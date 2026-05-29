@@ -1,0 +1,795 @@
+const { randomUUID } = require("crypto");
+
+const users = [
+  {
+    user_id: 1,
+    full_name: "Alicia Gomez",
+    email: "teacher@example.com",
+    phone_number: "555-0178",
+    password_hash: "Password123!",
+    role: "TEACHER",
+    is_active: true,
+    profile_picture_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80",
+    department: "Mathematics",
+    requires_otp: false,
+    otp_verified: true,
+  },
+  {
+    user_id: 2,
+    full_name: "Maya Patel",
+    email: "student@example.com",
+    phone_number: "555-0199",
+    password_hash: "Student123!",
+    role: "STUDENT",
+    is_active: true,
+    profile_picture_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+    student_number: "S-1002",
+    current_class_id: 1,
+    requires_otp: true,
+    otp_code: "654321",
+    otp_verified: false,
+  },
+  {
+    user_id: 4,
+    full_name: "Sara Ahmed",
+    email: "sara.ahmed@example.com",
+    phone_number: "555-0133",
+    password_hash: "Sara2025!",
+    role: "STUDENT",
+    is_active: true,
+    profile_picture_url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80",
+    student_number: "S-1101",
+    current_class_id: 2,
+    requires_otp: false,
+    otp_verified: true,
+  },
+  {
+    user_id: 3,
+    full_name: "Natalie Chen",
+    email: "parent@example.com",
+    phone_number: "555-0200",
+    password_hash: "Parent123!",
+    role: "PARENT",
+    is_active: true,
+    profile_picture_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+    preferred_language: "English",
+    relationship: "Mother",
+    requires_otp: true,
+    otp_code: "123456",
+    otp_verified: false,
+  },
+  {
+    user_id: 10,
+    full_name: "James Rivera",
+    email: "james.rivera@example.com",
+    phone_number: "555-0210",
+    password_hash: "Parent456!",
+    role: "PARENT",
+    is_active: true,
+    profile_picture_url: "",
+    relationship: "Father",
+  },
+];
+
+const teachers = [
+  {
+    teacher_id: 1,
+    user_id: 1,
+    employee_id: "T-1001",
+    department: "Mathematics",
+  },
+];
+
+const classes = [
+  {
+    class_id: 1,
+    class_name: "Grade 10 - Algebra",
+    subject_name: "Mathematics",
+    teacher_id: 1,
+    academic_year: "2025/2026",
+  },
+  {
+    class_id: 2,
+    class_name: "Grade 11 - Physics",
+    subject_name: "Physics",
+    teacher_id: 1,
+    academic_year: "2025/2026",
+  },
+];
+
+const rosters = [
+  {
+    class_id: 1,
+    students: [
+      { student_id: 1, name: "John Doe", student_number: "S-1001" },
+      { student_id: 2, name: "Maya Patel", student_number: "S-1002" },
+      { student_id: 3, name: "Isaac Lee", student_number: "S-1003" },
+      { student_id: 7, name: "Priya Sharma", student_number: "S-1004" },
+      { student_id: 8, name: "Carlos Mendez", student_number: "S-1005" },
+    ],
+  },
+  {
+    class_id: 2,
+    students: [
+      { student_id: 4, name: "Sara Ahmed", student_number: "S-1101" },
+      { student_id: 5, name: "Luis Rivera", student_number: "S-1102" },
+      { student_id: 6, name: "Nadia Khan", student_number: "S-1103" },
+      { student_id: 9, name: "Elena Popov", student_number: "S-1104" },
+    ],
+  },
+];
+
+const timetables = [
+  {
+    class_id: 1,
+    schedule: [
+      { day: "Monday", period: 1, subject: "Algebra I", room: "A1", start_time: "08:00", end_time: "08:45" },
+      { day: "Monday", period: 3, subject: "Algebra I", room: "A1", start_time: "10:00", end_time: "10:45" },
+      { day: "Wednesday", period: 2, subject: "Geometry", room: "A1", start_time: "09:00", end_time: "09:45" },
+      { day: "Wednesday", period: 5, subject: "Algebra I", room: "A1", start_time: "13:00", end_time: "13:45" },
+      { day: "Friday", period: 1, subject: "Algebra Review", room: "A1", start_time: "08:00", end_time: "08:45" },
+    ],
+  },
+  {
+    class_id: 2,
+    schedule: [
+      { day: "Tuesday", period: 1, subject: "Mechanics", room: "B2", start_time: "08:00", end_time: "08:45" },
+      { day: "Tuesday", period: 4, subject: "Mechanics Lab", room: "B2", start_time: "11:00", end_time: "11:45" },
+      { day: "Thursday", period: 2, subject: "Thermodynamics", room: "B2", start_time: "09:00", end_time: "09:45" },
+      { day: "Thursday", period: 3, subject: "Physics Review", room: "B2", start_time: "10:00", end_time: "10:45" },
+    ],
+  },
+];
+
+const attendanceRecords = [
+  {
+    attendance_id: 1,
+    class_id: 1,
+    date: "2025-10-03",
+    entries: [
+      { student_id: 1, status: "PRESENT", remark: "" },
+      { student_id: 2, status: "ABSENT", remark: "Sick" },
+      { student_id: 3, status: "LATE", remark: "Traffic" },
+      { student_id: 7, status: "PRESENT", remark: "" },
+      { student_id: 8, status: "PRESENT", remark: "" },
+    ],
+  },
+  {
+    attendance_id: 2,
+    class_id: 1,
+    date: "2025-10-04",
+    entries: [
+      { student_id: 1, status: "PRESENT", remark: "" },
+      { student_id: 2, status: "PRESENT", remark: "" },
+      { student_id: 3, status: "PRESENT", remark: "" },
+      { student_id: 7, status: "ABSENT", remark: "Excused" },
+      { student_id: 8, status: "PRESENT", remark: "" },
+    ],
+  },
+  {
+    attendance_id: 3,
+    class_id: 1,
+    date: "2025-10-05",
+    entries: [
+      { student_id: 1, status: "LATE", remark: "Bus delay" },
+      { student_id: 2, status: "PRESENT", remark: "" },
+      { student_id: 3, status: "PRESENT", remark: "" },
+      { student_id: 7, status: "PRESENT", remark: "" },
+      { student_id: 8, status: "ABSENT", remark: "" },
+    ],
+  },
+  {
+    attendance_id: 4,
+    class_id: 1,
+    date: "2025-10-06",
+    entries: [
+      { student_id: 1, status: "PRESENT", remark: "" },
+      { student_id: 2, status: "PRESENT", remark: "" },
+      { student_id: 3, status: "PRESENT", remark: "" },
+      { student_id: 7, status: "PRESENT", remark: "" },
+      { student_id: 8, status: "PRESENT", remark: "" },
+    ],
+  },
+  {
+    attendance_id: 5,
+    class_id: 1,
+    date: "2025-10-07",
+    entries: [
+      { student_id: 1, status: "PRESENT", remark: "" },
+      { student_id: 2, status: "LATE", remark: "Overslept" },
+      { student_id: 3, status: "ABSENT", remark: "Family emergency" },
+      { student_id: 7, status: "PRESENT", remark: "" },
+      { student_id: 8, status: "PRESENT", remark: "" },
+    ],
+  },
+  {
+    attendance_id: 6,
+    class_id: 2,
+    date: "2025-10-03",
+    entries: [
+      { student_id: 4, status: "PRESENT", remark: "" },
+      { student_id: 5, status: "PRESENT", remark: "" },
+      { student_id: 6, status: "LATE", remark: "" },
+      { student_id: 9, status: "PRESENT", remark: "" },
+    ],
+  },
+  {
+    attendance_id: 7,
+    class_id: 2,
+    date: "2025-10-04",
+    entries: [
+      { student_id: 4, status: "PRESENT", remark: "" },
+      { student_id: 5, status: "ABSENT", remark: "Medical" },
+      { student_id: 6, status: "PRESENT", remark: "" },
+      { student_id: 9, status: "PRESENT", remark: "" },
+    ],
+  },
+];
+
+const assignments = [
+  {
+    assignment_id: 1,
+    class_id: 1,
+    title: "Quadratic Equations",
+    description: "Solve the worksheet and upload your answers as a PDF.",
+    due_date: "2025-10-10T23:59:00.000Z",
+    max_score: 100,
+    attachments: ["worksheet-quadratic.pdf"],
+    created_at: "2025-10-01T08:30:00.000Z",
+    teacher_id: 1,
+    published: false,
+  },
+  {
+    assignment_id: 2,
+    class_id: 2,
+    title: "Motion Lab Report",
+    description: "Submit a lab report on the motion experiment.",
+    due_date: "2025-10-14T23:59:00.000Z",
+    max_score: 50,
+    attachments: ["motion-lab-guidelines.docx"],
+    created_at: "2025-10-02T10:15:00.000Z",
+    teacher_id: 1,
+    published: true,
+  },
+  {
+    assignment_id: 3,
+    class_id: 1,
+    title: "Linear Functions Homework",
+    description: "Complete problems 1-20 from Chapter 3.",
+    due_date: "2025-10-20T23:59:00.000Z",
+    max_score: 80,
+    attachments: [],
+    created_at: "2025-10-08T09:00:00.000Z",
+    teacher_id: 1,
+    published: false,
+  },
+];
+
+const submissions = [
+  {
+    submission_id: 1,
+    assignment_id: 1,
+    student_id: 1,
+    student_name: "John Doe",
+    submitted_at: "2025-10-09T14:12:00.000Z",
+    file_url: "submitted-john-doe-quadratics.pdf",
+    is_late: false,
+    score: null,
+    grade: null,
+    feedback: null,
+    published: false,
+  },
+  {
+    submission_id: 2,
+    assignment_id: 1,
+    student_id: 2,
+    student_name: "Maya Patel",
+    submitted_at: "2025-10-11T09:08:00.000Z",
+    file_url: "submitted-maya-patel-quadratics.pdf",
+    is_late: true,
+    score: null,
+    grade: null,
+    feedback: null,
+    published: false,
+  },
+  {
+    submission_id: 3,
+    assignment_id: 1,
+    student_id: 3,
+    student_name: "Isaac Lee",
+    submitted_at: "2025-10-09T16:00:00.000Z",
+    file_url: "submitted-isaac-lee-quadratics.pdf",
+    is_late: false,
+    score: 85,
+    grade: "B+",
+    feedback: "Good work, minor errors in problem 5.",
+    published: true,
+  },
+  {
+    submission_id: 4,
+    assignment_id: 2,
+    student_id: 4,
+    student_name: "Sara Ahmed",
+    submitted_at: "2025-10-13T10:00:00.000Z",
+    file_url: "submitted-sara-ahmed-motion.pdf",
+    is_late: false,
+    score: 45,
+    grade: "A",
+    feedback: "Excellent analysis!",
+    published: true,
+  },
+  {
+    submission_id: 5,
+    assignment_id: 2,
+    student_id: 5,
+    student_name: "Luis Rivera",
+    submitted_at: "2025-10-15T08:00:00.000Z",
+    file_url: "submitted-luis-rivera-motion.pdf",
+    is_late: true,
+    score: null,
+    grade: null,
+    feedback: null,
+    published: false,
+  },
+];
+
+const messages = [
+  {
+    thread_id: 1,
+    recipient_name: "John Doe",
+    recipient_role: "Student",
+    recipient_id: 2,
+    last_message: "I have a question about question 3.",
+    unread: 1,
+    read_by_recipient: true,
+    messages: [
+      { sender: "student", body: "I have a question about question 3.", created_at: "2025-10-08T14:10:00.000Z" },
+      { sender: "teacher", body: "Sure, what part is unclear?", created_at: "2025-10-08T14:12:00.000Z" },
+      { sender: "student", body: "The discriminant calculation — do we include the square root?", created_at: "2025-10-08T14:15:00.000Z" },
+    ],
+  },
+  {
+    thread_id: 2,
+    recipient_name: "Maya Patel",
+    recipient_role: "Student",
+    recipient_id: 2,
+    last_message: "Would it be okay to resubmit my lab report?",
+    unread: 0,
+    read_by_recipient: true,
+    messages: [
+      { sender: "student", body: "Would it be okay to resubmit my lab report?", created_at: "2025-10-09T15:20:00.000Z" },
+      { sender: "teacher", body: "Yes, upload it before tomorrow.", created_at: "2025-10-09T15:30:00.000Z" },
+    ],
+  },
+  {
+    thread_id: 3,
+    recipient_name: "Natalie Chen",
+    recipient_role: "Parent",
+    recipient_id: 3,
+    last_message: "Thank you for the update.",
+    unread: 0,
+    read_by_recipient: false,
+    messages: [
+      { sender: "parent", body: "Can we schedule a call about the project?", created_at: "2025-10-07T11:05:00.000Z" },
+      { sender: "teacher", body: "Yes, I am free on Friday afternoon.", created_at: "2025-10-07T11:20:00.000Z" },
+      { sender: "parent", body: "Thank you for the update.", created_at: "2025-10-07T11:25:00.000Z" },
+    ],
+  },
+];
+
+const notifications = [
+  { id: 1, type: "ASSIGNMENT", title: "New assignment submission", body: "John Doe submitted Quadratic Equations.", read: false, created_at: "2025-10-09T14:15:00.000Z" },
+  { id: 2, type: "SYSTEM", title: "System announcement", body: "Maintenance window tomorrow at 6 PM.", read: false, created_at: "2025-10-08T09:00:00.000Z" },
+  { id: 3, type: "ATTENDANCE", title: "Absence alert", body: "Sara Ahmed was marked absent today.", read: false, created_at: "2025-10-10T08:20:00.000Z" },
+  { id: 4, type: "MESSAGE", title: "New message", body: "Natalie Chen sent you a message.", read: true, created_at: "2025-10-07T11:05:00.000Z" },
+  { id: 5, type: "ASSIGNMENT", title: "Late submission", body: "Maya Patel submitted Quadratic Equations late.", read: false, created_at: "2025-10-11T09:08:00.000Z" },
+  { id: 6, type: "SYSTEM", title: "Online class reminder", body: "Algebra exam review starts in 1 hour.", read: false, created_at: "2025-10-12T13:00:00.000Z" },
+];
+
+const announcements = [
+  {
+    announcement_id: 1,
+    title: "School Open Day Reminder",
+    body: "Parent-teacher conferences will be held next Tuesday in the main hall.",
+    class_id: null,
+    created_at: "2025-10-06T12:00:00.000Z",
+    teacher_id: 1,
+  },
+  {
+    announcement_id: 2,
+    title: "Algebra Midterm Review",
+    body: "Extra study materials have been uploaded. Please review before the exam.",
+    class_id: 1,
+    created_at: "2025-10-08T10:00:00.000Z",
+    teacher_id: 1,
+  },
+  {
+    announcement_id: 3,
+    title: "Physics Lab Safety Reminder",
+    body: "All students must wear safety goggles during lab sessions.",
+    class_id: 2,
+    created_at: "2025-10-09T08:00:00.000Z",
+    teacher_id: 1,
+  },
+];
+
+const conductRecords = [
+  { student_id: 1, student_name: "John Doe", class_id: 1, conduct: "B", notes: "Participates actively but occasionally disruptive." },
+  { student_id: 2, student_name: "Maya Patel", class_id: 1, conduct: "A", notes: "Very respectful and punctual." },
+  { student_id: 3, student_name: "Isaac Lee", class_id: 1, conduct: "B+", notes: "Good attitude, needs to participate more." },
+  { student_id: 7, student_name: "Priya Sharma", class_id: 1, conduct: "A-", notes: "Excellent collaboration skills." },
+  { student_id: 8, student_name: "Carlos Mendez", class_id: 1, conduct: "C+", notes: "Frequently late, needs improvement." },
+  { student_id: 4, student_name: "Sara Ahmed", class_id: 2, conduct: "A", notes: "Model student." },
+  { student_id: 5, student_name: "Luis Rivera", class_id: 2, conduct: "B-", notes: "Can be inattentive." },
+  { student_id: 6, student_name: "Nadia Khan", class_id: 2, conduct: "A-", notes: "Helpful and engaged." },
+  { student_id: 9, student_name: "Elena Popov", class_id: 2, conduct: "B+", notes: "Good progress this term." },
+];
+
+const peerEvaluations = [
+  {
+    evaluation_id: 1,
+    class_id: 1,
+    title: "Group Project Feedback",
+    due_date: "2025-10-15",
+    status: "OPEN",
+    questions: ["Contribution to the project", "Communication skills", "Teamwork and collaboration"],
+    results: [
+      { reviewer_id: 1, reviewer_name: "John Doe", reviewee_id: 2, reviewee_name: "Maya Patel", score: 9, comments: "Strong leadership and clear communication." },
+      { reviewer_id: 2, reviewer_name: "Maya Patel", reviewee_id: 1, reviewee_name: "John Doe", score: 7, comments: "Good work but needs to listen more." },
+      { reviewer_id: 3, reviewer_name: "Isaac Lee", reviewee_id: 2, reviewee_name: "Maya Patel", score: 9, comments: "Very helpful in group tasks." },
+      { reviewer_id: 1, reviewer_name: "John Doe", reviewee_id: 3, reviewee_name: "Isaac Lee", score: 6, comments: "Could improve participation." },
+      { reviewer_id: 7, reviewer_name: "Priya Sharma", reviewee_id: 2, reviewee_name: "Maya Patel", score: 10, comments: "Outstanding collaboration." },
+    ],
+    released: false,
+  },
+  {
+    evaluation_id: 2,
+    class_id: 2,
+    title: "Lab Partner Assessment",
+    due_date: "2025-10-20",
+    status: "OPEN",
+    questions: ["Lab technique", "Data recording accuracy", "Safety compliance"],
+    results: [
+      { reviewer_id: 4, reviewer_name: "Sara Ahmed", reviewee_id: 5, reviewee_name: "Luis Rivera", score: 7, comments: "Good effort." },
+      { reviewer_id: 5, reviewer_name: "Luis Rivera", reviewee_id: 4, reviewee_name: "Sara Ahmed", score: 9, comments: "Very precise and careful." },
+    ],
+    released: true,
+  },
+];
+
+const onlineClasses = [
+  {
+    class_id: 1,
+    meeting_id: 1,
+    topic: "Algebra exam review",
+    link: "https://meet.google.com/abc-defg-hij",
+    scheduled_at: "2025-10-12T14:00:00.000Z",
+    recorded_url: "https://storage.example.com/recordings/algebra-review.mp4",
+    status: "COMPLETED",
+    provider: "Google Meet",
+  },
+  {
+    class_id: 2,
+    meeting_id: 2,
+    topic: "Physics problem-solving session",
+    link: "https://zoom.us/j/1234567890?pwd=abc123",
+    scheduled_at: "2025-10-18T10:00:00.000Z",
+    recorded_url: null,
+    status: "SCHEDULED",
+    provider: "Zoom",
+  },
+  {
+    class_id: 1,
+    meeting_id: 3,
+    topic: "Geometry proofs walkthrough",
+    link: "https://meet.google.com/xyz-abcd-efg",
+    scheduled_at: "2025-10-22T15:00:00.000Z",
+    recorded_url: null,
+    status: "SCHEDULED",
+    provider: "Google Meet",
+  },
+];
+
+const performancePredictions = [
+  { student_id: 1, student_name: "John Doe", class_id: 1, predicted_grade: "B+", risk_level: "MEDIUM", recommendation: "Practice problem sets daily. Focus on quadratic equations.", average_score: 78, attendance_rate: 85 },
+  { student_id: 2, student_name: "Maya Patel", class_id: 1, predicted_grade: "A-", risk_level: "LOW", recommendation: "Keep reviewing past papers. Excellent trajectory.", average_score: 91, attendance_rate: 92 },
+  { student_id: 3, student_name: "Isaac Lee", class_id: 1, predicted_grade: "B", risk_level: "MEDIUM", recommendation: "Improve attendance and participate more in class.", average_score: 75, attendance_rate: 80 },
+  { student_id: 7, student_name: "Priya Sharma", class_id: 1, predicted_grade: "A", risk_level: "LOW", recommendation: "Consistent performer. Consider advanced topics.", average_score: 94, attendance_rate: 96 },
+  { student_id: 8, student_name: "Carlos Mendez", class_id: 1, predicted_grade: "C+", risk_level: "HIGH", recommendation: "Needs immediate intervention. Schedule parent meeting.", average_score: 62, attendance_rate: 70 },
+  { student_id: 4, student_name: "Sara Ahmed", class_id: 2, predicted_grade: "A", risk_level: "LOW", recommendation: "Attend the upcoming review session for enrichment.", average_score: 95, attendance_rate: 98 },
+  { student_id: 5, student_name: "Luis Rivera", class_id: 2, predicted_grade: "B-", risk_level: "MEDIUM", recommendation: "Focus on lab reports and timely submissions.", average_score: 72, attendance_rate: 82 },
+  { student_id: 6, student_name: "Nadia Khan", class_id: 2, predicted_grade: "A-", risk_level: "LOW", recommendation: "Strong understanding of concepts. Keep it up.", average_score: 89, attendance_rate: 94 },
+  { student_id: 9, student_name: "Elena Popov", class_id: 2, predicted_grade: "B+", risk_level: "LOW", recommendation: "Good progress. Review thermodynamics more.", average_score: 83, attendance_rate: 90 },
+];
+
+const reports = [
+  { report_id: 1, type: "Class Progress", class_id: 1, title: "Grade 10 Algebra Progress", format: "PDF", file_url: "/reports/class-progress-grade10.pdf", generated_at: "2025-10-08T10:00:00.000Z" },
+  { report_id: 2, type: "Attendance Summary", class_id: 1, title: "October Attendance Summary", format: "PDF", file_url: "/reports/attendance-summary-oct.pdf", generated_at: "2025-10-07T14:00:00.000Z" },
+  { report_id: 3, type: "Class Progress", class_id: 2, title: "Grade 11 Physics Progress", format: "PDF", file_url: "/reports/class-progress-grade11.pdf", generated_at: "2025-10-09T08:00:00.000Z" },
+  { report_id: 4, type: "Attendance Summary", class_id: 2, title: "October Attendance - Physics", format: "CSV", file_url: "/reports/attendance-physics-oct.csv", generated_at: "2025-10-09T08:30:00.000Z" },
+];
+
+const todaySchedule = [
+  { class_id: 1, class_name: "Grade 10 - Algebra", subject: "Algebra I", room: "A1", start_time: "08:00", end_time: "08:45", period: 1 },
+  { class_id: 2, class_name: "Grade 11 - Physics", subject: "Mechanics", room: "B2", start_time: "09:00", end_time: "09:45", period: 2 },
+  { class_id: 1, class_name: "Grade 10 - Algebra", subject: "Algebra Review", room: "A1", start_time: "11:00", end_time: "11:45", period: 4 },
+  { class_id: 2, class_name: "Grade 11 - Physics", subject: "Physics Lab", room: "B2", start_time: "13:00", end_time: "13:45", period: 5 },
+];
+
+const attendanceChart = {
+  labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+  present: [85, 90, 88, 92, 87],
+  absent: [10, 5, 8, 4, 8],
+  late: [5, 5, 4, 4, 5],
+};
+
+const parentChildren = [
+  { parent_user_id: 3, student_user_id: 2, relationship: "Mother" },
+  { parent_user_id: 10, student_user_id: 4, relationship: "Father" },
+];
+
+const feeStructures = [
+  { fee_id: 1, student_id: 2, name: "Tuition Fee", amount: 15000, currency: "ETB", term: "2025/2026 - Semester 1" },
+  { fee_id: 2, student_id: 2, name: "Lab Fee", amount: 2000, currency: "ETB", term: "2025/2026 - Semester 1" },
+  { fee_id: 3, student_id: 4, name: "Tuition Fee", amount: 15000, currency: "ETB", term: "2025/2026 - Semester 1" },
+  { fee_id: 4, student_id: 4, name: "Lab Fee", amount: 2500, currency: "ETB", term: "2025/2026 - Semester 1" },
+];
+
+const payments = [
+  { payment_id: 1, parent_id: 3, student_id: 2, amount: 8000, currency: "ETB", status: "COMPLETED", payment_method: "Chapa", transaction_id: "CHP-2025-001", receipt_url: "/receipts/receipt-001.pdf", created_at: "2025-09-15T10:30:00.000Z" },
+  { payment_id: 2, parent_id: 3, student_id: 2, amount: 5000, currency: "ETB", status: "COMPLETED", payment_method: "Telebirr", transaction_id: "TBR-2025-042", receipt_url: "/receipts/receipt-002.pdf", created_at: "2025-10-01T14:20:00.000Z" },
+  { payment_id: 3, parent_id: 10, student_id: 4, amount: 10000, currency: "ETB", status: "COMPLETED", payment_method: "Chapa", transaction_id: "CHP-2025-055", receipt_url: "/receipts/receipt-003.pdf", created_at: "2025-09-20T09:00:00.000Z" },
+  { payment_id: 4, parent_id: 10, student_id: 4, amount: 5000, currency: "ETB", status: "PENDING", payment_method: "Telebirr", transaction_id: null, receipt_url: null, created_at: "2025-10-10T16:45:00.000Z" },
+];
+
+const studentNotes = [
+  { note_id: 1, student_id: 2, title: "Quadratic Formula Review", content: "The quadratic formula: x = (-b +/- sqrt(b^2 - 4ac)) / 2a\n\nRemember to check the discriminant first to determine the number of solutions.", created_at: "2025-10-05T10:30:00.000Z", updated_at: "2025-10-05T10:30:00.000Z" },
+  { note_id: 2, student_id: 2, title: "Physics Lab Safety", content: "- Always wear safety goggles\n- No loose clothing near equipment\n- Report spills immediately\n- Know where the fire extinguisher is", created_at: "2025-10-06T14:15:00.000Z", updated_at: "2025-10-07T09:00:00.000Z" },
+  { note_id: 3, student_id: 2, title: "Study Schedule - Midterms", content: "Monday: Math review 2-4pm\nTuesday: Physics problems 3-5pm\nWednesday: Group study 1-3pm\nThursday: Practice tests\nFriday: Rest & light review", created_at: "2025-10-08T08:00:00.000Z", updated_at: "2025-10-08T08:00:00.000Z" },
+  { note_id: 4, student_id: 4, title: "Newton's Laws Summary", content: "1st Law: An object at rest stays at rest unless acted on by a force.\n2nd Law: F = ma\n3rd Law: Every action has an equal and opposite reaction.", created_at: "2025-10-04T11:20:00.000Z", updated_at: "2025-10-04T11:20:00.000Z" },
+  { note_id: 5, student_id: 4, title: "Lab Report Template", content: "Title, Objective, Hypothesis, Materials, Procedure, Data/Observations, Analysis, Conclusion", created_at: "2025-10-09T16:00:00.000Z", updated_at: "2025-10-10T10:00:00.000Z" },
+];
+
+const aiBooks = [
+  { book_id: 1, title: "Algebra Essentials", author: "Dr. Sarah Mitchell", description: "A comprehensive guide to algebraic concepts from basic equations to advanced polynomials.", external_url: "https://openstax.org/books/algebra-and-trigonometry", subject_name: "Mathematics", preview_url: "https://openstax.org/books/algebra-and-trigonometry/pages/1-introduction-to-prerequisites" },
+  { book_id: 2, title: "Physics Fundamentals", author: "Prof. James Wheeler", description: "Covers mechanics, thermodynamics, and waves with interactive problem sets.", external_url: "https://openstax.org/books/college-physics-2e", subject_name: "Physics", preview_url: "https://openstax.org/books/college-physics-2e/pages/1-introduction-to-science-and-the-realm-of-physics" },
+  { book_id: 3, title: "Effective Study Strategies", author: "Dr. Emily Carter", description: "Evidence-based techniques for improving retention, focus, and academic performance.", external_url: "https://www.learningcommons.org/study-skills", subject_name: "Learning Skills", preview_url: null },
+  { book_id: 4, title: "Geometry Visual Guide", author: "Dr. Alan Park", description: "Visual approach to understanding geometric proofs, theorems, and constructions.", external_url: "https://openstax.org/books/geometry", subject_name: "Mathematics", preview_url: null },
+  { book_id: 5, title: "Thermodynamics Simplified", author: "Prof. Lisa Chang", description: "Breaks down complex thermodynamic concepts with real-world applications.", external_url: "https://openstax.org/books/university-physics-volume-2", subject_name: "Physics", preview_url: null },
+  { book_id: 6, title: "Critical Thinking for Students", author: "Dr. Robert Hayes", description: "Develop analytical and critical thinking skills for academic success.", external_url: "https://www.criticalthinking.org/students", subject_name: "Learning Skills", preview_url: null },
+];
+
+const studentBookAccess = [
+  { access_id: 1, student_id: 2, book_id: 1, accessed_at: "2025-10-05T10:30:00.000Z" },
+  { access_id: 2, student_id: 2, book_id: 2, accessed_at: "2025-10-06T14:15:00.000Z" },
+  { access_id: 3, student_id: 2, book_id: 3, accessed_at: "2025-10-08T09:00:00.000Z" },
+  { access_id: 4, student_id: 4, book_id: 2, accessed_at: "2025-10-04T11:20:00.000Z" },
+  { access_id: 5, student_id: 4, book_id: 5, accessed_at: "2025-10-09T16:00:00.000Z" },
+];
+
+// Learning Tutorials Repository
+const learningTutorials = [
+  {
+    tutorial_id: 1,
+    title: "Quadratic Equations - Complete Guide",
+    subject_name: "Mathematics",
+    topic: "Algebra",
+    description: "Learn how to solve quadratic equations using factoring, completing the square, and the quadratic formula.",
+    content_url: "https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratic-functions-equations",
+    video_url: "https://www.youtube.com/watch?v=IlNAJl36-10",
+    thumbnail: "https://images.unsplash.com/photo-1635070041078-e366dbe555cb?auto=format&fit=crop&w=400&q=80",
+    difficulty: "Intermediate",
+    duration_minutes: 45,
+    created_at: "2025-10-01T08:00:00.000Z",
+  },
+  {
+    tutorial_id: 2,
+    title: "Newton's Laws of Motion",
+    subject_name: "Physics",
+    topic: "Mechanics",
+    description: "Understand the three fundamental laws of motion with real-world examples and interactive simulations.",
+    content_url: "https://www.physicsclassroom.com/class/newtlaws",
+    video_url: "https://www.youtube.com/watch?v=kKKM8Y-u7ds",
+    thumbnail: "https://images.unsplash.com/photo-1636466497217-2658c551d182?auto=format&fit=crop&w=400&q=80",
+    difficulty: "Beginner",
+    duration_minutes: 60,
+    created_at: "2025-10-02T10:00:00.000Z",
+  },
+  {
+    tutorial_id: 3,
+    title: "Linear Functions and Graphing",
+    subject_name: "Mathematics",
+    topic: "Algebra",
+    description: "Master linear equations, slope-intercept form, and graphing techniques with step-by-step examples.",
+    content_url: "https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:linear-equations-graphs",
+    video_url: "https://www.youtube.com/watch?v=gFpHHTxsDkI",
+    thumbnail: "https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=400&q=80",
+    difficulty: "Beginner",
+    duration_minutes: 35,
+    created_at: "2025-10-03T09:00:00.000Z",
+  },
+  {
+    tutorial_id: 4,
+    title: "Thermodynamics Fundamentals",
+    subject_name: "Physics",
+    topic: "Thermodynamics",
+    description: "Explore heat transfer, entropy, and the laws of thermodynamics through practical applications.",
+    content_url: "https://www.physicsclassroom.com/class/thermalP",
+    video_url: "https://www.youtube.com/watch?v=PQpZIVaUeBk",
+    thumbnail: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=400&q=80",
+    difficulty: "Advanced",
+    duration_minutes: 75,
+    created_at: "2025-10-04T11:00:00.000Z",
+  },
+  {
+    tutorial_id: 5,
+    title: "Study Skills: Time Management",
+    subject_name: "Learning Skills",
+    topic: "Study Techniques",
+    description: "Learn effective time management strategies for students, including the Pomodoro Technique and study schedules.",
+    content_url: "https://www.mindtools.com/time-management",
+    video_url: "https://www.youtube.com/watch?v=iONDebH9q0s",
+    thumbnail: "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?auto=format&fit=crop&w=400&q=80",
+    difficulty: "Beginner",
+    duration_minutes: 30,
+    created_at: "2025-10-05T14:00:00.000Z",
+  },
+  {
+    tutorial_id: 6,
+    title: "Geometry Proofs Made Easy",
+    subject_name: "Mathematics",
+    topic: "Geometry",
+    description: "Step-by-step guide to understanding and writing geometric proofs with common theorems.",
+    content_url: "https://www.khanacademy.org/math/geometry/hs-geo-congruence",
+    video_url: "https://www.youtube.com/watch?v=VvEwVhGzJyI",
+    thumbnail: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=400&q=80",
+    difficulty: "Intermediate",
+    duration_minutes: 50,
+    created_at: "2025-10-06T10:00:00.000Z",
+  },
+];
+
+// Book Repository - Extended AI Books with more details
+const bookRepository = [
+  {
+    book_id: 101,
+    title: "Algebra & Trigonometry",
+    author: "OpenStax",
+    description: "Comprehensive algebra and trigonometry textbook covering equations, functions, polynomials, and trigonometric identities.",
+    external_url: "https://openstax.org/books/algebra-and-trigonometry",
+    subject_name: "Mathematics",
+    preview_url: "https://openstax.org/books/algebra-and-trigonometry/pages/1-introduction-to-prerequisites",
+    isbn: "978-1-938168-39-9",
+    edition: "1st Edition",
+    pages: 1400,
+    language: "English",
+    format: "Online/Free",
+    cover_image: "https://assets.openstax.org/oscms-prodcms/media/documents/Algebra_and_Trigonometry_-_WEB_68DwMf7.jpg",
+    rating: 4.7,
+    category: "Textbook",
+  },
+  {
+    book_id: 102,
+    title: "College Physics",
+    author: "OpenStax",
+    description: "Full physics textbook covering mechanics, thermodynamics, waves, optics, electricity, and magnetism.",
+    external_url: "https://openstax.org/books/college-physics-2e",
+    subject_name: "Physics",
+    preview_url: "https://openstax.org/books/college-physics-2e/pages/1-introduction-to-science-and-the-realm-of-physics",
+    isbn: "978-1-947172-09-1",
+    edition: "2nd Edition",
+    pages: 1200,
+    language: "English",
+    format: "Online/Free",
+    cover_image: "https://assets.openstax.org/oscms-prodcms/media/documents/CollegePhysics2e-WEB_0U4KRaT.jpg",
+    rating: 4.6,
+    category: "Textbook",
+  },
+  {
+    book_id: 103,
+    title: "University Physics Volume 2",
+    author: "OpenStax",
+    description: "Thermodynamics, waves, and modern physics for university-level students.",
+    external_url: "https://openstax.org/books/university-physics-volume-2",
+    subject_name: "Physics",
+    preview_url: "https://openstax.org/books/university-physics-volume-2/pages/1-temperature-and-heat",
+    isbn: "978-1-938168-15-5",
+    edition: "1st Edition",
+    pages: 1000,
+    language: "English",
+    format: "Online/Free",
+    cover_image: "https://assets.openstax.org/oscms-prodcms/media/documents/University_Physics_Volume_2_-_WEB.jpg",
+    rating: 4.8,
+    category: "Advanced Textbook",
+  },
+  {
+    book_id: 104,
+    title: "Study Skills for Academic Success",
+    author: "Learning Commons",
+    description: "Practical guide to effective studying, note-taking, time management, and exam preparation.",
+    external_url: "https://www.learningcommons.org/study-skills",
+    subject_name: "Learning Skills",
+    preview_url: null,
+    isbn: null,
+    edition: "2025 Edition",
+    pages: 150,
+    language: "English",
+    format: "Online/Free",
+    cover_image: null,
+    rating: 4.5,
+    category: "Study Guide",
+  },
+  {
+    book_id: 105,
+    title: "Geometry: A Comprehensive Course",
+    author: "OpenStax",
+    description: "Complete geometry course covering proofs, theorems, constructions, and coordinate geometry.",
+    external_url: "https://openstax.org/books/geometry",
+    subject_name: "Mathematics",
+    preview_url: "https://openstax.org/books/geometry/pages/1-introduction-to-foundations",
+    isbn: "978-1-951693-22-0",
+    edition: "1st Edition",
+    pages: 800,
+    language: "English",
+    format: "Online/Free",
+    cover_image: "https://assets.openstax.org/oscms-prodcms/media/documents/Geometry-WEB.jpg",
+    rating: 4.6,
+    category: "Textbook",
+  },
+  {
+    book_id: 106,
+    title: "Critical Thinking for Students",
+    author: "Foundation for Critical Thinking",
+    description: "Develop analytical and critical thinking skills essential for academic success and problem-solving.",
+    external_url: "https://www.criticalthinking.org/students",
+    subject_name: "Learning Skills",
+    preview_url: null,
+    isbn: null,
+    edition: "2024 Edition",
+    pages: 200,
+    language: "English",
+    format: "Online/Free",
+    cover_image: null,
+    rating: 4.4,
+    category: "Skills Development",
+  },
+];
+
+const sessions = {};
+
+function createToken(userId) {
+  const token = randomUUID();
+  sessions[token] = { user_id: userId, created_at: new Date().toISOString() };
+  return token;
+}
+
+module.exports = {
+  users,
+  teachers,
+  classes,
+  rosters,
+  timetables,
+  attendanceRecords,
+  assignments,
+  submissions,
+  messages,
+  notifications,
+  announcements,
+  conductRecords,
+  peerEvaluations,
+  onlineClasses,
+  performancePredictions,
+  reports,
+  todaySchedule,
+  attendanceChart,
+  parentChildren,
+  feeStructures,
+  payments,
+  studentNotes,
+  aiBooks,
+  studentBookAccess,
+  learningTutorials,
+  bookRepository,
+  sessions,
+  createToken,
+};

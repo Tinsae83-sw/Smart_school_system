@@ -509,6 +509,14 @@ const reports = [
   { report_id: 4, type: "Attendance Summary", class_id: 2, title: "October Attendance - Physics", format: "CSV", file_url: "/reports/attendance-physics-oct.csv", generated_at: "2025-10-09T08:30:00.000Z" },
 ];
 
+const materials = [
+  { material_id: 1, class_id: 1, title: "Chapter 3: Quadratic Equations", description: "Lecture notes covering quadratic formula and factoring methods.", file_url: "https://drive.google.com/file/d/abc123", file_type: "PDF", category: "Lecture Notes", created_at: "2025-10-01T08:00:00.000Z", teacher_id: 1 },
+  { material_id: 2, class_id: 1, title: "Algebra Practice Problems", description: "Extra practice problems for homework.", file_url: "https://drive.google.com/file/d/def456", file_type: "DOCX", category: "Assignments", created_at: "2025-10-03T09:00:00.000Z", teacher_id: 1 },
+  { material_id: 3, class_id: 2, title: "Physics Mechanics Overview", description: "Comprehensive study guide for mechanics.", file_url: "https://drive.google.com/file/d/ghi789", file_type: "PDF", category: "Study Guides", created_at: "2025-10-05T10:00:00.000Z", teacher_id: 1 },
+  { material_id: 4, class_id: 2, title: "Newton's Laws Video", description: "Recorded lecture on Newton's three laws of motion.", file_url: "https://youtube.com/watch?v=xyz123", file_type: "Video", category: "Videos", created_at: "2025-10-07T11:00:00.000Z", teacher_id: 1 },
+  { material_id: 5, class_id: 1, title: "Geometry Formula Sheet", description: "Quick reference for geometry formulas.", file_url: "https://drive.google.com/file/d/jkl012", file_type: "PDF", category: "References", created_at: "2025-10-08T08:30:00.000Z", teacher_id: 1 },
+];
+
 const todaySchedule = [
   { class_id: 1, class_name: "Grade 10 - Algebra", subject: "Algebra I", room: "A1", start_time: "08:00", end_time: "08:45", period: 1 },
   { class_id: 2, class_name: "Grade 11 - Physics", subject: "Mechanics", room: "B2", start_time: "09:00", end_time: "09:45", period: 2 },
@@ -780,6 +788,7 @@ module.exports = {
   onlineClasses,
   performancePredictions,
   reports,
+  materials,
   todaySchedule,
   attendanceChart,
   parentChildren,

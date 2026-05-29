@@ -17,6 +17,7 @@ const {
   onlineClasses,
   performancePredictions,
   reports,
+  materials,
   todaySchedule,
   attendanceChart,
 } = require("../data/mockData");
@@ -663,6 +664,43 @@ router.post("/notifications/read", (req, res) => {
   // Mark all as read
   notifications.forEach((n) => { n.read = true; });
   res.json({ success: true, message: "All notifications marked as read." });
+});
+
+// ─── Materials ──────────────────────────────────────────────
+
+router.get("/materials", (req, res) => {
+  const classId = Number(req.query.classId) || null;
+  res.json(materials.filter((m) => !classId || m.class_id === classId));
+});
+
+router.post("/materials", (req, res) => {
+  const { class_id, title, description, file_url, file_type, category } = req.body;
+  if (!class_id || !title || !file_url) {
+    return res.status(400).json({ error: "class_id, title, and file_url are required." });
+  }
+  const material = {
+    material_id: materials.length + 1,
+    class_id,
+    title,
+    description: description || "",
+    file_url,
+    file_type: file_type || "PDF",
+    category: category || "Other",
+    created_at: new Date().toISOString(),
+    teacher_id: req.teacher.teacher_id,
+  };
+  materials.push(material);
+  res.json({ success: true, material });
+});
+
+router.delete("/materials/:materialId", (req, res) => {
+  const materialId = Number(req.params.materialId);
+  const index = materials.findIndex((m) => m.material_id === materialId && m.teacher_id === req.teacher.teacher_id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Material not found." });
+  }
+  materials.splice(index, 1);
+  res.json({ success: true });
 });
 
 // ─── Helper ────────────────────────────────────────────────────

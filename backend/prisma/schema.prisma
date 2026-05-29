@@ -20,7 +20,17 @@ DROP TABLE IF EXISTS peer_evaluations CASCADE;
 DROP TABLE IF EXISTS online_classes CASCADE;
 DROP TABLE IF EXISTS student_parent CASCADE;
 DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS fee_structures CASCADE;
 DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS system_settings CASCADE;
+DROP TABLE IF EXISTS role_permissions CASCADE;
+DROP TABLE IF EXISTS announcements CASCADE;
+DROP TABLE IF EXISTS chat_messages CASCADE;
+DROP TABLE IF EXISTS chat_rooms CASCADE;
+DROP TABLE IF EXISTS transcripts CASCADE;
+DROP TABLE IF EXISTS rankings CASCADE;
+DROP TABLE IF EXISTS class_schedules CASCADE;
+DROP TABLE IF EXISTS academic_terms CASCADE;
 DROP TABLE IF EXISTS user_sessions CASCADE;
 DROP TABLE IF EXISTS otp_verifications CASCADE;
 DROP TABLE IF EXISTS performance_predictions CASCADE;
@@ -133,6 +143,129 @@ CREATE TABLE class_subject (
     subject_id       INT NOT NULL REFERENCES subjects(subject_id) ON DELETE CASCADE,
     teacher_id       INT NOT NULL REFERENCES teachers(teacher_id) ON DELETE CASCADE,
     UNIQUE (class_id, subject_id)
+);
+
+CREATE TABLE academic_terms (
+    term_id          SERIAL PRIMARY KEY,
+    name             VARCHAR(100) NOT NULL,
+    start_date       DATE NOT NULL,
+    end_date         DATE NOT NULL,
+    is_active        BOOLEAN DEFAULT TRUE,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE system_settings (
+    setting_id          SERIAL PRIMARY KEY,
+    key_name            VARCHAR(100) NOT NULL UNIQUE,
+    value               JSONB NOT NULL,
+    description         TEXT,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE role_permissions (
+    permission_id    SERIAL PRIMARY KEY,
+    role             user_role NOT NULL,
+    permissions      JSONB NOT NULL,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (role)
+);
+
+CREATE TABLE student_parent (
+    id               SERIAL PRIMARY KEY,
+    student_id       INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    parent_id        INT NOT NULL REFERENCES parents(parent_id) ON DELETE CASCADE,
+    relationship     VARCHAR(40),
+    linked_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (student_id, parent_id)
+);
+
+CREATE TABLE fee_structures (
+    fee_structure_id SERIAL PRIMARY KEY,
+    name             VARCHAR(150) NOT NULL,
+    description      TEXT,
+    amount           DECIMAL(10,2) NOT NULL,
+    currency         VARCHAR(10) NOT NULL DEFAULT 'USD',
+    academic_term_id INT REFERENCES academic_terms(term_id) ON DELETE SET NULL,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE payments (
+    payment_id      SERIAL PRIMARY KEY,
+    student_id      INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    amount          DECIMAL(10,2) NOT NULL,
+    currency        VARCHAR(10) NOT NULL DEFAULT 'USD',
+    status          payment_status NOT NULL DEFAULT 'PENDING',
+    payment_date    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    receipt_url     TEXT,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE announcements (
+    announcement_id SERIAL PRIMARY KEY,
+    title           VARCHAR(200) NOT NULL,
+    message         TEXT NOT NULL,
+    created_by      INT REFERENCES users(user_id) ON DELETE SET NULL,
+    target_roles    VARCHAR(200) NOT NULL DEFAULT 'ALL',
+    target_class_id INT REFERENCES school_classes(class_id) ON DELETE SET NULL,
+    published_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active       BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE audit_logs (
+    audit_id        SERIAL PRIMARY KEY,
+    user_id         INT REFERENCES users(user_id) ON DELETE SET NULL,
+    action          VARCHAR(200) NOT NULL,
+    entity          VARCHAR(100),
+    entity_id       INT,
+    ip_address      INET,
+    user_agent      TEXT,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE class_schedules (
+    schedule_id     SERIAL PRIMARY KEY,
+    class_id        INT NOT NULL REFERENCES school_classes(class_id) ON DELETE CASCADE,
+    day_of_week     VARCHAR(10) NOT NULL,
+    period          SMALLINT NOT NULL,
+    subject_id      INT NOT NULL REFERENCES subjects(subject_id) ON DELETE CASCADE,
+    teacher_id      INT NOT NULL REFERENCES teachers(teacher_id) ON DELETE CASCADE,
+    room_number     VARCHAR(50),
+    start_time      TIME NOT NULL,
+    end_time        TIME NOT NULL,
+    UNIQUE (class_id, day_of_week, period)
+);
+
+CREATE TABLE rankings (
+    ranking_id      SERIAL PRIMARY KEY,
+    entity_type     VARCHAR(20) NOT NULL,
+    entity_id       INT NOT NULL,
+    score           DECIMAL(6,2) NOT NULL,
+    rank_category   VARCHAR(100),
+    computed_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE transcripts (
+    transcript_id   SERIAL PRIMARY KEY,
+    student_id      INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    generated_by    INT REFERENCES users(user_id) ON DELETE SET NULL,
+    data            JSONB NOT NULL,
+    pdf_url         TEXT,
+    generated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE chat_rooms (
+    room_id         SERIAL PRIMARY KEY,
+    name            VARCHAR(150),
+    is_private      BOOLEAN DEFAULT TRUE,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE chat_messages (
+    message_id      SERIAL PRIMARY KEY,
+    room_id         INT NOT NULL REFERENCES chat_rooms(room_id) ON DELETE CASCADE,
+    sender_id       INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    content         TEXT NOT NULL,
+    sent_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ----------------------------

@@ -1,0 +1,410 @@
+-- ============================================================
+-- SMART SCHOOL CONNECT - COMPLETE DATABASE SCHEMA (CLEAN RESET)
+-- PostgreSQL 15+
+-- ============================================================
+
+-- ----------------------------
+-- CLEANUP: Drop everything in correct order (CASCADE removes dependencies)
+-- ----------------------------
+DROP TRIGGER IF EXISTS trigger_assignments_updated_at ON assignments CASCADE;
+DROP TRIGGER IF EXISTS trigger_attendance_records_updated_at ON attendance_records CASCADE;
+DROP TRIGGER IF EXISTS trigger_payments_updated_at ON payments CASCADE;
+DROP TRIGGER IF EXISTS trigger_student_notes_updated_at ON student_notes CASCADE;
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+
+DROP TABLE IF EXISTS student_book_access CASCADE;
+DROP TABLE IF EXISTS ai_books CASCADE;
+DROP TABLE IF EXISTS student_notes CASCADE;
+DROP TABLE IF EXISTS peer_evaluation_results CASCADE;
+DROP TABLE IF EXISTS peer_evaluations CASCADE;
+DROP TABLE IF EXISTS online_classes CASCADE;
+DROP TABLE IF EXISTS student_parent CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS user_sessions CASCADE;
+DROP TABLE IF EXISTS otp_verifications CASCADE;
+DROP TABLE IF EXISTS performance_predictions CASCADE;
+DROP TABLE IF EXISTS dashboards CASCADE;
+DROP TABLE IF EXISTS reports CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS grades CASCADE;
+DROP TABLE IF EXISTS submissions CASCADE;
+DROP TABLE IF EXISTS assignments CASCADE;
+DROP TABLE IF EXISTS attendance_records CASCADE;
+DROP TABLE IF EXISTS class_subject CASCADE;
+DROP TABLE IF EXISTS subjects CASCADE;
+DROP TABLE IF EXISTS school_classes CASCADE;
+DROP TABLE IF EXISTS parents CASCADE;
+DROP TABLE IF EXISTS students CASCADE;
+DROP TABLE IF EXISTS teachers CASCADE;
+DROP TABLE IF EXISTS administrators CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+DROP TYPE IF EXISTS user_role CASCADE;
+DROP TYPE IF EXISTS attendance_status CASCADE;
+DROP TYPE IF EXISTS notification_type CASCADE;
+DROP TYPE IF EXISTS risk_level CASCADE;
+DROP TYPE IF EXISTS admin_level CASCADE;
+DROP TYPE IF EXISTS payment_status CASCADE;
+
+-- ----------------------------
+-- ENUMS (Custom Types)
+-- ----------------------------
+CREATE TYPE user_role AS ENUM ('SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT', 'PARENT');
+CREATE TYPE attendance_status AS ENUM ('PRESENT', 'ABSENT', 'LATE');
+CREATE TYPE notification_type AS ENUM ('ASSIGNMENT', 'ATTENDANCE', 'GRADE', 'SYSTEM', 'MESSAGE', 'PAYMENT');
+CREATE TYPE risk_level AS ENUM ('LOW', 'MEDIUM', 'HIGH');
+CREATE TYPE admin_level AS ENUM ('SUPER', 'SCHOOL', 'DEPARTMENT');
+CREATE TYPE payment_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED');
+
+-- ----------------------------
+-- 1. USERS (base table, single table inheritance)
+-- ----------------------------
+CREATE TABLE users (
+    user_id          SERIAL PRIMARY KEY,
+    full_name        VARCHAR(100) NOT NULL,
+    email            VARCHAR(100) NOT NULL UNIQUE,
+    phone_number     VARCHAR(20),
+    password_hash    VARCHAR(255) NOT NULL,
+    role             user_role NOT NULL,
+    is_active        BOOLEAN DEFAULT TRUE,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login       TIMESTAMP,
+    profile_picture_url TEXT,
+    preferred_language VARCHAR(20) DEFAULT 'en'
+);
+
+-- ----------------------------
+-- 2. ROLE-SPECIFIC EXTENSIONS (1:1 with users)
+-- ----------------------------
+CREATE TABLE administrators (
+    admin_id        SERIAL PRIMARY KEY,
+    user_id         INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    employee_id     VARCHAR(20) NOT NULL UNIQUE,
+    access_level    admin_level NOT NULL
+);
+
+CREATE TABLE teachers (
+    teacher_id      SERIAL PRIMARY KEY,
+    user_id         INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    employee_id     VARCHAR(20) NOT NULL UNIQUE,
+    department      VARCHAR(100)
+);
+
+CREATE TABLE students (
+    student_id      SERIAL PRIMARY KEY,
+    user_id         INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    student_number  VARCHAR(20) NOT NULL UNIQUE,
+    enrollment_date DATE NOT NULL,
+    current_class_id INT   -- will reference school_classes after it is created
+);
+
+CREATE TABLE parents (
+    parent_id        SERIAL PRIMARY KEY,
+    user_id          INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    relationship     VARCHAR(20) NOT NULL   -- 'Father', 'Mother', 'Guardian'
+);
+
+-- ----------------------------
+-- 3. ACADEMIC CORE
+-- ----------------------------
+CREATE TABLE school_classes (
+    class_id            SERIAL PRIMARY KEY,
+    class_name          VARCHAR(50) NOT NULL,
+    academic_year       VARCHAR(20) NOT NULL,
+    homeroom_teacher_id INT NOT NULL REFERENCES teachers(teacher_id) ON DELETE RESTRICT
+);
+
+-- Add foreign key from students to school_classes (now that school_classes exists)
+ALTER TABLE students ADD CONSTRAINT fk_student_current_class
+    FOREIGN KEY (current_class_id) REFERENCES school_classes(class_id) ON DELETE SET NULL;
+
+CREATE TABLE subjects (
+    subject_id      SERIAL PRIMARY KEY,
+    subject_name    VARCHAR(100) NOT NULL,
+    subject_code    VARCHAR(20) NOT NULL UNIQUE
+);
+
+-- Junction table: class_subject (with teacher assignment)
+CREATE TABLE class_subject (
+    class_subject_id SERIAL PRIMARY KEY,
+    class_id         INT NOT NULL REFERENCES school_classes(class_id) ON DELETE CASCADE,
+    subject_id       INT NOT NULL REFERENCES subjects(subject_id) ON DELETE CASCADE,
+    teacher_id       INT NOT NULL REFERENCES teachers(teacher_id) ON DELETE CASCADE,
+    UNIQUE (class_id, subject_id)
+);
+
+-- ----------------------------
+-- 4. ATTENDANCE
+-- ----------------------------
+CREATE TABLE attendance_records (
+    record_id    SERIAL PRIMARY KEY,
+    student_id   INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    class_id     INT NOT NULL REFERENCES school_classes(class_id) ON DELETE CASCADE,
+    date         DATE NOT NULL,
+    status       attendance_status NOT NULL,
+    remarks      TEXT,
+    recorded_by  INT NOT NULL REFERENCES teachers(teacher_id),
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (student_id, class_id, date)
+);
+
+-- ----------------------------
+-- 5. ASSIGNMENTS & SUBMISSIONS & GRADES
+-- ----------------------------
+CREATE TABLE assignments (
+    assignment_id    SERIAL PRIMARY KEY,
+    class_subject_id INT NOT NULL REFERENCES class_subject(class_subject_id) ON DELETE CASCADE,
+    title            VARCHAR(200) NOT NULL,
+    description      TEXT,
+    due_date         TIMESTAMP NOT NULL,
+    max_score        DECIMAL(5,2) NOT NULL CHECK (max_score > 0),
+    attachments      TEXT[],   -- array of file URLs
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE submissions (
+    submission_id   SERIAL PRIMARY KEY,
+    assignment_id   INT NOT NULL REFERENCES assignments(assignment_id) ON DELETE CASCADE,
+    student_id      INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    submitted_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    file_url        TEXT NOT NULL,
+    is_late         BOOLEAN DEFAULT FALSE,
+    UNIQUE (assignment_id, student_id)
+);
+
+CREATE TABLE grades (
+    grade_id      SERIAL PRIMARY KEY,
+    submission_id INT NOT NULL UNIQUE REFERENCES submissions(submission_id) ON DELETE CASCADE,
+    score         DECIMAL(5,2) NOT NULL,
+    letter_grade  CHAR(2),
+    feedback      TEXT,
+    graded_by     INT NOT NULL REFERENCES teachers(teacher_id),
+    graded_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CHECK (score >= 0)
+);
+
+-- ----------------------------
+-- 6. COMMUNICATION (Messages, Notifications)
+-- ----------------------------
+CREATE TABLE messages (
+    message_id   SERIAL PRIMARY KEY,
+    sender_id    INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    receiver_id  INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    content      TEXT NOT NULL,
+    timestamp    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_read      BOOLEAN DEFAULT FALSE,
+    attachment   TEXT,
+    parent_message_id INT REFERENCES messages(message_id) ON DELETE SET NULL   -- for threading
+);
+
+CREATE TABLE notifications (
+    notification_id SERIAL PRIMARY KEY,
+    user_id         INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    type            notification_type NOT NULL,
+    content         VARCHAR(500) NOT NULL,
+    is_sent         BOOLEAN DEFAULT FALSE,
+    sent_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    metadata        JSONB   -- extra info (e.g., assignment_id, grade_id)
+);
+
+-- ----------------------------
+-- 7. REPORTS, DASHBOARDS, AI PREDICTIONS
+-- ----------------------------
+CREATE TABLE reports (
+    report_id     SERIAL PRIMARY KEY,
+    generated_by  INT NOT NULL REFERENCES users(user_id) ON DELETE SET NULL,
+    title         VARCHAR(200) NOT NULL,
+    data          JSONB NOT NULL,
+    generated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE dashboards (
+    dashboard_id   SERIAL PRIMARY KEY,
+    user_id        INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    widget_config  JSONB   -- stores chart preferences, layout
+);
+
+CREATE TABLE performance_predictions (
+    prediction_id    SERIAL PRIMARY KEY,
+    student_id       INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    predicted_grade  VARCHAR(10),
+    risk_level       risk_level,
+    recommendation   TEXT,
+    generated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------
+-- 8. AUTHENTICATION & SECURITY
+-- ----------------------------
+CREATE TABLE otp_verifications (
+    otp_id       SERIAL PRIMARY KEY,
+    email        VARCHAR(100) NOT NULL,
+    otp_code     VARCHAR(6) NOT NULL,
+    expires_at   TIMESTAMP NOT NULL,
+    is_verified  BOOLEAN DEFAULT FALSE,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_sessions (
+    session_id    SERIAL PRIMARY KEY,
+    user_id       INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    token         VARCHAR(255) NOT NULL UNIQUE,
+    login_time    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address    INET,
+    user_agent    TEXT
+);
+
+CREATE TABLE audit_logs (
+    log_id      SERIAL PRIMARY KEY,
+    user_id     INT REFERENCES users(user_id) ON DELETE SET NULL,
+    action      VARCHAR(255) NOT NULL,
+    timestamp   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address  INET,
+    details     JSONB
+);
+
+-- ----------------------------
+-- 9. PAYMENT INTEGRATION (Optional)
+-- ----------------------------
+CREATE TABLE payments (
+    payment_id      SERIAL PRIMARY KEY,
+    parent_id       INT NOT NULL REFERENCES parents(parent_id) ON DELETE CASCADE,
+    student_id      INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    amount          DECIMAL(10,2) NOT NULL,
+    currency        VARCHAR(3) DEFAULT 'ETB',
+    status          payment_status DEFAULT 'PENDING',
+    transaction_id  VARCHAR(100),
+    payment_method  VARCHAR(50),
+    receipt_url     TEXT,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------
+-- 10. ADDITIONAL RELATIONSHIPS
+-- ----------------------------
+-- Many-to-many: Parent <-> Student
+CREATE TABLE student_parent (
+    student_parent_id SERIAL PRIMARY KEY,
+    student_id        INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    parent_id         INT NOT NULL REFERENCES parents(parent_id) ON DELETE CASCADE,
+    UNIQUE (student_id, parent_id)
+);
+
+-- Teacher can conduct online classes (tutorial) – simple log
+CREATE TABLE online_classes (
+    online_class_id SERIAL PRIMARY KEY,
+    teacher_id      INT NOT NULL REFERENCES teachers(teacher_id) ON DELETE CASCADE,
+    class_subject_id INT NOT NULL REFERENCES class_subject(class_subject_id) ON DELETE CASCADE,
+    scheduled_at    TIMESTAMP NOT NULL,
+    meeting_link    TEXT,
+    recorded_at     TIMESTAMP,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Peer evaluations (teacher creates, students evaluate each other)
+CREATE TABLE peer_evaluations (
+    evaluation_id   SERIAL PRIMARY KEY,
+    teacher_id      INT NOT NULL REFERENCES teachers(teacher_id) ON DELETE CASCADE,
+    class_subject_id INT NOT NULL REFERENCES class_subject(class_subject_id) ON DELETE CASCADE,
+    title           VARCHAR(200),
+    due_date        TIMESTAMP,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE peer_evaluation_results (
+    result_id       SERIAL PRIMARY KEY,
+    evaluation_id   INT NOT NULL REFERENCES peer_evaluations(evaluation_id) ON DELETE CASCADE,
+    reviewer_id     INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    reviewee_id     INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    score           INT CHECK (score >= 0 AND score <= 100),
+    comments        TEXT,
+    submitted_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (evaluation_id, reviewer_id, reviewee_id)
+);
+
+-- Student notes (Take Notes feature)
+CREATE TABLE student_notes (
+    note_id     SERIAL PRIMARY KEY,
+    student_id  INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    title       VARCHAR(200),
+    content     TEXT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AI-supported books (recommended or interactive)
+CREATE TABLE ai_books (
+    book_id     SERIAL PRIMARY KEY,
+    title       VARCHAR(200) NOT NULL,
+    author      VARCHAR(100),
+    description TEXT,
+    external_url TEXT,
+    subject_id  INT REFERENCES subjects(subject_id) ON DELETE SET NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Student book access log
+CREATE TABLE student_book_access (
+    access_id   SERIAL PRIMARY KEY,
+    student_id  INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    book_id     INT NOT NULL REFERENCES ai_books(book_id) ON DELETE CASCADE,
+    accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------
+-- INDEXES FOR PERFORMANCE
+-- ----------------------------
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_students_current_class ON students(current_class_id);
+CREATE INDEX idx_attendance_student_date ON attendance_records(student_id, date);
+CREATE INDEX idx_attendance_class_date ON attendance_records(class_id, date);
+CREATE INDEX idx_assignments_due_date ON assignments(due_date);
+CREATE INDEX idx_submissions_assignment ON submissions(assignment_id);
+CREATE INDEX idx_messages_receiver ON messages(receiver_id, is_read, timestamp);
+CREATE INDEX idx_notifications_user_sent ON notifications(user_id, is_sent);
+CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp);
+CREATE INDEX idx_sessions_token ON user_sessions(token);
+CREATE INDEX idx_sessions_last_activity ON user_sessions(last_activity);
+CREATE INDEX idx_payments_parent ON payments(parent_id);
+CREATE INDEX idx_payments_status ON payments(status);
+
+-- ----------------------------
+-- TRIGGER FOR updated_at COLUMNS
+-- ----------------------------
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_assignments_updated_at
+    BEFORE UPDATE ON assignments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_attendance_records_updated_at
+    BEFORE UPDATE ON attendance_records
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_payments_updated_at
+    BEFORE UPDATE ON payments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_student_notes_updated_at
+    BEFORE UPDATE ON student_notes
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ----------------------------
+-- COMMENTS (Documentation)
+-- ----------------------------
+COMMENT ON TABLE users IS 'Base user table – all accounts inherit from here';
+COMMENT ON COLUMN users.role IS 'Determines which extension table holds additional attributes';
+COMMENT ON COLUMN grades.letter_grade IS 'Denormalized from score for performance (A, B+, etc.)';

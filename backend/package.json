@@ -1,22 +1,43 @@
 {
-  "name": "backend",
+  "name": "smart-school-connect-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "RESTful API for Smart School Connect - User Registration and Management System",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "seed": "node seed.js",
+    "test": "node test-api.js",
+    "test:api": "node test-api.js",
+    "setup": "node setup-database.js",
+    "db:setup": "node setup-database.js",
+    "db:push": "npx prisma db push",
+    "db:generate": "npx prisma generate",
+    "db:studio": "npx prisma studio"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "school",
+    "education",
+    "api",
+    "registration",
+    "students",
+    "teachers",
+    "parents"
+  ],
+  "author": "Smart School Connect",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.21.0",
     "sequelize": "^6.37.8"
   },

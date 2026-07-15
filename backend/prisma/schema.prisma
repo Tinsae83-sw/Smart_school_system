@@ -1,410 +1,2183 @@
--- ============================================================
--- SMART SCHOOL CONNECT - COMPLETE DATABASE SCHEMA (CLEAN RESET)
--- PostgreSQL 15+
--- ============================================================
+// ============================================================
+// SMART SCHOOL CONNECT - PRISMA SCHEMA
+// PostgreSQL 15+
+// ============================================================
 
--- ----------------------------
--- CLEANUP: Drop everything in correct order (CASCADE removes dependencies)
--- ----------------------------
-DROP TRIGGER IF EXISTS trigger_assignments_updated_at ON assignments CASCADE;
-DROP TRIGGER IF EXISTS trigger_attendance_records_updated_at ON attendance_records CASCADE;
-DROP TRIGGER IF EXISTS trigger_payments_updated_at ON payments CASCADE;
-DROP TRIGGER IF EXISTS trigger_student_notes_updated_at ON student_notes CASCADE;
-DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+generator client {
+  provider = "prisma-client-js"
+}
 
-DROP TABLE IF EXISTS student_book_access CASCADE;
-DROP TABLE IF EXISTS ai_books CASCADE;
-DROP TABLE IF EXISTS student_notes CASCADE;
-DROP TABLE IF EXISTS peer_evaluation_results CASCADE;
-DROP TABLE IF EXISTS peer_evaluations CASCADE;
-DROP TABLE IF EXISTS online_classes CASCADE;
-DROP TABLE IF EXISTS student_parent CASCADE;
-DROP TABLE IF EXISTS payments CASCADE;
-DROP TABLE IF EXISTS audit_logs CASCADE;
-DROP TABLE IF EXISTS user_sessions CASCADE;
-DROP TABLE IF EXISTS otp_verifications CASCADE;
-DROP TABLE IF EXISTS performance_predictions CASCADE;
-DROP TABLE IF EXISTS dashboards CASCADE;
-DROP TABLE IF EXISTS reports CASCADE;
-DROP TABLE IF EXISTS notifications CASCADE;
-DROP TABLE IF EXISTS messages CASCADE;
-DROP TABLE IF EXISTS grades CASCADE;
-DROP TABLE IF EXISTS submissions CASCADE;
-DROP TABLE IF EXISTS assignments CASCADE;
-DROP TABLE IF EXISTS attendance_records CASCADE;
-DROP TABLE IF EXISTS class_subject CASCADE;
-DROP TABLE IF EXISTS subjects CASCADE;
-DROP TABLE IF EXISTS school_classes CASCADE;
-DROP TABLE IF EXISTS parents CASCADE;
-DROP TABLE IF EXISTS students CASCADE;
-DROP TABLE IF EXISTS teachers CASCADE;
-DROP TABLE IF EXISTS administrators CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
+datasource db {
+  provider = "postgresql"
+}
 
-DROP TYPE IF EXISTS user_role CASCADE;
-DROP TYPE IF EXISTS attendance_status CASCADE;
-DROP TYPE IF EXISTS notification_type CASCADE;
-DROP TYPE IF EXISTS risk_level CASCADE;
-DROP TYPE IF EXISTS admin_level CASCADE;
-DROP TYPE IF EXISTS payment_status CASCADE;
+// ----------------------------
+// ENUMS
+// ----------------------------
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  PRINCIPAL
+  VP_ACADEMIC
+  VP_ADMINISTRATION
+  DEPARTMENT_HEAD
+  TEACHER
+  STUDENT
+  PARENT
+  PTSA_REPRESENTATIVE
+  SIC_MEMBER
+}
 
--- ----------------------------
--- ENUMS (Custom Types)
--- ----------------------------
-CREATE TYPE user_role AS ENUM ('SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT', 'PARENT');
-CREATE TYPE attendance_status AS ENUM ('PRESENT', 'ABSENT', 'LATE');
-CREATE TYPE notification_type AS ENUM ('ASSIGNMENT', 'ATTENDANCE', 'GRADE', 'SYSTEM', 'MESSAGE', 'PAYMENT');
-CREATE TYPE risk_level AS ENUM ('LOW', 'MEDIUM', 'HIGH');
-CREATE TYPE admin_level AS ENUM ('SUPER', 'SCHOOL', 'DEPARTMENT');
-CREATE TYPE payment_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED');
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
 
--- ----------------------------
--- 1. USERS (base table, single table inheritance)
--- ----------------------------
-CREATE TABLE users (
-    user_id          SERIAL PRIMARY KEY,
-    full_name        VARCHAR(100) NOT NULL,
-    email            VARCHAR(100) NOT NULL UNIQUE,
-    phone_number     VARCHAR(20),
-    password_hash    VARCHAR(255) NOT NULL,
-    role             user_role NOT NULL,
-    is_active        BOOLEAN DEFAULT TRUE,
-    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login       TIMESTAMP,
-    profile_picture_url TEXT,
-    preferred_language VARCHAR(20) DEFAULT 'en'
-);
+enum NotificationType {
+  ASSIGNMENT
+  ATTENDANCE
+  GRADE
+  SYSTEM
+  MESSAGE
+  PAYMENT
+}
 
--- ----------------------------
--- 2. ROLE-SPECIFIC EXTENSIONS (1:1 with users)
--- ----------------------------
-CREATE TABLE administrators (
-    admin_id        SERIAL PRIMARY KEY,
-    user_id         INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
-    employee_id     VARCHAR(20) NOT NULL UNIQUE,
-    access_level    admin_level NOT NULL
-);
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
 
-CREATE TABLE teachers (
-    teacher_id      SERIAL PRIMARY KEY,
-    user_id         INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
-    employee_id     VARCHAR(20) NOT NULL UNIQUE,
-    department      VARCHAR(100)
-);
+enum AdminLevel {
+  SUPER
+  SCHOOL
+  DEPARTMENT
+}
 
-CREATE TABLE students (
-    student_id      SERIAL PRIMARY KEY,
-    user_id         INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
-    student_number  VARCHAR(20) NOT NULL UNIQUE,
-    enrollment_date DATE NOT NULL,
-    current_class_id INT   -- will reference school_classes after it is created
-);
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
 
-CREATE TABLE parents (
-    parent_id        SERIAL PRIMARY KEY,
-    user_id          INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
-    relationship     VARCHAR(20) NOT NULL   -- 'Father', 'Mother', 'Guardian'
-);
+// Academic degree and gender enums for teachers
+enum DegreeLevel {
+  BACHELOR
+  MASTER
+  PHD
+  DIPLOMA
+  OTHER
+}
 
--- ----------------------------
--- 3. ACADEMIC CORE
--- ----------------------------
-CREATE TABLE school_classes (
-    class_id            SERIAL PRIMARY KEY,
-    class_name          VARCHAR(50) NOT NULL,
-    academic_year       VARCHAR(20) NOT NULL,
-    homeroom_teacher_id INT NOT NULL REFERENCES teachers(teacher_id) ON DELETE RESTRICT
-);
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
 
--- Add foreign key from students to school_classes (now that school_classes exists)
-ALTER TABLE students ADD CONSTRAINT fk_student_current_class
-    FOREIGN KEY (current_class_id) REFERENCES school_classes(class_id) ON DELETE SET NULL;
+// ----------------------------
+// 1. USERS (base table)
+// ----------------------------
+model User {
+  user_id               Int       @id @default(autoincrement()) @map("user_id")
+  full_name             String    @db.VarChar(100)
+  email                 String    @unique @db.VarChar(100)
+  phone_number          String?   @db.VarChar(20)
+  password_hash         String    @db.VarChar(255)
+  role                  UserRole
+  is_active             Boolean   @default(true)
+  created_at            DateTime  @default(now())
+  last_login            DateTime?
+  profile_picture_url   String?   @db.Text
+  preferred_language    String    @default("en") @db.VarChar(20)
 
-CREATE TABLE subjects (
-    subject_id      SERIAL PRIMARY KEY,
-    subject_name    VARCHAR(100) NOT NULL,
-    subject_code    VARCHAR(20) NOT NULL UNIQUE
-);
+  administrator         Administrator?
+  principal             Principal?
+  vp_academic           VPAcademic?
+  vp_administration     VPAdministration?
+  department_head       DepartmentHead?
+  teacher               Teacher?
+  student               Student?
+  parent                Parent?
+  ptsa_representative   PTSARepresentative?
+  sic_member            SICMember?
+  non_academic_staff    NonAcademicStaff?
+  sent_messages         Message[]         @relation("SenderMessages")
+  received_messages     Message[]         @relation("ReceiverMessages")
+  notifications         Notification[]
+  audit_logs            AuditLog[]
+  user_sessions         UserSession[]
+  reports               Report[]
+  dashboards            Dashboard?
+  reviewed_lesson_plans LessonPlan[]      @relation("LessonPlanReviewer")
+  resource_requests     ResourceRequest[] @relation("ResourceRequester")
+  reviewed_resource_requests ResourceRequest[] @relation("ResourceRequestReviewer")
+  created_exams         Exam[]            @relation("ExamCreator")
+  approved_exams        Exam[]            @relation("ExamApprover")
+  evaluation_forms      PeerEvaluationForm[] @relation("EvaluationFormCreator")
+  created_meetings      DepartmentMeeting[] @relation("MeetingCreator")
+  meeting_attendances  MeetingAttendee[]  @relation("MeetingAttendee")
+  created_minutes       MeetingMinutes[]  @relation("MinutesCreator")
+  intervention_plans    InterventionPlan[] @relation("InterventionCreator")
+  curriculum_maps       CurriculumMap[]    @relation("CurriculumCreator")
+  ptsa_meetings_created PTSAMeeting[]    @relation("PTSAMeetingCreator")
+  ptsa_meeting_attendances PTSAMeetingAttendee[] @relation("PTSAMeetingAttendee")
+  ptsa_feedback_submitted PTSAFeedback[]  @relation("PTSAFeedbackSubmitter")
+  budget_advisories_submitted BudgetAdvisory[] @relation("BudgetAdvisorySubmitter")
+  sip_feedback_submitted SIPFeedback[]    @relation("SIPFeedbackSubmitter")
+  parent_surveys_created ParentSurvey[]   @relation("ParentSurveyCreator")
+  grievances_submitted  Grievance[]       @relation("GrievanceSubmitter")
+  ptsa_fund_transactions_created PTSAFundTransaction[] @relation("PTSAFundTransactionCreator")
+  ptsa_announcements_created PTSAAnnouncement[] @relation("PTSAAnnouncementCreator")
 
--- Junction table: class_subject (with teacher assignment)
-CREATE TABLE class_subject (
-    class_subject_id SERIAL PRIMARY KEY,
-    class_id         INT NOT NULL REFERENCES school_classes(class_id) ON DELETE CASCADE,
-    subject_id       INT NOT NULL REFERENCES subjects(subject_id) ON DELETE CASCADE,
-    teacher_id       INT NOT NULL REFERENCES teachers(teacher_id) ON DELETE CASCADE,
-    UNIQUE (class_id, subject_id)
-);
+  @@map("users")
+}
 
--- ----------------------------
--- 4. ATTENDANCE
--- ----------------------------
-CREATE TABLE attendance_records (
-    record_id    SERIAL PRIMARY KEY,
-    student_id   INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-    class_id     INT NOT NULL REFERENCES school_classes(class_id) ON DELETE CASCADE,
-    date         DATE NOT NULL,
-    status       attendance_status NOT NULL,
-    remarks      TEXT,
-    recorded_by  INT NOT NULL REFERENCES teachers(teacher_id),
-    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (student_id, class_id, date)
-);
+// ----------------------------
+// 2. ROLE-SPECIFIC EXTENSIONS
+// ----------------------------
+model Administrator {
+  admin_id      Int       @id @default(autoincrement()) @map("admin_id")
+  user_id       Int       @unique @map("user_id")
+  employee_id   String    @unique @db.VarChar(20)
+  access_level  AdminLevel
 
--- ----------------------------
--- 5. ASSIGNMENTS & SUBMISSIONS & GRADES
--- ----------------------------
-CREATE TABLE assignments (
-    assignment_id    SERIAL PRIMARY KEY,
-    class_subject_id INT NOT NULL REFERENCES class_subject(class_subject_id) ON DELETE CASCADE,
-    title            VARCHAR(200) NOT NULL,
-    description      TEXT,
-    due_date         TIMESTAMP NOT NULL,
-    max_score        DECIMAL(5,2) NOT NULL CHECK (max_score > 0),
-    attachments      TEXT[],   -- array of file URLs
-    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  user          User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
-CREATE TABLE submissions (
-    submission_id   SERIAL PRIMARY KEY,
-    assignment_id   INT NOT NULL REFERENCES assignments(assignment_id) ON DELETE CASCADE,
-    student_id      INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-    submitted_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    file_url        TEXT NOT NULL,
-    is_late         BOOLEAN DEFAULT FALSE,
-    UNIQUE (assignment_id, student_id)
-);
+  @@map("administrators")
+}
 
-CREATE TABLE grades (
-    grade_id      SERIAL PRIMARY KEY,
-    submission_id INT NOT NULL UNIQUE REFERENCES submissions(submission_id) ON DELETE CASCADE,
-    score         DECIMAL(5,2) NOT NULL,
-    letter_grade  CHAR(2),
-    feedback      TEXT,
-    graded_by     INT NOT NULL REFERENCES teachers(teacher_id),
-    graded_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CHECK (score >= 0)
-);
+model Principal {
+  principal_id    Int       @id @default(autoincrement()) @map("principal_id")
+  user_id         Int       @unique @map("user_id")
+  employee_id     String    @unique @db.VarChar(20)
+  appointment_date DateTime? @db.Date
 
--- ----------------------------
--- 6. COMMUNICATION (Messages, Notifications)
--- ----------------------------
-CREATE TABLE messages (
-    message_id   SERIAL PRIMARY KEY,
-    sender_id    INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    receiver_id  INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    content      TEXT NOT NULL,
-    timestamp    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_read      BOOLEAN DEFAULT FALSE,
-    attachment   TEXT,
-    parent_message_id INT REFERENCES messages(message_id) ON DELETE SET NULL   -- for threading
-);
+  user            User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
-CREATE TABLE notifications (
-    notification_id SERIAL PRIMARY KEY,
-    user_id         INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    type            notification_type NOT NULL,
-    content         VARCHAR(500) NOT NULL,
-    is_sent         BOOLEAN DEFAULT FALSE,
-    sent_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    metadata        JSONB   -- extra info (e.g., assignment_id, grade_id)
-);
+  @@map("principals")
+}
 
--- ----------------------------
--- 7. REPORTS, DASHBOARDS, AI PREDICTIONS
--- ----------------------------
-CREATE TABLE reports (
-    report_id     SERIAL PRIMARY KEY,
-    generated_by  INT NOT NULL REFERENCES users(user_id) ON DELETE SET NULL,
-    title         VARCHAR(200) NOT NULL,
-    data          JSONB NOT NULL,
-    generated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+model VPAcademic {
+  vp_academic_id  Int       @id @default(autoincrement()) @map("vp_academic_id")
+  user_id         Int       @unique @map("user_id")
+  employee_id     String    @unique @db.VarChar(20)
+  appointment_date DateTime? @db.Date
 
-CREATE TABLE dashboards (
-    dashboard_id   SERIAL PRIMARY KEY,
-    user_id        INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
-    widget_config  JSONB   -- stores chart preferences, layout
-);
+  user            User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
-CREATE TABLE performance_predictions (
-    prediction_id    SERIAL PRIMARY KEY,
-    student_id       INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-    predicted_grade  VARCHAR(10),
-    risk_level       risk_level,
-    recommendation   TEXT,
-    generated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  @@map("vp_academic")
+}
 
--- ----------------------------
--- 8. AUTHENTICATION & SECURITY
--- ----------------------------
-CREATE TABLE otp_verifications (
-    otp_id       SERIAL PRIMARY KEY,
-    email        VARCHAR(100) NOT NULL,
-    otp_code     VARCHAR(6) NOT NULL,
-    expires_at   TIMESTAMP NOT NULL,
-    is_verified  BOOLEAN DEFAULT FALSE,
-    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+model VPAdministration {
+  vp_admin_id     Int       @id @default(autoincrement()) @map("vp_admin_id")
+  user_id         Int       @unique @map("user_id")
+  employee_id     String    @unique @db.VarChar(20)
+  appointment_date DateTime? @db.Date
 
-CREATE TABLE user_sessions (
-    session_id    SERIAL PRIMARY KEY,
-    user_id       INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    token         VARCHAR(255) NOT NULL UNIQUE,
-    login_time    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ip_address    INET,
-    user_agent    TEXT
-);
+  user            User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
-CREATE TABLE audit_logs (
-    log_id      SERIAL PRIMARY KEY,
-    user_id     INT REFERENCES users(user_id) ON DELETE SET NULL,
-    action      VARCHAR(255) NOT NULL,
-    timestamp   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ip_address  INET,
-    details     JSONB
-);
+  @@map("vp_administration")
+}
 
--- ----------------------------
--- 9. PAYMENT INTEGRATION (Optional)
--- ----------------------------
-CREATE TABLE payments (
-    payment_id      SERIAL PRIMARY KEY,
-    parent_id       INT NOT NULL REFERENCES parents(parent_id) ON DELETE CASCADE,
-    student_id      INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-    amount          DECIMAL(10,2) NOT NULL,
-    currency        VARCHAR(3) DEFAULT 'ETB',
-    status          payment_status DEFAULT 'PENDING',
-    transaction_id  VARCHAR(100),
-    payment_method  VARCHAR(50),
-    receipt_url     TEXT,
-    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+model DepartmentHead {
+  dept_head_id    Int       @id @default(autoincrement()) @map("dept_head_id")
+  user_id         Int       @unique @map("user_id")
+  employee_id     String    @unique @db.VarChar(20)
+  department      String    @db.VarChar(100)
+  appointment_date DateTime? @db.Date
 
--- ----------------------------
--- 10. ADDITIONAL RELATIONSHIPS
--- ----------------------------
--- Many-to-many: Parent <-> Student
-CREATE TABLE student_parent (
-    student_parent_id SERIAL PRIMARY KEY,
-    student_id        INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-    parent_id         INT NOT NULL REFERENCES parents(parent_id) ON DELETE CASCADE,
-    UNIQUE (student_id, parent_id)
-);
+  user            User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
--- Teacher can conduct online classes (tutorial) – simple log
-CREATE TABLE online_classes (
-    online_class_id SERIAL PRIMARY KEY,
-    teacher_id      INT NOT NULL REFERENCES teachers(teacher_id) ON DELETE CASCADE,
-    class_subject_id INT NOT NULL REFERENCES class_subject(class_subject_id) ON DELETE CASCADE,
-    scheduled_at    TIMESTAMP NOT NULL,
-    meeting_link    TEXT,
-    recorded_at     TIMESTAMP,
-    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  @@map("department_heads")
+}
 
--- Peer evaluations (teacher creates, students evaluate each other)
-CREATE TABLE peer_evaluations (
-    evaluation_id   SERIAL PRIMARY KEY,
-    teacher_id      INT NOT NULL REFERENCES teachers(teacher_id) ON DELETE CASCADE,
-    class_subject_id INT NOT NULL REFERENCES class_subject(class_subject_id) ON DELETE CASCADE,
-    title           VARCHAR(200),
-    due_date        TIMESTAMP,
-    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+model PTSARepresentative {
+  ptsa_rep_id    Int       @id @default(autoincrement()) @map("ptsa_rep_id")
+  user_id        Int       @unique @map("user_id")
+  term_start     DateTime? @db.Date
+  term_end       DateTime? @db.Date
+  position       String?   @db.VarChar(50)
 
-CREATE TABLE peer_evaluation_results (
-    result_id       SERIAL PRIMARY KEY,
-    evaluation_id   INT NOT NULL REFERENCES peer_evaluations(evaluation_id) ON DELETE CASCADE,
-    reviewer_id     INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-    reviewee_id     INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-    score           INT CHECK (score >= 0 AND score <= 100),
-    comments        TEXT,
-    submitted_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (evaluation_id, reviewer_id, reviewee_id)
-);
+  user           User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
--- Student notes (Take Notes feature)
-CREATE TABLE student_notes (
-    note_id     SERIAL PRIMARY KEY,
-    student_id  INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-    title       VARCHAR(200),
-    content     TEXT,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  @@map("ptsa_representatives")
+}
 
--- AI-supported books (recommended or interactive)
-CREATE TABLE ai_books (
-    book_id     SERIAL PRIMARY KEY,
-    title       VARCHAR(200) NOT NULL,
-    author      VARCHAR(100),
-    description TEXT,
-    external_url TEXT,
-    subject_id  INT REFERENCES subjects(subject_id) ON DELETE SET NULL,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+model SICMember {
+  sic_member_id  Int       @id @default(autoincrement()) @map("sic_member_id")
+  user_id        Int       @unique @map("user_id")
+  role           String?   @db.VarChar(100)
+  term_start     DateTime? @db.Date
+  term_end       DateTime? @db.Date
 
--- Student book access log
-CREATE TABLE student_book_access (
-    access_id   SERIAL PRIMARY KEY,
-    student_id  INT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-    book_id     INT NOT NULL REFERENCES ai_books(book_id) ON DELETE CASCADE,
-    accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  user           User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
--- ----------------------------
--- INDEXES FOR PERFORMANCE
--- ----------------------------
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_students_current_class ON students(current_class_id);
-CREATE INDEX idx_attendance_student_date ON attendance_records(student_id, date);
-CREATE INDEX idx_attendance_class_date ON attendance_records(class_id, date);
-CREATE INDEX idx_assignments_due_date ON assignments(due_date);
-CREATE INDEX idx_submissions_assignment ON submissions(assignment_id);
-CREATE INDEX idx_messages_receiver ON messages(receiver_id, is_read, timestamp);
-CREATE INDEX idx_notifications_user_sent ON notifications(user_id, is_sent);
-CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp);
-CREATE INDEX idx_sessions_token ON user_sessions(token);
-CREATE INDEX idx_sessions_last_activity ON user_sessions(last_activity);
-CREATE INDEX idx_payments_parent ON payments(parent_id);
-CREATE INDEX idx_payments_status ON payments(status);
+  @@map("sic_members")
+}
 
--- ----------------------------
--- TRIGGER FOR updated_at COLUMNS
--- ----------------------------
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+model Teacher {
+  teacher_id      Int       @id @default(autoincrement()) @map("teacher_id")
+  user_id         Int       @unique @map("user_id")
+  employee_id     String    @unique @db.VarChar(20)
+  department      String?   @db.VarChar(100)
+  hire_date       DateTime? @db.Date
+  degree_level    DegreeLevel? 
+  gender          Gender?
+  age             Int?
+  experience_years Int?
+  grade_levels    Int[]
+  subjects        String[]
 
-CREATE TRIGGER trigger_assignments_updated_at
-    BEFORE UPDATE ON assignments
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  user                User                @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  homeroom_classes    SchoolClass[]
+  class_subjects      ClassSubject[]
+  attendance_records  AttendanceRecord[]
+  grades              Grade[]
+  lesson_plans        LessonPlan[]
+  resource_allocations ResourceAllocation[]
+  exam_invigilations  ExamInvigilator[]
+  peer_evaluations_as_evaluator PeerEvaluation[] @relation("PeerEvaluationEvaluator")
+  peer_evaluations_as_evaluatee PeerEvaluation[] @relation("PeerEvaluationEvaluatee")
 
-CREATE TRIGGER trigger_attendance_records_updated_at
-    BEFORE UPDATE ON attendance_records
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  @@map("teachers")
+}
 
-CREATE TRIGGER trigger_payments_updated_at
-    BEFORE UPDATE ON payments
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+model Student {
+  student_id      Int       @id @default(autoincrement()) @map("student_id")
+  user_id         Int       @unique @map("user_id")
+  student_number  String    @unique @db.VarChar(20)
+  enrollment_date DateTime  @db.Date
+  current_class_id Int?     @map("current_class_id")
+  date_of_birth   DateTime? @db.Date
+  gender          String?   @db.VarChar(10)
 
-CREATE TRIGGER trigger_student_notes_updated_at
-    BEFORE UPDATE ON student_notes
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  user                User                @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  current_class       SchoolClass?        @relation(fields: [current_class_id], references: [class_id], onDelete: SetNull)
+  attendance_records  AttendanceRecord[]
+  submissions         Submission[]
+  student_parents     StudentParent[]
+  payments            Payment[]
+  performance_predictions PerformancePrediction[]
+  transcripts         Transcript[]
+  exam_results         ExamResult[] @relation("ExamResultStudent")
+  intervention_plans   InterventionPlan[] @relation("InterventionStudent")
 
--- ----------------------------
--- COMMENTS (Documentation)
--- ----------------------------
-COMMENT ON TABLE users IS 'Base user table – all accounts inherit from here';
-COMMENT ON COLUMN users.role IS 'Determines which extension table holds additional attributes';
-COMMENT ON COLUMN grades.letter_grade IS 'Denormalized from score for performance (A, B+, etc.)';
+  @@index([current_class_id])
+  @@map("students")
+}
+
+model Parent {
+  parent_id         Int       @id @default(autoincrement()) @map("parent_id")
+  user_id           Int       @unique @map("user_id")
+  relationship      String    @db.VarChar(20)
+  address           String?   @db.Text
+  preferred_language String?   @db.VarChar(20)
+
+  user                User                @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  student_parents     StudentParent[]
+  payments            Payment[]
+  survey_responses    ParentSurveyResponse[] @relation("ParentSurveyResponse")
+
+  @@map("parents")
+}
+
+// ----------------------------
+// 3. ACADEMIC CORE
+// ----------------------------
+model SchoolClass {
+  class_id            Int       @id @default(autoincrement()) @map("class_id")
+  class_name          String    @db.VarChar(50)
+  academic_year       String    @db.VarChar(20)
+  homeroom_teacher_id Int       @map("homeroom_teacher_id")
+
+  homeroom_teacher    Teacher             @relation(fields: [homeroom_teacher_id], references: [teacher_id], onDelete: Restrict)
+  students            Student[]
+  class_subjects      ClassSubject[]
+  attendance_records  AttendanceRecord[]
+  announcements       Announcement[]
+  class_schedules     ClassSchedule[]
+
+  @@map("school_classes")
+}
+
+model Subject {
+  subject_id    Int       @id @default(autoincrement()) @map("subject_id")
+  subject_name  String    @db.VarChar(100)
+  subject_code  String    @unique @db.VarChar(20)
+
+  class_subjects  ClassSubject[]
+  class_schedules ClassSchedule[]
+  curriculum_maps CurriculumMap[]
+
+  @@map("subjects")
+}
+
+model ClassSubject {
+  class_subject_id Int     @id @default(autoincrement()) @map("class_subject_id")
+  class_id         Int     @map("class_id")
+  subject_id       Int     @map("subject_id")
+  teacher_id       Int     @map("teacher_id")
+
+  school_class      SchoolClass       @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
+  subject           Subject           @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
+  teacher           Teacher           @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+  assignments       Assignment[]
+  lesson_plans      LessonPlan[]
+  exams             Exam[]
+
+  @@unique([class_id, subject_id])
+  @@map("class_subject")
+}
+
+// ----------------------------
+// 4. ATTENDANCE
+// ----------------------------
+model AttendanceRecord {
+  record_id   Int       @id @default(autoincrement()) @map("record_id")
+  student_id  Int       @map("student_id")
+  class_id    Int       @map("class_id")
+  date        DateTime  @db.Date
+  status      AttendanceStatus
+  remarks     String?   @db.Text
+  recorded_by Int       @map("recorded_by")
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now()) @updatedAt
+
+  student     Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  school_class SchoolClass @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
+  teacher     Teacher   @relation(fields: [recorded_by], references: [teacher_id])
+
+  @@unique([student_id, class_id, date])
+  @@map("attendance_records")
+}
+
+// ----------------------------
+// 5. ASSIGNMENTS & SUBMISSIONS & GRADES
+// ----------------------------
+model Assignment {
+  assignment_id    Int       @id @default(autoincrement()) @map("assignment_id")
+  class_subject_id Int       @map("class_subject_id")
+  title            String    @db.VarChar(200)
+  description      String?   @db.Text
+  due_date         DateTime
+  max_score        Decimal   @db.Decimal(5, 2)
+  attachments      String[]
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  class_subject    ClassSubject    @relation(fields: [class_subject_id], references: [class_subject_id], onDelete: Cascade)
+  submissions      Submission[]
+
+  @@map("assignments")
+}
+
+model Submission {
+  submission_id Int       @id @default(autoincrement()) @map("submission_id")
+  assignment_id Int       @map("assignment_id")
+  student_id    Int       @map("student_id")
+  submitted_at  DateTime  @default(now())
+  file_url      String    @db.Text
+  is_late       Boolean   @default(false)
+
+  assignment    Assignment  @relation(fields: [assignment_id], references: [assignment_id], onDelete: Cascade)
+  student       Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  grade         Grade?
+
+  @@unique([assignment_id, student_id])
+  @@map("submissions")
+}
+
+model Grade {
+  grade_id      Int       @id @default(autoincrement()) @map("grade_id")
+  submission_id Int       @unique @map("submission_id")
+  score         Decimal   @db.Decimal(5, 2)
+  letter_grade  String?   @db.Char(2)
+  feedback      String?   @db.Text
+  graded_by     Int       @map("graded_by")
+  graded_at     DateTime  @default(now())
+
+  submission    Submission  @relation(fields: [submission_id], references: [submission_id], onDelete: Cascade)
+  teacher       Teacher     @relation(fields: [graded_by], references: [teacher_id])
+
+  @@map("grades")
+}
+
+// ----------------------------
+// 6. COMMUNICATION
+// ----------------------------
+model Message {
+  message_id        Int       @id @default(autoincrement()) @map("message_id")
+  sender_id         Int       @map("sender_id")
+  receiver_id       Int       @map("receiver_id")
+  content           String    @db.Text
+  timestamp         DateTime  @default(now())
+  is_read           Boolean   @default(false)
+  attachment        String?   @db.Text
+  parent_message_id Int?      @map("parent_message_id")
+
+  sender            User      @relation("SenderMessages", fields: [sender_id], references: [user_id], onDelete: Cascade)
+  receiver          User      @relation("ReceiverMessages", fields: [receiver_id], references: [user_id], onDelete: Cascade)
+  parent_message    Message?  @relation("MessageThread", fields: [parent_message_id], references: [message_id], onDelete: SetNull)
+  child_messages    Message[] @relation("MessageThread")
+
+  @@map("messages")
+}
+
+model Notification {
+  notification_id Int             @id @default(autoincrement()) @map("notification_id")
+  user_id         Int             @map("user_id")
+  type            NotificationType
+  content         String          @db.VarChar(500)
+  is_sent         Boolean         @default(false)
+  sent_at         DateTime        @default(now())
+  metadata        Json?
+
+  user            User            @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// ----------------------------
+// 7. REPORTS, DASHBOARDS, AI PREDICTIONS
+// ----------------------------
+model Report {
+  report_id     Int       @id @default(autoincrement()) @map("report_id")
+  generated_by  Int?      @map("generated_by")
+  title         String    @db.VarChar(200)
+  data          Json
+  generated_at  DateTime  @default(now())
+
+  user          User?     @relation(fields: [generated_by], references: [user_id], onDelete: SetNull)
+
+  @@map("reports")
+}
+
+model Dashboard {
+  dashboard_id  Int       @id @default(autoincrement()) @map("dashboard_id")
+  user_id       Int       @unique @map("user_id")
+  widget_config Json?
+
+  user          User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@map("dashboards")
+}
+
+model PerformancePrediction {
+  prediction_id   Int         @id @default(autoincrement()) @map("prediction_id")
+  student_id      Int         @map("student_id")
+  predicted_grade String?     @db.VarChar(10)
+  risk_level      RiskLevel?
+  recommendation  String?     @db.Text
+  generated_at    DateTime    @default(now())
+
+  student         Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@map("performance_predictions")
+}
+
+// ----------------------------
+// 8. AUTHENTICATION & SECURITY
+// ----------------------------
+model OtpVerification {
+  otp_id      Int       @id @default(autoincrement()) @map("otp_id")
+  email       String    @db.VarChar(100)
+  otp_code    String    @db.VarChar(6)
+  expires_at  DateTime
+  is_verified Boolean   @default(false)
+  created_at  DateTime  @default(now())
+
+  @@map("otp_verifications")
+}
+
+model UserSession {
+  session_id    Int       @id @default(autoincrement()) @map("session_id")
+  user_id       Int       @map("user_id")
+  token         String    @unique @db.VarChar(255)
+  login_time    DateTime  @default(now())
+  last_activity DateTime  @default(now())
+  ip_address    String?
+  user_agent    String?   @db.Text
+
+  user          User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model AuditLog {
+  log_id      Int       @id @default(autoincrement()) @map("log_id")
+  user_id     Int?      @map("user_id")
+  action      String    @db.VarChar(255)
+  timestamp   DateTime  @default(now())
+  ip_address  String?
+  details     Json?
+
+  user        User?     @relation(fields: [user_id], references: [user_id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+// ----------------------------
+// 9. PAYMENT INTEGRATION
+// ----------------------------
+model Payment {
+  payment_id      Int           @id @default(autoincrement()) @map("payment_id")
+  parent_id       Int           @map("parent_id")
+  student_id      Int           @map("student_id")
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("ETB") @db.VarChar(3)
+  status          PaymentStatus @default(PENDING)
+  transaction_id  String?       @db.VarChar(100)
+  payment_method  String?       @db.VarChar(50)
+  receipt_url     String?       @db.Text
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @default(now()) @updatedAt
+
+  parent          Parent        @relation(fields: [parent_id], references: [parent_id], onDelete: Cascade)
+  student         Student       @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+// ----------------------------
+// 10. ADDITIONAL RELATIONSHIPS
+// ----------------------------
+model StudentParent {
+  student_parent_id Int       @id @default(autoincrement()) @map("student_parent_id")
+  student_id        Int       @map("student_id")
+  parent_id         Int       @map("parent_id")
+  relationship      String?   @db.VarChar(40)
+  linked_at         DateTime  @default(now())
+
+  student           Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  parent            Parent    @relation(fields: [parent_id], references: [parent_id], onDelete: Cascade)
+
+  @@unique([student_id, parent_id])
+  @@map("student_parent")
+}
+
+model Announcement {
+  announcement_id Int       @id @default(autoincrement()) @map("announcement_id")
+  title           String    @db.VarChar(200)
+  message         String    @db.Text
+  created_by      Int?      @map("created_by")
+  target_roles    String    @default("ALL") @db.VarChar(200)
+  target_class_id Int?      @map("target_class_id")
+  published_at    DateTime  @default(now())
+  is_active       Boolean   @default(true)
+
+  school_class    SchoolClass? @relation(fields: [target_class_id], references: [class_id], onDelete: SetNull)
+
+  @@map("announcements")
+}
+
+model ClassSchedule {
+  schedule_id   Int       @id @default(autoincrement()) @map("schedule_id")
+  class_id      Int       @map("class_id")
+  day_of_week   String    @db.VarChar(10)
+  period        Int
+  subject_id    Int       @map("subject_id")
+  teacher_id    Int       @map("teacher_id")
+  room_number   String?   @db.VarChar(50)
+  start_time    DateTime  @db.Time
+  end_time      DateTime  @db.Time
+
+  school_class  SchoolClass @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
+  subject       Subject     @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
+
+  @@unique([class_id, day_of_week, period])
+  @@map("class_schedules")
+}
+
+model Transcript {
+  transcript_id Int       @id @default(autoincrement()) @map("transcript_id")
+  student_id    Int       @map("student_id")
+  generated_by  Int?      @map("generated_by")
+  data          Json
+  pdf_url       String?   @db.Text
+  generated_at  DateTime  @default(now())
+
+  student       Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@map("transcripts")
+}
+
+// ----------------------------
+// 11. DEPARTMENT HEAD SPECIFIC TABLES
+// ----------------------------
+
+// Lesson Plans
+model LessonPlan {
+  lesson_plan_id   Int       @id @default(autoincrement()) @map("lesson_plan_id")
+  teacher_id       Int       @map("teacher_id")
+  class_subject_id Int       @map("class_subject_id")
+  title            String    @db.VarChar(200)
+  objectives       String[]  @db.Text
+  materials        String[]  @db.Text
+  activities       String[]  @db.Text
+  assessment       String?   @db.Text
+  submitted_at     DateTime  @default(now())
+  reviewed_at      DateTime?
+  reviewed_by      Int?      @map("reviewed_by")
+  status           String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED
+  review_comments  String?   @db.Text
+  week_number      Int?
+  term             String    @db.VarChar(20)
+
+  teacher          Teacher   @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+  class_subject    ClassSubject @relation(fields: [class_subject_id], references: [class_subject_id], onDelete: Cascade)
+  reviewer         User?     @relation("LessonPlanReviewer", fields: [reviewed_by], references: [user_id], onDelete: SetNull)
+
+  @@map("lesson_plans")
+}
+
+// Resources
+model Resource {
+  resource_id      Int       @id @default(autoincrement()) @map("resource_id")
+  name             String    @db.VarChar(200)
+  type             String    @db.VarChar(50) // TEXTBOOK, LAB_EQUIPMENT, SOFTWARE, MATERIAL
+  description      String?   @db.Text
+  quantity         Int       @default(1)
+  department       String    @db.VarChar(100)
+  status           String    @default("AVAILABLE") @db.VarChar(20) // AVAILABLE, IN_USE, DAMAGED, REQUESTED
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  resource_allocations ResourceAllocation[]
+  resource_requests    ResourceRequest[]
+
+  @@map("resources")
+}
+
+model ResourceAllocation {
+  allocation_id    Int       @id @default(autoincrement()) @map("allocation_id")
+  resource_id      Int       @map("resource_id")
+  teacher_id       Int       @map("teacher_id")
+  allocated_at     DateTime  @default(now())
+  returned_at      DateTime?
+  quantity         Int       @default(1)
+  notes            String?   @db.Text
+
+  resource         Resource  @relation(fields: [resource_id], references: [resource_id], onDelete: Cascade)
+  teacher          Teacher   @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+
+  @@map("resource_allocations")
+}
+
+model ResourceRequest {
+  request_id       Int       @id @default(autoincrement()) @map("request_id")
+  resource_id      Int?      @map("resource_id")
+  requested_by     Int       @map("requested_by") // Department Head user_id
+  name             String    @db.VarChar(200)
+  type             String    @db.VarChar(50)
+  quantity         Int
+  reason           String    @db.Text
+  status           String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED
+  submitted_at     DateTime  @default(now())
+  reviewed_at      DateTime?
+  reviewed_by      Int?      @map("reviewed_by")
+  review_comments  String?   @db.Text
+
+  resource         Resource? @relation(fields: [resource_id], references: [resource_id], onDelete: SetNull)
+  requester        User      @relation("ResourceRequester", fields: [requested_by], references: [user_id], onDelete: Cascade)
+  reviewer         User?     @relation("ResourceRequestReviewer", fields: [reviewed_by], references: [user_id], onDelete: SetNull)
+
+  @@map("resource_requests")
+}
+
+// Exams
+model Exam {
+  exam_id          Int       @id @default(autoincrement()) @map("exam_id")
+  class_subject_id Int       @map("class_subject_id")
+  title            String    @db.VarChar(200)
+  exam_type        String    @db.VarChar(50) // MIDTERM, FINAL, QUIZ
+  exam_date        DateTime  @db.Date
+  duration_minutes Int
+  total_marks      Decimal   @db.Decimal(10, 2)
+  created_by       Int       @map("created_by")
+  approved_by      Int?      @map("approved_by")
+  status           String    @default("DRAFT") @db.VarChar(20) // DRAFT, PENDING_APPROVAL, APPROVED, COMPLETED
+  created_at       DateTime  @default(now())
+  approved_at      DateTime?
+
+  class_subject    ClassSubject @relation(fields: [class_subject_id], references: [class_subject_id], onDelete: Cascade)
+  creator          User      @relation("ExamCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
+  approver         User?     @relation("ExamApprover", fields: [approved_by], references: [user_id], onDelete: SetNull)
+  exam_invigilators ExamInvigilator[]
+  exam_results     ExamResult[]
+
+  @@map("exams")
+}
+
+model ExamInvigilator {
+  invigilator_id   Int       @id @default(autoincrement()) @map("invigilator_id")
+  exam_id          Int       @map("exam_id")
+  teacher_id       Int       @map("teacher_id")
+  assigned_at      DateTime  @default(now())
+
+  exam             Exam      @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade)
+  teacher          Teacher   @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+
+  @@unique([exam_id, teacher_id])
+  @@map("exam_invigilators")
+}
+
+model ExamResult {
+  result_id        Int       @id @default(autoincrement()) @map("result_id")
+  exam_id          Int       @map("exam_id")
+  student_id       Int       @map("student_id")
+  score            Decimal   @db.Decimal(10, 2)
+  letter_grade     String?   @db.Char(2)
+  remarks          String?   @db.Text
+  graded_at        DateTime  @default(now())
+
+  exam             Exam      @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade)
+  student          Student   @relation("ExamResultStudent", fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([exam_id, student_id])
+  @@map("exam_results")
+}
+
+// Peer Evaluations
+model PeerEvaluationForm {
+  form_id          Int       @id @default(autoincrement()) @map("form_id")
+  title            String    @db.VarChar(200)
+  description      String?   @db.Text
+  criteria         Json      // Array of evaluation criteria with weights
+  created_by       Int       @map("created_by")
+  created_at       DateTime  @default(now())
+  is_active        Boolean   @default(true)
+
+  creator          User      @relation("EvaluationFormCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
+  peer_evaluations PeerEvaluation[]
+
+  @@map("peer_evaluation_forms")
+}
+
+model PeerEvaluation {
+  evaluation_id    Int       @id @default(autoincrement()) @map("evaluation_id")
+  form_id          Int       @map("form_id")
+  evaluator_id     Int       @map("evaluator_id") // Teacher being evaluated
+  evaluatee_id     Int       @map("evaluatee_id") // Teacher doing the evaluation
+  scores           Json      // Scores for each criterion
+  overall_score    Decimal   @db.Decimal(5, 2)
+  comments         String?   @db.Text
+  submitted_at     DateTime  @default(now())
+  term             String    @db.VarChar(20)
+
+  form             PeerEvaluationForm @relation(fields: [form_id], references: [form_id], onDelete: Cascade)
+  evaluator        Teacher   @relation("PeerEvaluationEvaluator", fields: [evaluator_id], references: [teacher_id], onDelete: Cascade)
+  evaluatee        Teacher   @relation("PeerEvaluationEvaluatee", fields: [evaluatee_id], references: [teacher_id], onDelete: Cascade)
+
+  @@unique([form_id, evaluator_id, evaluatee_id, term])
+  @@map("peer_evaluations")
+}
+
+// Department Meetings
+model DepartmentMeeting {
+  meeting_id       Int       @id @default(autoincrement()) @map("meeting_id")
+  department       String    @db.VarChar(100)
+  title            String    @db.VarChar(200)
+  description      String?   @db.Text
+  scheduled_date   DateTime  @db.Date
+  scheduled_time   DateTime  @db.Time
+  location         String?   @db.VarChar(100)
+  created_by       Int       @map("created_by")
+  status           String    @default("SCHEDULED") @db.VarChar(20) // SCHEDULED, COMPLETED, CANCELLED
+  created_at       DateTime  @default(now())
+
+  creator          User      @relation("MeetingCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
+  meeting_attendees MeetingAttendee[]
+  meeting_minutes  MeetingMinutes?
+
+  @@map("department_meetings")
+}
+
+model MeetingAttendee {
+  attendee_id      Int       @id @default(autoincrement()) @map("attendee_id")
+  meeting_id       Int       @map("meeting_id")
+  user_id          Int       @map("user_id")
+  attended         Boolean   @default(false)
+  notes            String?   @db.Text
+
+  meeting          DepartmentMeeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
+  user             User      @relation("MeetingAttendee", fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@unique([meeting_id, user_id])
+  @@map("meeting_attendees")
+}
+
+model MeetingMinutes {
+  minutes_id       Int       @id @default(autoincrement()) @map("minutes_id")
+  meeting_id       Int       @unique @map("meeting_id")
+  content          String    @db.Text
+  action_items     Json?
+  created_by       Int       @map("created_by")
+  created_at       DateTime  @default(now())
+
+  meeting          DepartmentMeeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
+  creator          User      @relation("MinutesCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
+
+  @@map("meeting_minutes")
+}
+
+// Student Interventions
+model InterventionPlan {
+  intervention_id  Int       @id @default(autoincrement()) @map("intervention_id")
+  student_id       Int       @map("student_id")
+  created_by       Int       @map("created_by")
+  type             String    @db.VarChar(50) // ACADEMIC, BEHAVIORAL, ATTENDANCE
+  description      String    @db.Text
+  actions          String[]  @db.Text
+  start_date       DateTime  @db.Date
+  end_date         DateTime? @db.Date
+  status           String    @default("ACTIVE") @db.VarChar(20) // ACTIVE, COMPLETED, CANCELLED
+  progress_notes   String?   @db.Text
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  student          Student   @relation("InterventionStudent", fields: [student_id], references: [student_id], onDelete: Cascade)
+  creator          User      @relation("InterventionCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
+
+  @@map("intervention_plans")
+}
+
+// Department Settings
+model DepartmentSettings {
+  settings_id      Int       @id @default(autoincrement()) @map("settings_id")
+  department       String    @unique @db.VarChar(100)
+  goals            String[]  @db.Text
+  grading_scale    Json?     // Custom grading scale for department
+  academic_calendar Json?
+  notification_preferences Json?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  @@map("department_settings")
+}
+
+// Curriculum Map
+model CurriculumMap {
+  curriculum_id    Int       @id @default(autoincrement()) @map("curriculum_id")
+  subject_id       Int       @map("subject_id")
+  grade_level      Int
+  term             String    @db.VarChar(20)
+  topics           Json      // Array of topics with weeks
+  learning_objectives String[] @db.Text
+  alignment_standards String[] @db.Text // Ethiopian national standards
+  created_by       Int       @map("created_by")
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  subject          Subject   @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
+  creator          User      @relation("CurriculumCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
+
+  @@unique([subject_id, grade_level, term])
+  @@map("curriculum_maps")
+}
+
+// ----------------------------
+// 12. PRINCIPAL-SPECIFIC TABLES
+// ----------------------------
+
+// School Profile & Settings
+model SchoolProfile {
+  profile_id        Int       @id @default(autoincrement()) @map("profile_id")
+  school_name       String    @db.VarChar(200)
+  address           String    @db.Text
+  phone_number      String    @db.VarChar(20)
+  email             String    @db.VarChar(100)
+  logo_url          String?   @db.Text
+  motto             String?   @db.VarChar(200)
+  school_code       String    @unique @db.VarChar(20)
+  woreda            String    @db.VarChar(100)
+  zone              String?   @db.VarChar(100)
+  region            String    @db.VarChar(100)
+  established_date  DateTime? @db.Date
+  principal_name    String    @db.VarChar(100)
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  @@map("school_profile")
+}
+
+model AcademicYear {
+  year_id           Int       @id @default(autoincrement()) @map("year_id")
+  year_name         String    @unique @db.VarChar(20) // e.g., "2024-2025"
+  start_date        DateTime  @db.Date
+  end_date          DateTime  @db.Date
+  is_current        Boolean   @default(false)
+  terms             Json      // Array of term objects with dates
+  breaks            Json?     // Array of break periods
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  @@map("academic_years")
+}
+
+model GradingScale {
+  scale_id          Int       @id @default(autoincrement()) @map("scale_id")
+  scale_name        String    @unique @db.VarChar(50)
+  grade_level       Int       // 9, 10, 11, 12 or 0 for all
+  min_pass_score    Decimal   @db.Decimal(5, 2)
+  grading_criteria  Json      // Array of {min, max, letter, description}
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  @@map("grading_scales")
+}
+
+model SchoolFee {
+  fee_id            Int       @id @default(autoincrement()) @map("fee_id")
+  fee_name          String    @db.VarChar(100)
+  fee_type          String    @db.VarChar(50) // TUITION, LAB, LIBRARY, EXTRACURRICULAR
+  grade_level       Int       // 9, 10, 11, 12 or 0 for all
+  amount            Decimal   @db.Decimal(10, 2)
+  currency          String    @default("ETB") @db.VarChar(3)
+  description       String?   @db.Text
+  is_active         Boolean   @default(true)
+  academic_year     String    @db.VarChar(20)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  @@map("school_fees")
+}
+
+model AcademicPolicy {
+  policy_id         Int       @id @default(autoincrement()) @map("policy_id")
+  policy_name       String    @db.VarChar(200)
+  policy_type       String    @db.VarChar(50) // ATTENDANCE, DISCIPLINE, DRESS_CODE, ACADEMIC
+  content           String    @db.Text
+  effective_date    DateTime  @db.Date
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  @@map("academic_policies")
+}
+
+// Financial Management
+model Budget {
+  budget_id         Int       @id @default(autoincrement()) @map("budget_id")
+  budget_name       String    @db.VarChar(200)
+  academic_year     String    @db.VarChar(20)
+  total_amount      Decimal   @db.Decimal(15, 2)
+  allocated_amount  Decimal   @db.Decimal(15, 2)
+  spent_amount      Decimal   @default(0) @db.Decimal(15, 2)
+  remaining_amount  Decimal   @db.Decimal(15, 2)
+  status            String    @default("ACTIVE") @db.VarChar(20) // ACTIVE, CLOSED, PENDING
+  breakdown         Json      // Allocation by category
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  expenditures      Expenditure[]
+
+  @@map("budgets")
+}
+
+model Expenditure {
+  expenditure_id    Int       @id @default(autoincrement()) @map("expenditure_id")
+  budget_id          Int       @map("budget_id")
+  category           String    @db.VarChar(50) // SALARIES, MATERIALS, INFRASTRUCTURE, MAINTENANCE, EXTRACURRICULAR
+  description        String    @db.Text
+  amount             Decimal   @db.Decimal(15, 2)
+  expenditure_date   DateTime  @db.Date
+  approved_by        Int?      @map("approved_by")
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED
+  receipt_url        String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  budget             Budget    @relation(fields: [budget_id], references: [budget_id], onDelete: Cascade)
+
+  @@map("expenditures")
+}
+
+model AssetInventory {
+  asset_id           Int       @id @default(autoincrement()) @map("asset_id")
+  asset_name         String    @db.VarChar(200)
+  asset_code         String    @unique @db.VarChar(50)
+  category           String    @db.VarChar(50) // LAB_EQUIPMENT, FURNITURE, COMPUTERS, PROJECTORS
+  quantity           Int       @default(1)
+  unit_cost          Decimal?  @db.Decimal(10, 2)
+  purchase_date      DateTime? @db.Date
+  location           String?   @db.VarChar(100)
+  condition          String    @default("GOOD") @db.VarChar(20) // NEW, GOOD, FAIR, DAMAGED
+  status             String    @default("AVAILABLE") @db.VarChar(20) // AVAILABLE, IN_USE, MAINTENANCE, RETIRED
+  assigned_to        String?   @db.VarChar(100) // Department or person
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("asset_inventory")
+}
+
+model FacilityBooking {
+  booking_id         Int       @id @default(autoincrement()) @map("booking_id")
+  facility_id        Int       @map("facility_id")
+  booking_date       DateTime  @db.Date
+  start_time         DateTime  @db.Time
+  end_time           DateTime  @db.Time
+  purpose            String    @db.Text
+  booked_by          Int       @map("booked_by")
+  approved_by        Int?      @map("approved_by")
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED, CANCELLED
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  facility           Facility  @relation(fields: [facility_id], references: [facility_id], onDelete: Cascade)
+
+  @@map("facility_bookings")
+}
+
+// Governance & Compliance
+model SchoolImprovementPlan {
+  sip_id             Int       @id @default(autoincrement()) @map("sip_id")
+  plan_name          String    @db.VarChar(200)
+  academic_year      String    @db.VarChar(20)
+  goals              Json      // Array of improvement goals
+  action_items       Json      // Array of action items with deadlines
+  submitted_by       Int       @map("submitted_by")
+  approved_by        Int?      @map("approved_by")
+  status             String    @default("DRAFT") @db.VarChar(20) // DRAFT, SUBMITTED, APPROVED, REJECTED
+  submitted_at       DateTime?
+  approved_at        DateTime?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  progress_items     SIPProgress[]
+  feedback           SIPFeedback[]
+
+  @@map("school_improvement_plans")
+}
+
+model SIPProgress {
+  progress_id        Int       @id @default(autoincrement()) @map("progress_id")
+  sip_id             Int       @map("sip_id")
+  action_item_id     String    @map("action_item_id") // Reference to action item in SIP
+  status             String    @default("NOT_STARTED") @db.VarChar(20) // NOT_STARTED, IN_PROGRESS, ON_TRACK, DELAYED, COMPLETED
+  progress_percentage Int     @default(0)
+  notes              String?   @db.Text
+  updated_by         Int       @map("updated_by")
+  updated_at         DateTime  @default(now())
+
+  sip                SchoolImprovementPlan @relation(fields: [sip_id], references: [sip_id], onDelete: Cascade)
+
+  @@map("sip_progress")
+}
+
+model SIPFeedback {
+  feedback_id        Int       @id @default(autoincrement()) @map("feedback_id")
+  sip_id             Int       @map("sip_id")
+  submitted_by       Int       @map("submitted_by")
+  feedback           String    @db.Text
+  submitted_at       DateTime  @default(now())
+
+  sip                SchoolImprovementPlan @relation(fields: [sip_id], references: [sip_id], onDelete: Cascade)
+
+  @@map("sip_feedback")
+}
+
+model PTSAExecutive {
+  executive_id       Int       @id @default(autoincrement()) @map("executive_id")
+  user_id            Int       @map("user_id")
+  position           String    @db.VarChar(50) // PRESIDENT, VICE_PRESIDENT, SECRETARY, TREASURER
+  term_start         DateTime  @db.Date
+  term_end           DateTime  @db.Date
+  is_active          Boolean   @default(true)
+  recognized_by      Int?      @map("recognized_by") // Principal who recognized
+  recognized_at      DateTime?
+
+  @@map("ptsa_executive")
+}
+
+model PTSAFeedback {
+  feedback_id        Int       @id @default(autoincrement()) @map("feedback_id")
+  submitted_by       Int       @map("submitted_by")
+  category           String    @db.VarChar(50) // ACADEMIC, FACILITIES, STAFF, FINANCIAL, GENERAL
+  subject            String    @db.VarChar(200)
+  feedback           String    @db.Text
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, REVIEWED, RESPONDED, RESOLVED
+  response           String?   @db.Text
+  responded_by       Int?      @map("responded_by")
+  responded_at       DateTime?
+  submitted_at       DateTime  @default(now())
+
+  @@map("ptsa_feedback")
+}
+
+model BudgetAdvisory {
+  advisory_id        Int       @id @default(autoincrement()) @map("advisory_id")
+  submitted_by       Int       @map("submitted_by")
+  budget_id          Int       @map("budget_id")
+  recommendation     String    @db.Text
+  priority           String    @default("MEDIUM") @db.VarChar(10) // LOW, MEDIUM, HIGH
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, REVIEWED, ACCEPTED, REJECTED
+  reviewed_by        Int?      @map("reviewed_by")
+  reviewed_at        DateTime?
+  submitted_at       DateTime  @default(now())
+
+  @@map("budget_advisories")
+}
+
+model PTSAMeeting {
+  meeting_id         Int       @id @default(autoincrement()) @map("meeting_id")
+  title              String    @db.VarChar(200)
+  description        String?   @db.Text
+  scheduled_date     DateTime  @db.Date
+  scheduled_time     DateTime  @db.Time
+  location           String?   @db.VarChar(100)
+  created_by         Int       @map("created_by")
+  approved_by        Int?      @map("approved_by")
+  status             String    @default("SCHEDULED") @db.VarChar(20) // SCHEDULED, APPROVED, COMPLETED, CANCELLED
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  attendees          PTSAMeetingAttendee[]
+  minutes            PTSAMeetingMinutes?
+  announcements      PTSAAnnouncement[]
+
+  @@map("ptsa_meetings")
+}
+
+model PTSAMeetingAttendee {
+  attendee_id        Int       @id @default(autoincrement()) @map("attendee_id")
+  meeting_id         Int       @map("meeting_id")
+  user_id            Int       @map("user_id")
+  attended           Boolean   @default(false)
+  role               String?   @db.VarChar(50) // MEMBER, GUEST, PRINCIPAL
+  notes              String?   @db.Text
+
+  @@unique([meeting_id, user_id])
+  @@map("ptsa_meeting_attendees")
+}
+
+model PTSAMeetingMinutes {
+  minutes_id         Int       @id @default(autoincrement()) @map("minutes_id")
+  meeting_id         Int       @unique @map("meeting_id")
+  content            String    @db.Text
+  action_items       Json?
+  created_by         Int       @map("created_by")
+  created_at         DateTime  @default(now())
+
+  @@map("ptsa_meeting_minutes")
+}
+
+model PTSAAnnouncement {
+  announcement_id    Int       @id @default(autoincrement()) @map("announcement_id")
+  meeting_id         Int?      @map("meeting_id")
+  title              String    @db.VarChar(200)
+  content            String    @db.Text
+  created_by         Int       @map("created_by")
+  published_at       DateTime  @default(now())
+  is_active          Boolean   @default(true)
+
+  @@map("ptsa_announcements")
+}
+
+model PTSAFundTransaction {
+  transaction_id     Int       @id @default(autoincrement()) @map("transaction_id")
+  transaction_type   String    @db.VarChar(20) // CONTRIBUTION, EXPENSE, TRANSFER
+  amount             Decimal   @db.Decimal(10, 2)
+  description        String    @db.Text
+  created_by         Int       @map("created_by")
+  transaction_date   DateTime  @default(now())
+  receipt_url        String?   @db.Text
+
+  @@map("ptsa_fund_transactions")
+}
+
+// Grievances & Discipline
+model Grievance {
+  grievance_id       Int       @id @default(autoincrement()) @map("grievance_id")
+  submitted_by       Int       @map("submitted_by")
+  category           String    @db.VarChar(50) // ACADEMIC, DISCIPLINARY, ADMINISTRATIVE, SAFETY
+  subject            String    @db.VarChar(200)
+  description        String    @db.Text
+  priority           String    @default("MEDIUM") @db.VarChar(10) // LOW, MEDIUM, HIGH, URGENT
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, UNDER_REVIEW, RESOLVED, ESCALATED, CLOSED
+  assigned_to        Int?      @map("assigned_to")
+  resolution         String?   @db.Text
+  escalated_to_woreda Boolean  @default(false)
+  escalation_date    DateTime?
+  submitted_at       DateTime  @default(now())
+  resolved_at        DateTime?
+
+  @@map("grievances")
+}
+
+model DisciplinaryAction {
+  action_id          Int       @id @default(autoincrement()) @map("action_id")
+  student_id         Int       @map("student_id")
+  action_type        String    @db.VarChar(50) // WARNING, SUSPENSION, PROBATION, EXPULSION
+  reason             String    @db.Text
+  start_date         DateTime  @db.Date
+  end_date           DateTime?
+  duration_days      Int?
+  recommended_by     Int       @map("recommended_by")
+  approved_by        Int?      @map("approved_by")
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, ACTIVE, COMPLETED, CANCELLED
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("disciplinary_actions")
+}
+
+// Staff Management
+model StaffLeaveRequest {
+  leave_id           Int       @id @default(autoincrement()) @map("leave_id")
+  user_id            Int       @map("user_id")
+  staff_id           Int?      @map("staff_id") // Optional link to NonAcademicStaff
+  leave_type         String    @db.VarChar(20) // ANNUAL, SICK, EMERGENCY, MATERNITY, PATERNITY
+  start_date         DateTime  @db.Date
+  end_date           DateTime  @db.Date
+  total_days         Int
+  reason             String    @db.Text
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED, CANCELLED
+  approved_by        Int?      @map("approved_by")
+  approved_at        DateTime?
+  rejection_reason   String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  staff              NonAcademicStaff? @relation(fields: [staff_id], references: [staff_id], onDelete: SetNull)
+
+  @@map("staff_leave_requests")
+}
+
+model StaffTransfer {
+  transfer_id        Int       @id @default(autoincrement()) @map("transfer_id")
+  user_id            Int       @map("user_id")
+  transfer_type      String    @db.VarChar(30) // DEPARTMENT_TRANSFER, SCHOOL_TRANSFER
+  from_department    String?   @db.VarChar(100)
+  to_department      String?   @db.VarChar(100)
+  from_school        String?   @db.VarChar(100)
+  to_school          String?   @db.VarChar(100)
+  effective_date     DateTime  @db.Date
+  reason             String    @db.Text
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED, COMPLETED
+  approved_by        Int?      @map("approved_by")
+  approved_at        DateTime?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("staff_transfers")
+}
+
+model StaffPerformance {
+  performance_id     Int       @id @default(autoincrement()) @map("performance_id")
+  user_id            Int       @map("user_id")
+  academic_year      String    @db.VarChar(20)
+  term               String    @db.VarChar(20)
+  overall_rating     String    @db.VarChar(10) // EXCELLENT, GOOD, SATISFACTORY, NEEDS_IMPROVEMENT
+  metrics            Json      // Various performance metrics
+  strengths          String[]  @db.Text
+  areas_for_improvement String[] @db.Text
+  goals              String[]  @db.Text
+  reviewed_by        Int       @map("reviewed_by")
+  review_date        DateTime  @db.Date
+  comments           String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("staff_performance")
+}
+
+// Reporting
+model AnnualSchoolReport {
+  report_id          Int       @id @default(autoincrement()) @map("report_id")
+  academic_year      String    @db.VarChar(20)
+  report_data        Json      // Comprehensive report data
+  generated_by       Int       @map("generated_by")
+  submitted_to_woreda Boolean   @default(false)
+  submission_date    DateTime?
+  pdf_url            String?   @db.Text
+  created_at         DateTime  @default(now())
+
+  @@map("annual_school_reports")
+}
+
+model ComplianceReport {
+  compliance_id      Int       @id @default(autoincrement()) @map("compliance_id")
+  report_name        String    @db.VarChar(200)
+  academic_year      String    @db.VarChar(20)
+  compliance_type    String    @db.VarChar(50) // TEACHER_LICENSING, SAFETY, REPORTING_DEADLINES
+  status             String    @default("COMPLIANT") @db.VarChar(20) // COMPLIANT, NON_COMPLIANT, PENDING_REVIEW
+  findings           Json      // Array of compliance findings
+  action_required    Boolean   @default(false)
+  reviewed_by        Int?      @map("reviewed_by")
+  review_date        DateTime?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("compliance_reports")
+}
+
+model NationalExamReport {
+  exam_report_id     Int       @id @default(autoincrement()) @map("exam_report_id")
+  exam_type          String    @db.VarChar(20) // EGSECE, ESSLCE
+  academic_year      String    @db.VarChar(20)
+  total_students     Int
+  passed_count       Int
+  pass_rate          Decimal   @db.Decimal(5, 2)
+  average_score      Decimal   @db.Decimal(5, 2)
+  subject_breakdown  Json      // Performance by subject
+  year_over_year     Json      // Comparison with previous years
+  district_comparison Json?     // Comparison with district average
+  generated_by       Int       @map("generated_by")
+  created_at         DateTime  @default(now())
+
+  @@map("national_exam_reports")
+}
+
+// Communication
+model SchoolAnnouncement {
+  announcement_id    Int       @id @default(autoincrement()) @map("announcement_id")
+  title              String    @db.VarChar(200)
+  content            String    @db.Text
+  announcement_type  String    @db.VarChar(30) // GENERAL, URGENT, ACADEMIC, ADMINISTRATIVE
+  target_audience    String    @default("ALL") @db.VarChar(50) // ALL, TEACHERS, STUDENTS, PARENTS, STAFF
+  created_by         Int       @map("created_by")
+  approved_by        Int?      @map("approved_by")
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, PUBLISHED, ARCHIVED
+  publish_date       DateTime?
+  is_urgent          Boolean   @default(false)
+  attachment_url     String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("school_announcements")
+}
+
+model UrgentAlert {
+  alert_id           Int       @id @default(autoincrement()) @map("alert_id")
+  alert_type         String    @db.VarChar(30) // SCHOOL_CLOSURE, SECURITY, WEATHER, HEALTH
+  title              String    @db.VarChar(200)
+  message            String    @db.Text
+  severity           String    @default("HIGH") @db.VarChar(10) // LOW, MEDIUM, HIGH, CRITICAL
+  created_by         Int       @map("created_by")
+  sent_at            DateTime  @default(now())
+  expires_at         DateTime?
+  delivery_method    String    @default("SMS_EMAIL") @db.VarChar(20) // SMS, EMAIL, SMS_EMAIL, IN_APP
+  target_audience    String    @default("ALL") @db.VarChar(50)
+  status             String    @default("SENT") @db.VarChar(20) // DRAFT, SENT, CANCELLED
+
+  @@map("urgent_alerts")
+}
+
+model CommunicationLog {
+  log_id             Int       @id @default(autoincrement()) @map("log_id")
+  communication_type String    @db.VarChar(30) // ANNOUNCEMENT, ALERT, EMAIL, SMS
+  title              String    @db.VarChar(200)
+  recipient_count    Int
+  sent_by            Int       @map("sent_by")
+  sent_at            DateTime  @default(now())
+  status             String    @default("SENT") @db.VarChar(20)
+  details            Json?
+
+  @@map("communication_logs")
+}
+
+// External Relations
+model SchoolEvent {
+  event_id           Int       @id @default(autoincrement()) @map("event_id")
+  event_name         String    @db.VarChar(200)
+  event_type         String    @db.VarChar(50) // OPEN_DAY, SPORTS, CULTURAL, EXAM, PARENT_TEACHER
+  description        String?   @db.Text
+  event_date         DateTime  @db.Date
+  start_time         DateTime  @db.Time
+  end_time           DateTime  @db.Time
+  location           String?   @db.VarChar(100)
+  organized_by       Int       @map("organized_by")
+  status             String    @default("PLANNED") @db.VarChar(20) // PLANNED, CONFIRMED, CANCELLED, COMPLETED
+  attendance_count   Int?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("school_events")
+}
+
+model SchoolPartnership {
+  partnership_id     Int       @id @default(autoincrement()) @map("partnership_id")
+  partner_name       String    @db.VarChar(200)
+  partner_type       String    @db.VarChar(50) // NGO, UNIVERSITY, GOVERNMENT, PRIVATE_COMPANY
+  partnership_type   String    @db.VarChar(50) // ACADEMIC, FINANCIAL, TECHNICAL, COMMUNITY
+  description        String    @db.Text
+  start_date         DateTime  @db.Date
+  end_date           DateTime?
+  status             String    @default("ACTIVE") @db.VarChar(20) // ACTIVE, INACTIVE, PENDING
+  contact_person     String?   @db.VarChar(100)
+  contact_email      String?   @db.VarChar(100)
+  contact_phone      String?   @db.VarChar(20)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("school_partnerships")
+}
+
+model AlumniContact {
+  alumni_id          Int       @id @default(autoincrement()) @map("alumni_id")
+  full_name          String    @db.VarChar(100)
+  email              String    @db.VarChar(100)
+  phone_number       String?   @db.VarChar(20)
+  graduation_year    Int
+  current_occupation String?   @db.VarChar(100)
+  current_location   String?   @db.VarChar(100)
+  is_active          Boolean   @default(true)
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("alumni_contacts")
+}
+
+model CommunityFeedback {
+  feedback_id        Int       @id @default(autoincrement()) @map("feedback_id")
+  feedback_type      String    @db.VarChar(50) // SURVEY, SUGGESTION, COMPLAINT, COMPLIMENT
+  source             String    @db.VarChar(50) // COMMUNITY_MEMBER, PARENT, LOCAL_BUSINESS
+  subject            String    @db.VarChar(200)
+  feedback           String    @db.Text
+  submitted_anonymously Boolean @default(false)
+  submitter_name     String?   @db.VarChar(100)
+  submitter_contact  String?   @db.VarChar(100)
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, REVIEWED, ADDRESSED
+  reviewed_by        Int?      @map("reviewed_by")
+  reviewed_at        DateTime?
+  submitted_at       DateTime  @default(now())
+
+  @@map("community_feedback")
+}
+
+model ParentSurvey {
+  survey_id          Int       @id @default(autoincrement()) @map("survey_id")
+  survey_name        String    @db.VarChar(200)
+  academic_year      String    @db.VarChar(20)
+  term               String    @db.VarChar(20)
+  questions          Json      // Array of survey questions
+  target_audience    String    @default("ALL_PARENTS") @db.VarChar(50)
+  status             String    @default("DRAFT") @db.VarChar(20) // DRAFT, ACTIVE, CLOSED
+  created_by         Int       @map("created_by")
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  responses          ParentSurveyResponse[]
+
+  @@map("parent_surveys")
+}
+
+model ParentSurveyResponse {
+  response_id        Int       @id @default(autoincrement()) @map("response_id")
+  survey_id          Int       @map("survey_id")
+  parent_id          Int       @map("parent_id")
+  answers            Json      // Array of answers
+  submitted_at       DateTime  @default(now())
+
+  survey             ParentSurvey @relation(fields: [survey_id], references: [survey_id], onDelete: Cascade)
+
+  @@unique([survey_id, parent_id])
+  @@map("parent_survey_responses")
+}
+
+// ----------------------------
+// 13. SIC (School Improvement Committee) SPECIFIC TABLES
+// ----------------------------
+
+// SIC Meetings
+model SICMeeting {
+  meeting_id         Int       @id @default(autoincrement()) @map("meeting_id")
+  title              String    @db.VarChar(200)
+  description        String?   @db.Text
+  scheduled_date     DateTime  @db.Date
+  scheduled_time     DateTime  @db.Time
+  location           String?   @db.VarChar(100)
+  meeting_type       String    @default("REGULAR") @db.VarChar(20) // REGULAR, SPECIAL, EMERGENCY, ANNUAL
+  created_by         Int       @map("created_by")
+  status             String    @default("SCHEDULED") @db.VarChar(20) // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  attendees          SICMeetingAttendee[]
+  minutes            SICMeetingMinutes?
+  agenda_items       SICAgendaItem[]
+  resolutions        SICResolution[]
+
+  @@map("sic_meetings")
+}
+
+model SICMeetingAttendee {
+  attendee_id        Int       @id @default(autoincrement()) @map("attendee_id")
+  meeting_id         Int       @map("meeting_id")
+  user_id            Int       @map("user_id")
+  attended           Boolean   @default(false)
+  role               String?   @db.VarChar(50) // MEMBER, CHAIR, SECRETARY, GUEST
+  notes              String?   @db.Text
+
+  meeting            SICMeeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
+
+  @@unique([meeting_id, user_id])
+  @@map("sic_meeting_attendees")
+}
+
+model SICMeetingMinutes {
+  minutes_id         Int       @id @default(autoincrement()) @map("minutes_id")
+  meeting_id         Int       @unique @map("meeting_id")
+  content            String    @db.Text
+  action_items       Json?
+  decisions          Json?
+  created_by         Int       @map("created_by")
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  meeting            SICMeeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
+
+  @@map("sic_meeting_minutes")
+}
+
+model SICAgendaItem {
+  agenda_id          Int       @id @default(autoincrement()) @map("agenda_id")
+  meeting_id         Int       @map("meeting_id")
+  title              String    @db.VarChar(200)
+  description        String?   @db.Text
+  submitted_by       Int       @map("submitted_by")
+  priority           String    @default("MEDIUM") @db.VarChar(10) // LOW, MEDIUM, HIGH
+  order              Int       @default(0)
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, DISCUSSED, DEFERRED, COMPLETED
+  created_at         DateTime  @default(now())
+
+  meeting            SICMeeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
+
+  @@map("sic_agenda_items")
+}
+
+model SICResolution {
+  resolution_id      Int       @id @default(autoincrement()) @map("resolution_id")
+  meeting_id         Int       @map("meeting_id")
+  title              String    @db.VarChar(200)
+  description        String    @db.Text
+  proposed_by        Int       @map("proposed_by")
+  vote_for           Int       @default(0)
+  vote_against       Int       @default(0)
+  vote_abstain       Int       @default(0)
+  status             String    @default("PROPOSED") @db.VarChar(20) // PROPOSED, APPROVED, REJECTED, TABLED
+  passed_at          DateTime?
+  created_at         DateTime  @default(now())
+
+  meeting            SICMeeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
+
+  @@map("sic_resolutions")
+}
+
+// SIC Needs Assessment & Surveys
+model SICNeedsAssessment {
+  assessment_id      Int       @id @default(autoincrement()) @map("assessment_id")
+  assessment_name    String    @db.VarChar(200)
+  academic_year      String    @db.VarChar(20)
+  assessment_type    String    @db.VarChar(50) // SCHOOL_SELF, COMMUNITY, STUDENT, STAFF
+  questions          Json      // Array of assessment questions
+  target_audience    String    @default("ALL") @db.VarChar(50)
+  status             String    @default("DRAFT") @db.VarChar(20) // DRAFT, ACTIVE, CLOSED
+  created_by         Int       @map("created_by")
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  responses          SICAssessmentResponse[]
+
+  @@map("sic_needs_assessments")
+}
+
+model SICAssessmentResponse {
+  response_id        Int       @id @default(autoincrement()) @map("response_id")
+  assessment_id      Int       @map("assessment_id")
+  respondent_type    String    @db.VarChar(50) // STUDENT, PARENT, TEACHER, COMMUNITY_MEMBER
+  respondent_id       Int?      @map("respondent_id") // Optional user_id if logged in
+  answers            Json      // Array of answers
+  submitted_anonymously Boolean @default(false)
+  submitted_at       DateTime  @default(now())
+
+  assessment         SICNeedsAssessment @relation(fields: [assessment_id], references: [assessment_id], onDelete: Cascade)
+
+  @@map("sic_assessment_responses")
+}
+
+// SIC Training & Capacity Building
+model SICTraining {
+  training_id        Int       @id @default(autoincrement()) @map("training_id")
+  title              String    @db.VarChar(200)
+  description        String?   @db.Text
+  training_type      String    @db.VarChar(50) // SIP_PLANNING, DATA_ANALYSIS, MONITORING, COMPLIANCE
+  scheduled_date     DateTime  @db.Date
+  scheduled_time     DateTime  @db.Time
+  location           String?   @db.VarChar(100)
+  duration_hours     Int?
+  instructor         String?   @db.VarChar(100)
+  max_participants   Int?
+  status             String    @default("SCHEDULED") @db.VarChar(20) // SCHEDULED, COMPLETED, CANCELLED
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  completions        SICTrainingCompletion[]
+
+  @@map("sic_trainings")
+}
+
+model SICTrainingCompletion {
+  completion_id      Int       @id @default(autoincrement()) @map("completion_id")
+  training_id        Int       @map("training_id")
+  user_id            Int       @map("user_id")
+  completed_at       DateTime  @default(now())
+  feedback           String?   @db.Text
+  rating             Int?      // 1-5 scale
+
+  training           SICTraining @relation(fields: [training_id], references: [training_id], onDelete: Cascade)
+
+  @@unique([training_id, user_id])
+  @@map("sic_training_completions")
+}
+
+// SIC Reports & Documentation
+model SICAnnualReport {
+  report_id          Int       @id @default(autoincrement()) @map("report_id")
+  academic_year      String    @db.VarChar(20)
+  report_data        Json      // Comprehensive annual report data
+  achievements       Json?     // Key achievements
+  recommendations    Json?     // Recommendations for next year
+  submitted_by       Int       @map("submitted_by")
+  submitted_to_board Boolean   @default(false)
+  submission_date    DateTime?
+  pdf_url            String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("sic_annual_reports")
+}
+
+model SICActionLog {
+  action_log_id      Int       @id @default(autoincrement()) @map("action_log_id")
+  action_type        String    @db.VarChar(50) // SIP_UPDATE, MEETING_HELD, SURVEY_CONDUCTED, PARTNERSHIP_ESTABLISHED
+  description        String    @db.Text
+  action_taken_by    Int       @map("action_taken_by")
+  related_sip_id     Int?      @map("related_sip_id")
+  related_meeting_id Int?      @map("related_meeting_id")
+  created_at         DateTime  @default(now())
+
+  @@map("sic_action_logs")
+}
+
+model SICInspectionReport {
+  inspection_id      Int       @id @default(autoincrement()) @map("inspection_id")
+  inspection_type    String    @db.VarChar(50) // WOREDA, MINISTRY, INTERNAL
+  inspection_date    DateTime  @db.Date
+  inspector_name     String    @db.VarChar(100)
+  inspector_agency   String    @db.VarChar(100)
+  findings           Json      // Array of findings
+  recommendations    Json?     // Array of recommendations
+  compliance_status  String    @default("PENDING") @db.VarChar(20) // COMPLIANT, NON_COMPLIANT, PARTIALLY_COMPLIANT
+  action_required    Boolean   @default(false)
+  response_deadline  DateTime?
+  submitted_at       DateTime  @default(now())
+  reviewed_by        Int?      @map("reviewed_by")
+  reviewed_at        DateTime?
+
+  @@map("sic_inspection_reports")
+}
+
+model SICSelfAssessment {
+  assessment_id      Int       @id @default(autoincrement()) @map("assessment_id")
+  academic_year      String    @db.VarChar(20)
+  strengths          Json      // Array of identified strengths
+  weaknesses         Json      // Array of identified weaknesses
+  opportunities      Json      // Array of opportunities
+  threats            Json      // Array of threats (SWOT analysis)
+  priority_areas     Json      // Priority improvement areas
+  conducted_by       Int       @map("conducted_by")
+  conducted_at       DateTime  @default(now())
+  approved_by        Int?      @map("approved_by")
+  approved_at        DateTime?
+
+  @@map("sic_self_assessments")
+}
+
+// SIC Recommendations & Proposals
+model SICRecommendation {
+  recommendation_id  Int       @id @default(autoincrement()) @map("recommendation_id")
+  title              String    @db.VarChar(200)
+  description        String    @db.Text
+  category           String    @db.VarChar(50) // ACADEMIC, INFRASTRUCTURE, POLICY, FINANCIAL, STAFFING
+  priority           String    @default("MEDIUM") @db.VarChar(10) // LOW, MEDIUM, HIGH
+  submitted_by       Int       @map("submitted_by")
+  submitted_to       Int       @map("submitted_to") // Principal or Board
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, UNDER_REVIEW, ACCEPTED, REJECTED, IMPLEMENTED
+  submitted_at       DateTime  @default(now())
+  reviewed_at        DateTime?
+  implemented_at     DateTime?
+  response           String?   @db.Text
+
+  @@map("sic_recommendations")
+}
+
+// SIC Partnership Tracking (extends SchoolPartnership)
+model SICPartnershipTracking {
+  tracking_id        Int       @id @default(autoincrement()) @map("tracking_id")
+  partnership_id     Int       @map("partnership_id")
+  contribution_type  String    @db.VarChar(50) // FINANCIAL, TECHNICAL, MATERIAL, MENTORSHIP
+  contribution_value  Decimal?  @db.Decimal(15, 2)
+  impact_assessment  String?   @db.Text
+  tracking_date      DateTime  @default(now())
+  tracked_by         Int       @map("tracked_by")
+
+  @@map("sic_partnership_tracking")
+}
+
+// ----------------------------
+// 14. VP ADMINISTRATION SPECIFIC TABLES
+// ----------------------------
+
+// Non-Academic Staff
+model NonAcademicStaff {
+  staff_id           Int       @id @default(autoincrement()) @map("staff_id")
+  user_id            Int       @unique @map("user_id")
+  employee_id        String    @unique @db.VarChar(20)
+  role               String    @db.VarChar(50) // LIBRARIAN, LAB_TECHNICIAN, CLEANER, SECURITY, SECRETARY, DRIVER
+  department         String?   @db.VarChar(100)
+  hire_date          DateTime? @db.Date
+  salary             Decimal?  @db.Decimal(10, 2)
+  work_schedule      Json?     // Work schedule details
+  is_active          Boolean   @default(true)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  user               User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  attendance_records StaffAttendance[]
+  leave_requests     StaffLeaveRequest[]
+
+  @@map("non_academic_staff")
+}
+
+model StaffAttendance {
+  attendance_id      Int       @id @default(autoincrement()) @map("attendance_id")
+  staff_id           Int       @map("staff_id")
+  date               DateTime  @db.Date
+  status             String    @db.VarChar(20) // PRESENT, ABSENT, LATE, HALF_DAY
+  check_in_time      DateTime? @db.Time
+  check_out_time     DateTime? @db.Time
+  notes              String?   @db.Text
+  recorded_by        Int       @map("recorded_by")
+  created_at         DateTime  @default(now())
+
+  staff              NonAcademicStaff @relation(fields: [staff_id], references: [staff_id], onDelete: Cascade)
+
+  @@unique([staff_id, date])
+  @@map("staff_attendance")
+}
+
+// Facilities Management
+model Facility {
+  facility_id        Int       @id @default(autoincrement()) @map("facility_id")
+  facility_name      String    @db.VarChar(200)
+  facility_type      String    @db.VarChar(50) // CLASSROOM, LAB, LIBRARY, HALL, PLAYGROUND, TOILET, OFFICE
+  capacity           Int
+  location           String?   @db.VarChar(100)
+  building           String?   @db.VarChar(50)
+  floor              Int?
+  amenities          String[]  @db.Text
+  status             String    @default("AVAILABLE") @db.VarChar(20) // AVAILABLE, UNDER_MAINTENANCE, CLOSED
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  bookings           FacilityBooking[]
+  maintenance_requests FacilityMaintenance[]
+
+  @@map("facilities")
+}
+
+model FacilityMaintenance {
+  maintenance_id     Int       @id @default(autoincrement()) @map("maintenance_id")
+  facility_id        Int       @map("facility_id")
+  issue_type         String    @db.VarChar(50) // REPAIR, CLEANING, RENOVATION, SAFETY
+  description        String    @db.Text
+  priority           String    @default("MEDIUM") @db.VarChar(10) // LOW, MEDIUM, HIGH, URGENT
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+  reported_by        Int       @map("reported_by")
+  assigned_to        Int?      @map("assigned_to")
+  scheduled_date     DateTime? @db.Date
+  completed_date     DateTime?
+  cost               Decimal?  @db.Decimal(10, 2)
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  facility           Facility  @relation(fields: [facility_id], references: [facility_id], onDelete: Cascade)
+
+  @@map("facility_maintenance")
+}
+
+// Asset Management Extensions
+model AssetAssignment {
+  assignment_id      Int       @id @default(autoincrement()) @map("assignment_id")
+  asset_id           Int       @map("asset_id")
+  assigned_to        String    @db.VarChar(100) // Staff name or department
+  assigned_by        Int       @map("assigned_by")
+  assigned_date      DateTime  @db.Date
+  return_date        DateTime?
+  status             String    @default("ASSIGNED") @db.VarChar(20) // ASSIGNED, RETURNED, OVERDUE
+  condition_on_assign String   @db.VarChar(20)
+  condition_on_return String?  @db.VarChar(20)
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("asset_assignments")
+}
+
+model AssetMaintenance {
+  maintenance_id     Int       @id @default(autoincrement()) @map("maintenance_id")
+  asset_id           Int       @map("asset_id")
+  maintenance_type   String    @db.VarChar(50) // ROUTINE, REPAIR, CALIBRATION, UPGRADE
+  description        String    @db.Text
+  scheduled_date     DateTime  @db.Date
+  completed_date     DateTime?
+  performed_by       String?   @db.VarChar(100)
+  cost               Decimal?  @db.Decimal(10, 2)
+  status             String    @default("SCHEDULED") @db.VarChar(20) // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("asset_maintenance")
+}
+
+// Procurement & Inventory
+model Supplier {
+  supplier_id        Int       @id @default(autoincrement()) @map("supplier_id")
+  supplier_name      String    @db.VarChar(200)
+  contact_person     String    @db.VarChar(100)
+  email              String?   @db.VarChar(100)
+  phone_number       String    @db.VarChar(20)
+  address            String?   @db.Text
+  products_services  String[]  @db.Text
+  is_approved        Boolean   @default(true)
+  rating             Int?      // 1-5 scale
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  purchase_requests  PurchaseRequest[]
+
+  @@map("suppliers")
+}
+
+model PurchaseRequest {
+  request_id         Int       @id @default(autoincrement()) @map("request_id")
+  request_number     String    @unique @db.VarChar(50)
+  item_name          String    @db.VarChar(200)
+  item_description   String?   @db.Text
+  quantity           Int
+  unit_cost          Decimal?  @db.Decimal(10, 2)
+  total_cost         Decimal?  @db.Decimal(10, 2)
+  category           String    @db.VarChar(50) // EQUIPMENT, MATERIALS, SUPPLIES, SERVICES
+  priority           String    @default("MEDIUM") @db.VarChar(10) // LOW, MEDIUM, HIGH, URGENT
+  requested_by       Int       @map("requested_by")
+  supplier_id        Int?      @map("supplier_id")
+  justification      String    @db.Text
+  status             String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED, ORDERED, RECEIVED
+  approved_by        Int?      @map("approved_by")
+  approved_at        DateTime?
+  order_date         DateTime?
+  expected_delivery  DateTime?
+  actual_delivery    DateTime?
+  receipt_url        String?   @db.Text
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  supplier           Supplier? @relation(fields: [supplier_id], references: [supplier_id], onDelete: SetNull)
+
+  @@map("purchase_requests")
+}
+
+model Inventory {
+  inventory_id       Int       @id @default(autoincrement()) @map("inventory_id")
+  item_name          String    @db.VarChar(200)
+  item_code          String    @unique @db.VarChar(50)
+  category           String    @db.VarChar(50) // OFFICE_SUPPLIES, CLEANING, LAB_CHEMICALS, FOOD
+  description        String?   @db.Text
+  unit_of_measure    String    @db.VarChar(20) // PIECES, BOXES, LITERS, KILOGRAMS
+  current_stock      Int       @default(0)
+  reorder_level      Int       @default(10)
+  max_stock          Int?
+  unit_cost          Decimal?  @db.Decimal(10, 2)
+  location           String?   @db.VarChar(100)
+  supplier_id        Int?      @map("supplier_id")
+  last_restocked     DateTime?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  stock_transactions  InventoryTransaction[]
+
+  @@map("inventory")
+}
+
+model InventoryTransaction {
+  transaction_id     Int       @id @default(autoincrement()) @map("transaction_id")
+  inventory_id       Int       @map("inventory_id")
+  transaction_type   String    @db.VarChar(20) // IN, OUT, ADJUSTMENT
+  quantity           Int
+  remaining_stock    Int
+  unit_cost          Decimal?  @db.Decimal(10, 2)
+  total_cost         Decimal?  @db.Decimal(10, 2)
+  reference          String?   @db.VarChar(50) // Purchase request number, etc.
+  performed_by       Int       @map("performed_by")
+  notes              String?   @db.Text
+  transaction_date   DateTime  @default(now())
+
+  @@map("inventory_transactions")
+}
+
+// Incident Management
+model Incident {
+  incident_id        Int       @id @default(autoincrement()) @map("incident_id")
+  incident_type      String    @db.VarChar(50) // STUDENT_MISCONDUCT, STAFF_MISCONDUCT, FACILITY_ISSUE, SAFETY
+  reported_by        Int       @map("reported_by")
+  incident_date      DateTime  @db.Date
+  incident_time      DateTime? @db.Time
+  involved_person_id Int?      @map("involved_person_id") // Student or Staff user_id
+  involved_person_type String? @db.VarChar(20) // STUDENT, TEACHER, NON_ACADEMIC_STAFF
+  description        String    @db.Text
+  location           String?   @db.VarChar(100)
+  witnesses          String[]  @db.Text
+  priority           String    @default("MEDIUM") @db.VarChar(10) // LOW, MEDIUM, HIGH, URGENT
+  status             String    @default("REPORTED") @db.VarChar(20) // REPORTED, UNDER_INVESTIGATION, RESOLVED, CLOSED
+  action_taken       String?   @db.Text
+  resolved_by        Int?      @map("resolved_by")
+  resolved_at        DateTime?
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("incidents")
+}
+
+// Income Transactions (for financial management)
+model IncomeTransaction {
+  income_id          Int       @id @default(autoincrement()) @map("income_id")
+  budget_id          Int?      @map("budget_id")
+  income_source      String    @db.VarChar(50) // GOVERNMENT_GRANT, SCHOOL_FEES, DONATION, PTSA_CONTRIBUTION
+  amount             Decimal   @db.Decimal(15, 2)
+  description        String    @db.Text
+  income_date        DateTime  @db.Date
+  received_by        Int       @map("received_by")
+  reference          String?   @db.VarChar(100)
+  receipt_url        String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("income_transactions")
+}
+
+// Security & Safety Management
+model SecurityPersonnel {
+  security_id        Int       @id @default(autoincrement()) @map("security_id")
+  user_id            Int       @unique @map("user_id")
+  employee_id        String    @unique @db.VarChar(20)
+  shift              String    @db.VarChar(20) // MORNING, AFTERNOON, NIGHT, ROTATING
+  patrol_route       String?   @db.Text
+  assigned_area      String?   @db.VarChar(100)
+  is_active          Boolean   @default(true)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("security_personnel")
+}
+
+model VisitorLog {
+  visitor_id         Int       @id @default(autoincrement()) @map("visitor_id")
+  visitor_name       String    @db.VarChar(100)
+  visitor_type       String    @db.VarChar(50) // PARENT, CONTRACTOR, OFFICIAL, DELIVERY, OTHER
+  purpose            String    @db.Text
+  person_to_visit    String    @db.VarChar(100)
+  id_type            String?   @db.VarChar(50) // NATIONAL_ID, PASSPORT, DRIVING_LICENSE
+  id_number          String?   @db.VarChar(50)
+  check_in_time      DateTime  @default(now())
+  check_out_time     DateTime?
+  phone_number       String?   @db.VarChar(20)
+  vehicle_plate      String?   @db.VarChar(20)
+  notes              String?   @db.Text
+  logged_by          Int       @map("logged_by")
+
+  @@map("visitor_logs")
+}
+
+model SafetyEquipment {
+  equipment_id       Int       @id @default(autoincrement()) @map("equipment_id")
+  equipment_type     String    @db.VarChar(50) // FIRE_EXTINGUISHER, SMOKE_DETECTOR, FIRST_AID_KIT, EMERGENCY_LIGHT
+  equipment_name     String    @db.VarChar(200)
+  location           String    @db.VarChar(100)
+  facility_id        Int?      @map("facility_id")
+  installation_date  DateTime? @db.Date
+  last_inspection    DateTime? @db.Date
+  next_inspection    DateTime? @db.Date
+  expiry_date        DateTime? @db.Date
+  status             String    @default("OPERATIONAL") @db.VarChar(20) // OPERATIONAL, EXPIRED, DAMAGED, NEEDS_INSPECTION
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("safety_equipment")
+}
+
+model CCTVCamera {
+  camera_id          Int       @id @default(autoincrement()) @map("camera_id")
+  camera_name        String    @db.VarChar(200)
+  location           String    @db.VarChar(100)
+  facility_id        Int?      @map("facility_id")
+  camera_type        String    @db.VarChar(50) // DOME, BULLET, PTZ
+  ip_address         String?   @db.VarChar(50)
+  status             String    @default("OPERATIONAL") @db.VarChar(20) // OPERATIONAL, OFFLINE, MAINTENANCE
+  last_checked       DateTime? @db.Date
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("cctv_cameras")
+}
+
+// School Transport
+model Vehicle {
+  vehicle_id         Int       @id @default(autoincrement()) @map("vehicle_id")
+  vehicle_number     String    @unique @db.VarChar(20)
+  vehicle_type       String    @db.VarChar(50) // BUS, VAN, CAR, TRUCK
+  capacity           Int
+  make               String?   @db.VarChar(50)
+  model              String?   @db.VarChar(50)
+  year               Int?
+  fuel_type          String?   @db.VarChar(20) // PETROL, DIESEL, ELECTRIC
+  condition          String    @default("GOOD") @db.VarChar(20) // NEW, GOOD, FAIR, POOR
+  status             String    @default("AVAILABLE") @db.VarChar(20) // AVAILABLE, IN_USE, MAINTENANCE, OUT_OF_SERVICE
+  purchase_date      DateTime? @db.Date
+  last_service       DateTime? @db.Date
+  next_service       DateTime? @db.Date
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  maintenance_records VehicleMaintenance[]
+  driver_assignments DriverAssignment[]
+  transport_schedules TransportSchedule[]
+
+  @@map("vehicles")
+}
+
+model VehicleMaintenance {
+  maintenance_id     Int       @id @default(autoincrement()) @map("maintenance_id")
+  vehicle_id         Int       @map("vehicle_id")
+  maintenance_type   String    @db.VarChar(50) // ROUTINE_SERVICE, REPAIR, INSPECTION, TIRE_CHANGE
+  description        String    @db.Text
+  service_date       DateTime  @db.Date
+  odometer_reading   Int?
+  cost               Decimal?  @db.Decimal(10, 2)
+  performed_by       String?   @db.VarChar(100)
+  service_provider   String?   @db.VarChar(200)
+  next_service_date  DateTime?
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+
+  vehicle            Vehicle   @relation(fields: [vehicle_id], references: [vehicle_id], onDelete: Cascade)
+
+  @@map("vehicle_maintenance")
+}
+
+model DriverAssignment {
+  assignment_id      Int       @id @default(autoincrement()) @map("assignment_id")
+  vehicle_id         Int       @map("vehicle_id")
+  driver_id          Int       @map("driver_id") // NonAcademicStaff user_id
+  assigned_date      DateTime  @db.Date
+  shift              String    @db.VarChar(20) // MORNING, AFTERNOON, FULL_DAY
+  route              String?   @db.Text
+  is_primary         Boolean   @default(true)
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  vehicle            Vehicle   @relation(fields: [vehicle_id], references: [vehicle_id], onDelete: Cascade)
+
+  @@map("driver_assignments")
+}
+
+model TransportSchedule {
+  schedule_id        Int       @id @default(autoincrement()) @map("schedule_id")
+  vehicle_id         Int       @map("vehicle_id")
+  route_name         String    @db.VarChar(200)
+  route_description  String?   @db.Text
+  pickup_points      Json      // Array of pickup points with times
+  dropoff_points     Json      // Array of dropoff points with times
+  start_time         DateTime  @db.Time
+  end_time           DateTime  @db.Time
+  days_of_week       String[]  @db.VarChar(10) // ["MONDAY", "TUESDAY", etc.]
+  academic_year      String    @db.VarChar(20)
+  is_active          Boolean   @default(true)
+  notes              String?   @db.Text
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  vehicle            Vehicle   @relation(fields: [vehicle_id], references: [vehicle_id], onDelete: Cascade)
+
+  @@map("transport_schedules")
+}
+
+// Catering / School Feeding
+model MealPlan {
+  meal_id            Int       @id @default(autoincrement()) @map("meal_id")
+  plan_name          String    @db.VarChar(200)
+  meal_type          String    @db.VarChar(20) // BREAKFAST, LUNCH, SNACK
+  academic_year      String    @db.VarChar(20)
+  week_number        Int
+  day_of_week        String    @db.VarChar(10) // MONDAY, TUESDAY, etc.
+  menu_items         Json      // Array of menu items
+  nutritional_info   Json?     // Nutritional information
+  special_diet       Json?     // Special dietary accommodations
+  is_active          Boolean   @default(true)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  @@map("meal_plans")
+}
+
+model FoodInventory {
+  food_id            Int       @id @default(autoincrement()) @map("food_id")
+  item_name          String    @db.VarChar(200)
+  item_code          String    @unique @db.VarChar(50)
+  category           String    @db.VarChar(50) // GRAINS, VEGETABLES, MEAT, DAIRY, OILS, SPICES
+  unit_of_measure    String    @db.VarChar(20) // KILOGRAMS, LITERS, PIECES
+  current_quantity   Decimal   @db.Decimal(10, 2)
+  reorder_level      Decimal   @db.Decimal(10, 2)
+  max_quantity       Decimal?  @db.Decimal(10, 2)
+  unit_cost          Decimal?  @db.Decimal(10, 2)
+  storage_location   String?   @db.VarChar(100)
+  supplier_id        Int?      @map("supplier_id")
+  expiry_date        DateTime?
+  last_restocked     DateTime?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @default(now()) @updatedAt
+
+  food_transactions  FoodTransaction[]
+
+  @@map("food_inventory")
+}
+
+model FoodTransaction {
+  transaction_id     Int       @id @default(autoincrement()) @map("transaction_id")
+  food_id            Int       @map("food_id")
+  transaction_type   String    @db.VarChar(20) // PURCHASE, CONSUMPTION, WASTE, ADJUSTMENT
+  quantity           Decimal   @db.Decimal(10, 2)
+  remaining_quantity Decimal   @db.Decimal(10, 2)
+  unit_cost          Decimal?  @db.Decimal(10, 2)
+  total_cost         Decimal?  @db.Decimal(10, 2)
+  reference          String?   @db.VarChar(50)
+  performed_by       Int       @map("performed_by")
+  meal_date          DateTime? @db.Date
+  notes              String?   @db.Text
+  transaction_date   DateTime  @default(now())
+
+  @@map("food_transactions")
+}

@@ -1,5 +1,24 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
+
+// Helper function to get parent ID (with or without authentication)
+async function getParentId(req) {
+  // If authenticated, use the authenticated parent ID
+  if (req.parent_id) {
+    return req.parent_id;
+  }
+  
+  // For development without authentication, use the first parent in the database
+  const parent = await prisma.parent.findFirst({
+    where: { user: { role: 'PARENT' } },
+    include: { user: true }
+  });
+  
+  if (!parent) {
+    throw new Error('No parent found in database');
+  }
+  
+  return parent.parent_id;
+}
 
 // ============================================
 // 1. DASHBOARD & OVERVIEW
@@ -7,7 +26,7 @@ const prisma = new PrismaClient();
 
 exports.getParentDashboard = async (req, res) => {
   try {
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
     
     // Get all children associated with this parent
     const studentParents = await prisma.studentParent.findMany({
@@ -74,7 +93,7 @@ exports.getParentDashboard = async (req, res) => {
 
       return {
         student_id: student.student_id,
-        full_name: req.user.full_name,
+        full_name: student.user.full_name,
         student_number: student.student_number,
         class_name: student.current_class?.class_name || 'Not assigned',
         school_name: 'Smart Valley Academy',
@@ -119,7 +138,7 @@ exports.getParentDashboard = async (req, res) => {
 exports.getChildDashboard = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify parent has access to this child
     const studentParent = await prisma.studentParent.findFirst({
@@ -264,7 +283,7 @@ exports.getChildDashboard = async (req, res) => {
     res.json({
       child: {
         student_id: student.student_id,
-        full_name: req.user.full_name,
+        full_name: student.user.full_name,
         student_number: student.student_number,
         class_name: student.current_class?.class_name || 'Not assigned',
         school_name: 'Smart Valley Academy'
@@ -296,7 +315,7 @@ exports.getChildDashboard = async (req, res) => {
 exports.getQuickStats = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -385,7 +404,7 @@ exports.getActivityFeed = async (req, res) => {
   try {
     const { childId } = req.params;
     const { limit = 10 } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -428,7 +447,7 @@ exports.getCurrentGrades = async (req, res) => {
   try {
     const { childId } = req.params;
     const { term, subject_id } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -508,7 +527,7 @@ exports.getCurrentGrades = async (req, res) => {
 exports.getGradeDistribution = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -579,7 +598,7 @@ exports.getGradeDistribution = async (req, res) => {
 exports.getSubjectPerformance = async (req, res) => {
   try {
     const { childId, subjectId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -661,7 +680,7 @@ exports.getTermReports = async (req, res) => {
   try {
     const { childId } = req.params;
     const { term } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -704,7 +723,7 @@ exports.getTermReports = async (req, res) => {
 exports.getGradeHistory = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -745,7 +764,7 @@ exports.getGradeHistory = async (req, res) => {
 exports.getClassComparison = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -777,7 +796,7 @@ exports.getClassComparison = async (req, res) => {
 exports.getSubjectRanks = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -809,7 +828,7 @@ exports.getSubjectRanks = async (req, res) => {
 exports.getProgressChart = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -850,7 +869,7 @@ exports.getAttendanceSummary = async (req, res) => {
   try {
     const { childId } = req.params;
     const { term } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -899,7 +918,7 @@ exports.getDailyAttendance = async (req, res) => {
   try {
     const { childId } = req.params;
     const { start_date, end_date, page = 1, limit = 30 } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -965,7 +984,7 @@ exports.getMonthlyAttendance = async (req, res) => {
   try {
     const { childId } = req.params;
     const { year = new Date().getFullYear(), month = new Date().getMonth() + 1 } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1036,7 +1055,7 @@ exports.getMonthlyAttendance = async (req, res) => {
 exports.getAttendanceTrends = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1074,7 +1093,7 @@ exports.getAttendanceTrends = async (req, res) => {
 exports.getAbsenceReasons = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1113,7 +1132,7 @@ exports.getAbsenceReasons = async (req, res) => {
 exports.getAttendanceAlerts = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1163,7 +1182,7 @@ exports.exportAttendanceReport = async (req, res) => {
   try {
     const { childId } = req.params;
     const { format = 'pdf', term } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1196,7 +1215,7 @@ exports.exportAttendanceReport = async (req, res) => {
 exports.getConductSummary = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1228,7 +1247,7 @@ exports.getConductSummary = async (req, res) => {
 exports.getConductHistory = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1269,7 +1288,7 @@ exports.getConductHistory = async (req, res) => {
 exports.getConductComments = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1311,7 +1330,7 @@ exports.getConductComments = async (req, res) => {
 exports.getConductIncidents = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1348,7 +1367,7 @@ exports.getConductIncidents = async (req, res) => {
 exports.getConductTrends = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1386,7 +1405,7 @@ exports.getOfficialTranscript = async (req, res) => {
   try {
     const { childId } = req.params;
     const { term } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1411,7 +1430,7 @@ exports.getOfficialTranscript = async (req, res) => {
     const transcript = {
       student: {
         student_id: studentParent.student.student_id,
-        full_name: req.user.full_name,
+        full_name: studentParent.student.user.full_name,
         student_number: studentParent.student.student_number,
         class_name: studentParent.student.current_class?.class_name || 'Not assigned'
       },
@@ -1437,7 +1456,7 @@ exports.getOfficialTranscript = async (req, res) => {
 exports.getCumulativeTranscript = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1455,7 +1474,7 @@ exports.getCumulativeTranscript = async (req, res) => {
     const transcript = {
       student: {
         student_id: studentParent.student.student_id,
-        full_name: req.user.full_name,
+        full_name: studentParent.student.user.full_name,
         student_number: studentParent.student.student_number
       },
       academic_history: [
@@ -1493,7 +1512,7 @@ exports.downloadTranscript = async (req, res) => {
   try {
     const { childId } = req.params;
     const { type = 'current' } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1520,7 +1539,7 @@ exports.downloadTranscript = async (req, res) => {
 exports.printTranscript = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1548,7 +1567,7 @@ exports.printTranscript = async (req, res) => {
 exports.verifyTranscript = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1587,7 +1606,7 @@ exports.getCurrentAssignments = async (req, res) => {
   try {
     const { childId } = req.params;
     const { status, subject_id } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1693,7 +1712,7 @@ exports.getAssignmentDeadlines = async (req, res) => {
   try {
     const { childId } = req.params;
     const { month = new Date().getMonth() + 1, year = new Date().getFullYear() } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1767,7 +1786,7 @@ exports.getAssignmentDeadlines = async (req, res) => {
 exports.getSubmittedAssignments = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1822,7 +1841,7 @@ exports.getSubmittedAssignments = async (req, res) => {
 exports.getAssignmentScores = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1880,7 +1899,7 @@ exports.getAssignmentScores = async (req, res) => {
 exports.getMissingAssignments = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1941,7 +1960,7 @@ exports.getMissingAssignments = async (req, res) => {
 exports.downloadAssignmentFiles = async (req, res) => {
   try {
     const { childId, assignmentId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -1987,7 +2006,7 @@ exports.downloadAssignmentFiles = async (req, res) => {
 exports.getExamSchedule = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -2049,7 +2068,7 @@ exports.getExamResults = async (req, res) => {
   try {
     const { childId } = req.params;
     const { exam_type, term } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -2112,7 +2131,7 @@ exports.getExamResults = async (req, res) => {
 exports.getNationalExamResults = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -2153,7 +2172,7 @@ exports.getNationalExamResults = async (req, res) => {
 exports.getExamPerformanceAnalysis = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -2192,7 +2211,7 @@ exports.downloadExamReport = async (req, res) => {
   try {
     const { childId } = req.params;
     const { term } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -2223,12 +2242,17 @@ exports.downloadExamReport = async (req, res) => {
 exports.sendMessageToTeacher = async (req, res) => {
   try {
     const { receiver_id, student_id, subject, content, attachment_url } = req.body;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     // Verify parent has access to this student
     const studentParent = await prisma.studentParent.findFirst({
       where: {
-        parent_id: req.user.parent_id,
+        parent_id: parentId,
         student_id: parseInt(student_id)
       }
     });
@@ -2260,7 +2284,12 @@ exports.sendMessageToTeacher = async (req, res) => {
 exports.sendMessageToVPAcademic = async (req, res) => {
   try {
     const { subject, content, student_id } = req.body;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     // Find VP Academic user
     const vpAcademic = await prisma.vPAcademic.findFirst();
@@ -2271,7 +2300,7 @@ exports.sendMessageToVPAcademic = async (req, res) => {
     // Verify parent has access to this student
     const studentParent = await prisma.studentParent.findFirst({
       where: {
-        parent_id: req.user.parent_id,
+        parent_id: parentId,
         student_id: parseInt(student_id)
       }
     });
@@ -2302,7 +2331,12 @@ exports.sendMessageToVPAcademic = async (req, res) => {
 exports.getMessageHistory = async (req, res) => {
   try {
     const { thread_id, student_id } = req.query;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     const whereClause = {
       OR: [
@@ -2370,7 +2404,12 @@ exports.getMessageHistory = async (req, res) => {
 exports.getMessageThread = async (req, res) => {
   try {
     const { threadId } = req.params;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     const [id1, id2] = threadId.split('-').map(Number);
     
@@ -2428,7 +2467,12 @@ exports.replyToMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
     const { content, attachment_url } = req.body;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     const originalMessage = await prisma.message.findUnique({
       where: { message_id: parseInt(messageId) }
@@ -2464,7 +2508,12 @@ exports.replyToMessage = async (req, res) => {
 exports.markMessageAsRead = async (req, res) => {
   try {
     const { messageId } = req.params;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     const message = await prisma.message.update({
       where: { message_id: parseInt(messageId) },
@@ -2484,7 +2533,12 @@ exports.markMessageAsRead = async (req, res) => {
 
 exports.markAllMessagesAsRead = async (req, res) => {
   try {
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     const result = await prisma.message.updateMany({
       where: {
@@ -2511,7 +2565,12 @@ exports.markAllMessagesAsRead = async (req, res) => {
 exports.sendMessageToPrincipal = async (req, res) => {
   try {
     const { subject, content, student_id } = req.body;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     // Find Principal user
     const principal = await prisma.principal.findFirst();
@@ -2541,7 +2600,12 @@ exports.sendMessageToPrincipal = async (req, res) => {
 exports.sendMessageToVPAdmin = async (req, res) => {
   try {
     const { subject, content, student_id } = req.body;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     // Find VP Admin user
     const vpAdmin = await prisma.vPAdministration.findFirst();
@@ -2571,7 +2635,12 @@ exports.sendMessageToVPAdmin = async (req, res) => {
 exports.submitGrievance = async (req, res) => {
   try {
     const { category, subject, description, student_id, priority } = req.body;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     // Create grievance record (using Message table for simplicity)
     const grievance = await prisma.message.create({
@@ -2597,7 +2666,12 @@ exports.submitGrievance = async (req, res) => {
 exports.submitFeedback = async (req, res) => {
   try {
     const { category, subject, description, student_id } = req.body;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     const feedback = await prisma.message.create({
       data: {
@@ -2620,7 +2694,12 @@ exports.submitFeedback = async (req, res) => {
 
 exports.trackGrievanceStatus = async (req, res) => {
   try {
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     const grievances = await prisma.message.findMany({
       where: {
@@ -2653,7 +2732,12 @@ exports.trackGrievanceStatus = async (req, res) => {
 exports.getGrievanceDetails = async (req, res) => {
   try {
     const { grievanceId } = req.params;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     const grievance = await prisma.message.findFirst({
       where: {
@@ -2836,7 +2920,7 @@ exports.getEventCalendar = async (req, res) => {
 exports.getPeerEvaluationSummary = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -2874,7 +2958,7 @@ exports.getPeerEvaluationSummary = async (req, res) => {
 exports.getPeerEvaluationComments = async (req, res) => {
   try {
     const { childId, evaluationId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -2914,7 +2998,7 @@ exports.getPeerEvaluationComments = async (req, res) => {
 exports.getPeerRating = async (req, res) => {
   try {
     const { childId, evaluationId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -2951,7 +3035,7 @@ exports.getPeerRating = async (req, res) => {
 exports.getPeerComparison = async (req, res) => {
   try {
     const { childId, evaluationId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -2988,7 +3072,7 @@ exports.getPeerComparison = async (req, res) => {
 exports.getFeeStructure = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -3038,7 +3122,7 @@ exports.getFeeStructure = async (req, res) => {
 exports.getPaymentHistory = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -3081,7 +3165,7 @@ exports.getPaymentHistory = async (req, res) => {
 exports.getOutstandingBalance = async (req, res) => {
   try {
     const { childId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -3115,7 +3199,7 @@ exports.getOutstandingBalance = async (req, res) => {
 exports.generateFeeReceipt = async (req, res) => {
   try {
     const { childId, paymentId } = req.params;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -3142,7 +3226,12 @@ exports.generateFeeReceipt = async (req, res) => {
 exports.requestFeeClarification = async (req, res) => {
   try {
     const { subject, content, student_id } = req.body;
-    const sender_id = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const sender_id = parent.user_id;
 
     // Find VP Admin
     const vpAdmin = await prisma.vPAdministration.findFirst();
@@ -3175,8 +3264,9 @@ exports.requestFeeClarification = async (req, res) => {
 
 exports.getParentProfile = async (req, res) => {
   try {
+    const parentId = await getParentId(req);
     const parent = await prisma.parent.findUnique({
-      where: { parent_id: req.user.parent_id },
+      where: { parent_id: parentId },
       include: {
         user: true
       }
@@ -3207,9 +3297,14 @@ exports.getParentProfile = async (req, res) => {
 exports.updateParentProfile = async (req, res) => {
   try {
     const { full_name, phone_number, address, preferred_language } = req.body;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
 
     await prisma.user.update({
-      where: { user_id: req.user.user_id },
+      where: { user_id: parent.user_id },
       data: {
         full_name,
         phone_number
@@ -3217,7 +3312,7 @@ exports.updateParentProfile = async (req, res) => {
     });
 
     await prisma.parent.update({
-      where: { parent_id: req.user.parent_id },
+      where: { parent_id: parentId },
       data: {
         address,
         preferred_language
@@ -3302,7 +3397,7 @@ exports.changePassword = async (req, res) => {
 
 exports.getAssociatedChildren = async (req, res) => {
   try {
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     const studentParents = await prisma.studentParent.findMany({
       where: { parent_id: parentId },
@@ -3345,9 +3440,14 @@ exports.requestChildAssociation = async (req, res) => {
     }
 
     // Create association request (using a message for simplicity)
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
     const message = await prisma.message.create({
       data: {
-        sender_id: req.user.user_id,
+        sender_id: parent.user_id,
         receiver_id: 1, // VP Academic
         content: `[CHILD ASSOCIATION REQUEST] Student: ${student_number}, Relationship: ${relationship}, Reason: ${reason}`
       }
@@ -3366,7 +3466,12 @@ exports.requestChildAssociation = async (req, res) => {
 
 exports.getLoginHistory = async (req, res) => {
   try {
-    const userId = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const userId = parent.user_id;
 
     const sessions = await prisma.userSession.findMany({
       where: { user_id: userId },
@@ -3393,9 +3498,14 @@ exports.requestAccountDeactivation = async (req, res) => {
     const { reason } = req.body;
 
     // Create deactivation request
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
     const message = await prisma.message.create({
       data: {
-        sender_id: req.user.user_id,
+        sender_id: parent.user_id,
         receiver_id: 1,
         content: `[ACCOUNT DEACTIVATION REQUEST] Reason: ${reason}`
       }
@@ -3446,9 +3556,10 @@ exports.bookConferenceSlot = async (req, res) => {
     const { conference_id, time_slot, teacher_id, student_id } = req.body;
 
     // Verify parent has access to this student
+    const parentId = await getParentId(req);
     const studentParent = await prisma.studentParent.findFirst({
       where: {
-        parent_id: req.user.parent_id,
+        parent_id: parentId,
         student_id: parseInt(student_id)
       }
     });
@@ -3458,9 +3569,13 @@ exports.bookConferenceSlot = async (req, res) => {
     }
 
     // Create booking (using message for simplicity)
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
     const message = await prisma.message.create({
       data: {
-        sender_id: req.user.user_id,
+        sender_id: parent.user_id,
         receiver_id: parseInt(teacher_id),
         content: `[CONFERENCE BOOKING] Conference ID: ${conference_id}, Time: ${time_slot}, Student: ${student_id}`
       }
@@ -3624,10 +3739,15 @@ exports.getPTSAMeetingMinutes = async (req, res) => {
 exports.submitPTSAFeedback = async (req, res) => {
   try {
     const { subject, content, category } = req.body;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
 
     const feedback = await prisma.pTSAFeedback.create({
       data: {
-        submitted_by: req.user.user_id,
+        submitted_by: parent.user_id,
         subject,
         content,
         category: category || 'GENERAL'
@@ -3791,7 +3911,7 @@ exports.generateAcademicReport = async (req, res) => {
   try {
     const { childId } = req.params;
     const { term, include_charts, include_comments } = req.body;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -3806,9 +3926,13 @@ exports.generateAcademicReport = async (req, res) => {
     }
 
     // Create report record
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
     const report = await prisma.report.create({
       data: {
-        generated_by: req.user.user_id,
+        generated_by: parent.user_id,
         title: `Academic Report - Child ${childId}`,
         data: {
           type: 'ACADEMIC',
@@ -3835,7 +3959,7 @@ exports.generateAttendanceReport = async (req, res) => {
   try {
     const { childId } = req.params;
     const { term, include_calendar } = req.body;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -3849,9 +3973,13 @@ exports.generateAttendanceReport = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
     const report = await prisma.report.create({
       data: {
-        generated_by: req.user.user_id,
+        generated_by: parent.user_id,
         title: `Attendance Report - Child ${childId}`,
         data: {
           type: 'ATTENDANCE',
@@ -3877,7 +4005,7 @@ exports.generateConductReport = async (req, res) => {
   try {
     const { childId } = req.params;
     const { term, include_comments } = req.body;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -3891,9 +4019,13 @@ exports.generateConductReport = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
     const report = await prisma.report.create({
       data: {
-        generated_by: req.user.user_id,
+        generated_by: parent.user_id,
         title: `Conduct Report - Child ${childId}`,
         data: {
           type: 'CONDUCT',
@@ -3919,7 +4051,7 @@ exports.generateCombinedReport = async (req, res) => {
   try {
     const { childId } = req.params;
     const { term, include_charts, include_comments } = req.body;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -3933,9 +4065,13 @@ exports.generateCombinedReport = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
     const report = await prisma.report.create({
       data: {
-        generated_by: req.user.user_id,
+        generated_by: parent.user_id,
         title: `Combined Report - Child ${childId}`,
         data: {
           type: 'COMBINED',
@@ -3962,7 +4098,7 @@ exports.exportDataToCSV = async (req, res) => {
   try {
     const { childId } = req.params;
     const { type = 'all', term } = req.query;
-    const parentId = req.user.parent_id;
+    const parentId = await getParentId(req);
 
     // Verify access
     const studentParent = await prisma.studentParent.findFirst({
@@ -4044,10 +4180,15 @@ exports.getUserGuide = async (req, res) => {
 exports.submitHelpRequest = async (req, res) => {
   try {
     const { category, subject, description, priority } = req.body;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
 
     const message = await prisma.message.create({
       data: {
-        sender_id: req.user.user_id,
+        sender_id: parent.user_id,
         receiver_id: 1,
         content: `[HELP REQUEST - ${category}] ${subject}: ${description}`
       }
@@ -4113,7 +4254,12 @@ exports.getSupportContact = async (req, res) => {
 
 exports.getNotifications = async (req, res) => {
   try {
-    const userId = req.user.user_id;
+    const parentId = await getParentId(req);
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+    const userId = parent.user_id;
 
     const notifications = await prisma.notification.findMany({
       where: { user_id: userId },

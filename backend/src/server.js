@@ -60,25 +60,37 @@ app.use('/api/admin/classes', classRoutes);
 const departmentHeadRoutes = require('./routes/departmentHeadRoutes');
 app.use('/api/department-head', departmentHeadRoutes);
 
-// Principal routes
+// Principal routes (no authentication for development)
 const principalRoutes = require('./routes/principalRoutes');
-const { authenticatePrincipal } = require('./middleware/principalAuth');
-app.use('/api/principal', authenticatePrincipal, principalRoutes);
+app.use('/api/principal', principalRoutes);
 
-// VP Academic routes
+// VP Academic routes (no authentication for development)
 const vpAcademicRoutes = require('./routes/vpAcademicRoutes');
-const { authenticateVPAcademic } = require('./middleware/vpAcademicAuth');
-app.use('/api/vp-academic', authenticateVPAcademic, vpAcademicRoutes);
+app.use('/api/vp-academic', vpAcademicRoutes);
 
 // VP Administration routes
 const vpAdminRoutes = require('./routes/vpAdminRoutes');
-// const { authenticateVPAdmin } = require('./middleware/vpAdminAuth'); // To be implemented
 app.use('/api/vp-administration', vpAdminRoutes);
 
-// SIC (School Improvement Committee) routes
+// SIC (School Improvement Committee) routes (no authentication for development)
 const sicRoutes = require('./routes/sicRoutes');
-const { authenticateSIC } = require('./middleware/sicAuth');
-app.use('/api/sic', authenticateSIC, sicRoutes);
+app.use('/api/sic', sicRoutes);
+
+// Parent routes
+const parentRoutes = require('./routes/parentRoutes');
+app.use('/api/parent', parentRoutes);
+
+// Teacher routes (no authentication for development)
+const teacherRoutes = require('./routes/teacherRoutes');
+app.use('/api/teacher', teacherRoutes);
+
+// Student routes (no authentication for development)
+const studentRoutes = require('./routes/studentRoutes');
+app.use('/api/student', studentRoutes);
+
+// PTSA representative routes (no authentication for development)
+const ptsaRoutes = require('./routes/ptsaRoutes');
+app.use('/api/ptsa', ptsaRoutes);
 
 // app.use('/api/admin/classes', classRoutes);
 // app.use('/api/admin/attendance', attendanceRoutes);

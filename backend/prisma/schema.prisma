@@ -26,6 +26,7 @@ enum UserRole {
   PARENT
   PTSA_REPRESENTATIVE
   SIC_MEMBER
+  NON_ACADEMIC_STAFF
 }
 
 enum AttendanceStatus {
@@ -123,12 +124,16 @@ model User {
   intervention_plans    InterventionPlan[] @relation("InterventionCreator")
   curriculum_maps       CurriculumMap[]    @relation("CurriculumCreator")
   ptsa_meetings_created PTSAMeeting[]    @relation("PTSAMeetingCreator")
+  ptsa_meetings_approved PTSAMeeting[]   @relation("PTSAMeetingApprover")
   ptsa_meeting_attendances PTSAMeetingAttendee[] @relation("PTSAMeetingAttendee")
   ptsa_feedback_submitted PTSAFeedback[]  @relation("PTSAFeedbackSubmitter")
+  ptsa_feedback_responded PTSAFeedback[]  @relation("PTSAFeedbackResponder")
   budget_advisories_submitted BudgetAdvisory[] @relation("BudgetAdvisorySubmitter")
+  budget_advisories_reviewed BudgetAdvisory[] @relation("BudgetAdvisoryReviewer")
   sip_feedback_submitted SIPFeedback[]    @relation("SIPFeedbackSubmitter")
   parent_surveys_created ParentSurvey[]   @relation("ParentSurveyCreator")
   grievances_submitted  Grievance[]       @relation("GrievanceSubmitter")
+  grievances_assigned   Grievance[]      @relation("GrievanceAssignee")
   ptsa_fund_transactions_created PTSAFundTransaction[] @relation("PTSAFundTransactionCreator")
   ptsa_announcements_created PTSAAnnouncement[] @relation("PTSAAnnouncementCreator")
 
@@ -241,6 +246,7 @@ model Teacher {
   exam_invigilations  ExamInvigilator[]
   peer_evaluations_as_evaluator PeerEvaluation[] @relation("PeerEvaluationEvaluator")
   peer_evaluations_as_evaluatee PeerEvaluation[] @relation("PeerEvaluationEvaluatee")
+  teacher_settings    TeacherSettings?
 
   @@map("teachers")
 }
@@ -264,6 +270,20 @@ model Student {
   transcripts         Transcript[]
   exam_results         ExamResult[] @relation("ExamResultStudent")
   intervention_plans   InterventionPlan[] @relation("InterventionStudent")
+  student_notes       StudentNote[]
+  book_progress       BookProgress[]
+  book_bookmarks      BookBookmark[]
+  book_highlights     BookHighlight[]
+  book_annotations    BookAnnotation[]
+  quiz_attempts       QuizAttempt[]
+  notification_preferences StudentNotificationPreference?
+  login_history       StudentLoginHistory[]
+  student_profile     StudentProfile?
+  peer_evaluations_received StudentPeerEvaluation[] @relation("StudentEvaluated")
+  peer_evaluations_given StudentPeerEvaluation[] @relation("StudentEvaluator")
+  session_attendances SessionAttendance[]
+  material_progress  MaterialProgress[]
+  forum_posts         ForumPost[]
 
   @@index([current_class_id])
   @@map("students")
@@ -311,6 +331,7 @@ model Subject {
   class_subjects  ClassSubject[]
   class_schedules ClassSchedule[]
   curriculum_maps CurriculumMap[]
+  ai_books        AIBook[]
 
   @@map("subjects")
 }
@@ -327,6 +348,9 @@ model ClassSubject {
   assignments       Assignment[]
   lesson_plans      LessonPlan[]
   exams             Exam[]
+  virtual_classes   VirtualClass[]
+  course_materials  CourseMaterial[]
+  discussion_forums DiscussionForum[]
 
   @@unique([class_id, subject_id])
   @@map("class_subject")
@@ -365,6 +389,9 @@ model Assignment {
   due_date         DateTime
   max_score        Decimal   @db.Decimal(5, 2)
   attachments      String[]
+  allow_resubmission Boolean  @default(false)
+  resubmission_deadline DateTime?
+  max_resubmissions Int       @default(1)
   created_at       DateTime  @default(now())
   updated_at       DateTime  @default(now()) @updatedAt
 
@@ -381,12 +408,17 @@ model Submission {
   submitted_at  DateTime  @default(now())
   file_url      String    @db.Text
   is_late       Boolean   @default(false)
+  resubmission_number Int  @default(0)
+  parent_submission_id Int? @map("parent_submission_id")
+  feedback_viewed Boolean @default(false)
 
   assignment    Assignment  @relation(fields: [assignment_id], references: [assignment_id], onDelete: Cascade)
   student       Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
   grade         Grade?
+  resubmissions Submission[] @relation("SubmissionResubmissions")
+  parent_submission Submission? @relation("SubmissionResubmissions", fields: [parent_submission_id], references: [submission_id], onDelete: SetNull)
 
-  @@unique([assignment_id, student_id])
+  @@unique([assignment_id, student_id, resubmission_number])
   @@map("submissions")
 }
 
@@ -1074,6 +1106,7 @@ model SIPFeedback {
   submitted_at       DateTime  @default(now())
 
   sip                SchoolImprovementPlan @relation(fields: [sip_id], references: [sip_id], onDelete: Cascade)
+  submitted_by_user  User @relation("SIPFeedbackSubmitter", fields: [submitted_by], references: [user_id], onDelete: Cascade)
 
   @@map("sip_feedback")
 }
@@ -1103,6 +1136,9 @@ model PTSAFeedback {
   responded_at       DateTime?
   submitted_at       DateTime  @default(now())
 
+  submitted_by_user  User @relation("PTSAFeedbackSubmitter", fields: [submitted_by], references: [user_id], onDelete: Cascade)
+  responded_by_user  User? @relation("PTSAFeedbackResponder", fields: [responded_by], references: [user_id], onDelete: SetNull)
+
   @@map("ptsa_feedback")
 }
 
@@ -1116,6 +1152,9 @@ model BudgetAdvisory {
   reviewed_by        Int?      @map("reviewed_by")
   reviewed_at        DateTime?
   submitted_at       DateTime  @default(now())
+
+  submitted_by_user  User @relation("BudgetAdvisorySubmitter", fields: [submitted_by], references: [user_id], onDelete: Cascade)
+  reviewed_by_user   User? @relation("BudgetAdvisoryReviewer", fields: [reviewed_by], references: [user_id], onDelete: SetNull)
 
   @@map("budget_advisories")
 }
@@ -1133,6 +1172,8 @@ model PTSAMeeting {
   created_at         DateTime  @default(now())
   updated_at         DateTime  @default(now()) @updatedAt
 
+  created_by_user    User      @relation("PTSAMeetingCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
+  approved_by_user   User?     @relation("PTSAMeetingApprover", fields: [approved_by], references: [user_id], onDelete: SetNull)
   attendees          PTSAMeetingAttendee[]
   minutes            PTSAMeetingMinutes?
   announcements      PTSAAnnouncement[]
@@ -1148,6 +1189,9 @@ model PTSAMeetingAttendee {
   role               String?   @db.VarChar(50) // MEMBER, GUEST, PRINCIPAL
   notes              String?   @db.Text
 
+  meeting            PTSAMeeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
+  user               User       @relation("PTSAMeetingAttendee", fields: [user_id], references: [user_id], onDelete: Cascade)
+
   @@unique([meeting_id, user_id])
   @@map("ptsa_meeting_attendees")
 }
@@ -1159,6 +1203,8 @@ model PTSAMeetingMinutes {
   action_items       Json?
   created_by         Int       @map("created_by")
   created_at         DateTime  @default(now())
+
+  meeting            PTSAMeeting @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
 
   @@map("ptsa_meeting_minutes")
 }
@@ -1172,6 +1218,9 @@ model PTSAAnnouncement {
   published_at       DateTime  @default(now())
   is_active          Boolean   @default(true)
 
+  meeting            PTSAMeeting? @relation(fields: [meeting_id], references: [meeting_id], onDelete: SetNull)
+  created_by_user    User        @relation("PTSAAnnouncementCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
+
   @@map("ptsa_announcements")
 }
 
@@ -1183,6 +1232,8 @@ model PTSAFundTransaction {
   created_by         Int       @map("created_by")
   transaction_date   DateTime  @default(now())
   receipt_url        String?   @db.Text
+
+  created_by_user    User @relation("PTSAFundTransactionCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
 
   @@map("ptsa_fund_transactions")
 }
@@ -1202,6 +1253,9 @@ model Grievance {
   escalation_date    DateTime?
   submitted_at       DateTime  @default(now())
   resolved_at        DateTime?
+
+  submitted_by_user  User @relation("GrievanceSubmitter", fields: [submitted_by], references: [user_id], onDelete: Cascade)
+  assigned_to_user   User? @relation("GrievanceAssignee", fields: [assigned_to], references: [user_id], onDelete: SetNull)
 
   @@map("grievances")
 }
@@ -1461,6 +1515,7 @@ model ParentSurvey {
   created_at         DateTime  @default(now())
   updated_at         DateTime  @default(now()) @updatedAt
 
+  created_by_user    User @relation("ParentSurveyCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
   responses          ParentSurveyResponse[]
 
   @@map("parent_surveys")
@@ -1474,6 +1529,7 @@ model ParentSurveyResponse {
   submitted_at       DateTime  @default(now())
 
   survey             ParentSurvey @relation(fields: [survey_id], references: [survey_id], onDelete: Cascade)
+  parent             Parent      @relation("ParentSurveyResponse", fields: [parent_id], references: [parent_id], onDelete: Cascade)
 
   @@unique([survey_id, parent_id])
   @@map("parent_survey_responses")
@@ -1931,6 +1987,8 @@ model InventoryTransaction {
   notes              String?   @db.Text
   transaction_date   DateTime  @default(now())
 
+  inventory          Inventory @relation(fields: [inventory_id], references: [inventory_id], onDelete: Cascade)
+
   @@map("inventory_transactions")
 }
 
@@ -2179,5 +2237,560 @@ model FoodTransaction {
   notes              String?   @db.Text
   transaction_date   DateTime  @default(now())
 
+  food               FoodInventory @relation(fields: [food_id], references: [food_id], onDelete: Cascade)
+
   @@map("food_transactions")
+}
+
+// ----------------------------
+// 15. PARENT-SPECIFIC TABLES
+// ----------------------------
+
+// Conduct & Behavior Tracking
+model ConductGrade {
+  conduct_id        Int       @id @default(autoincrement()) @map("conduct_id")
+  student_id        Int       @map("student_id")
+  term              String    @db.VarChar(20)
+  academic_year     String    @db.VarChar(20)
+  grade             String    @db.VarChar(20) // EXCELLENT, GOOD, SATISFACTORY, NEEDS_IMPROVEMENT, POOR
+  rating            Decimal   @db.Decimal(3, 2) // 1-5 scale
+  teacher_id        Int       @map("teacher_id")
+  comments          String?   @db.Text
+  graded_at         DateTime  @default(now())
+
+  conduct_comments  ConductComment[]
+
+  @@unique([student_id, term, academic_year])
+  @@map("conduct_grades")
+}
+
+model ConductComment {
+  comment_id        Int       @id @default(autoincrement()) @map("comment_id")
+  conduct_id        Int       @map("conduct_id")
+  teacher_id        Int       @map("teacher_id")
+  comment           String    @db.Text
+  subject           String?   @db.VarChar(100)
+  commented_at      DateTime  @default(now())
+
+  conduct           ConductGrade @relation(fields: [conduct_id], references: [conduct_id], onDelete: Cascade)
+
+  @@map("conduct_comments")
+}
+
+model ConductIncident {
+  incident_id       Int       @id @default(autoincrement()) @map("incident_id")
+  student_id        Int       @map("student_id")
+  incident_date     DateTime  @db.Date
+  incident_type     String    @db.VarChar(50) // MINOR, MAJOR, SERIOUS
+  description       String    @db.Text
+  resolution        String?   @db.Text
+  status            String    @default("RESOLVED") @db.VarChar(20) // PENDING, RESOLVED, ESCALATED
+  reported_by       Int       @map("reported_by")
+  resolved_by       Int?      @map("resolved_by")
+  resolved_at       DateTime?
+  created_at        DateTime  @default(now())
+
+  @@map("conduct_incidents")
+}
+
+// Parent-Teacher Conference
+model ParentTeacherConference {
+  conference_id     Int       @id @default(autoincrement()) @map("conference_id")
+  title             String    @db.VarChar(200)
+  conference_date   DateTime  @db.Date
+  start_time        DateTime  @db.Time
+  end_time          DateTime  @db.Time
+  location          String?   @db.VarChar(100)
+  academic_year     String    @db.VarChar(20)
+  term              String    @db.VarChar(20)
+  status            String    @default("SCHEDULED") @db.VarChar(20) // SCHEDULED, COMPLETED, CANCELLED
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  bookings          ConferenceBooking[]
+
+  @@map("parent_teacher_conferences")
+}
+
+model ConferenceBooking {
+  booking_id        Int       @id @default(autoincrement()) @map("booking_id")
+  conference_id     Int       @map("conference_id")
+  parent_id         Int       @map("parent_id")
+  student_id        Int       @map("student_id")
+  teacher_id        Int       @map("teacher_id")
+  booked_at         DateTime  @default(now())
+  status            String    @default("CONFIRMED") @db.VarChar(20) // CONFIRMED, CANCELLED, COMPLETED
+  notes             String?   @db.Text
+  reminder_sent     Boolean   @default(false)
+
+  conference        ParentTeacherConference @relation(fields: [conference_id], references: [conference_id], onDelete: Cascade)
+
+  @@unique([conference_id, parent_id, student_id])
+  @@map("conference_bookings")
+}
+
+// Parent Settings & Preferences
+model ParentNotificationPreference {
+  preference_id     Int       @id @default(autoincrement()) @map("preference_id")
+  parent_id         Int       @unique @map("parent_id")
+  email_grades      Boolean   @default(true)
+  email_attendance  Boolean   @default(true)
+  email_conduct     Boolean   @default(true)
+  email_assignments Boolean   @default(true)
+  email_announcements Boolean @default(true)
+  sms_grades        Boolean   @default(false)
+  sms_attendance    Boolean   @default(false)
+  sms_conduct       Boolean   @default(false)
+  sms_assignments   Boolean   @default(false)
+  sms_announcements Boolean   @default(false)
+  in_app_grades     Boolean   @default(true)
+  in_app_attendance Boolean   @default(true)
+  in_app_conduct    Boolean   @default(true)
+  in_app_assignments Boolean @default(true)
+  in_app_announcements Boolean @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  @@map("parent_notification_preferences")
+}
+
+model ParentLoginHistory {
+  login_id          Int       @id @default(autoincrement()) @map("login_id")
+  parent_id         Int       @map("parent_id")
+  login_time        DateTime  @default(now())
+  logout_time       DateTime?
+  ip_address        String?   @db.VarChar(50)
+  user_agent        String?   @db.Text
+  device_type       String?   @db.VarChar(50) // MOBILE, DESKTOP, TABLET
+  login_status      String    @default("SUCCESS") @db.VarChar(20) // SUCCESS, FAILED
+
+  @@map("parent_login_history")
+}
+
+// Child Association Requests
+model ParentChildAssociationRequest {
+  request_id        Int       @id @default(autoincrement()) @map("request_id")
+  parent_id         Int       @map("parent_id")
+  student_id        Int       @map("student_id")
+  relationship      String    @db.VarChar(40)
+  reason            String    @db.Text
+  status            String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED
+  requested_at      DateTime  @default(now())
+  reviewed_by       Int?      @map("reviewed_by") // VP Academic user_id
+  reviewed_at       DateTime?
+  rejection_reason  String?   @db.Text
+
+  @@unique([parent_id, student_id])
+  @@map("parent_child_association_requests")
+}
+
+// National Exam Results (EGSECE/ESSLCE)
+model NationalExamResult {
+  result_id         Int       @id @default(autoincrement()) @map("result_id")
+  student_id        Int       @map("student_id")
+  exam_type         String    @db.VarChar(20) // EGSECE, ESSLCE
+  academic_year     String    @db.VarChar(20)
+  exam_year         Int
+  subjects          Json      // Array of {subject, score, grade}
+  overall_grade     String    @db.VarChar(10)
+  division          Int?      // 1, 2, 3, 4
+  total_score       Decimal?  @db.Decimal(10, 2)
+  max_score         Decimal?  @db.Decimal(10, 2)
+  percentage        Decimal?  @db.Decimal(5, 2)
+  school_rank       Int?
+  region_rank       Int?
+  certificate_url   String?   @db.Text
+  verified          Boolean   @default(false)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  @@unique([student_id, exam_type, exam_year])
+  @@map("national_exam_results")
+}
+
+// Student Peer Evaluations
+model StudentPeerEvaluation {
+  evaluation_id     Int       @id @default(autoincrement()) @map("evaluation_id")
+  student_id        Int       @map("student_id") // Student being evaluated
+  evaluator_id      Int       @map("evaluator_id") // Student doing the evaluation
+  class_id          Int       @map("class_id")
+  term              String    @db.VarChar(20)
+  academic_year     String    @db.VarChar(20)
+  teamwork_score    Decimal   @db.Decimal(3, 2)
+  participation_score Decimal @db.Decimal(3, 2)
+  collaboration_score Decimal @db.Decimal(3, 2)
+  respect_score     Decimal   @db.Decimal(3, 2)
+  overall_rating    Decimal   @db.Decimal(3, 2)
+  comments          String?   @db.Text
+  is_anonymous      Boolean   @default(true)
+  submitted_at      DateTime  @default(now())
+
+  evaluated_student Student   @relation("StudentEvaluated", fields: [student_id], references: [student_id], onDelete: Cascade)
+  evaluator_student Student   @relation("StudentEvaluator", fields: [evaluator_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([student_id, evaluator_id, term, academic_year])
+  @@map("student_peer_evaluations")
+}
+
+// ----------------------------
+// 16. STUDENT-SPECIFIC TABLES
+// ----------------------------
+
+// Student Notes
+model StudentNote {
+  note_id          Int       @id @default(autoincrement()) @map("note_id")
+  student_id       Int       @map("student_id")
+  title            String    @db.VarChar(200)
+  content          String    @db.Text
+  subject          String?   @db.VarChar(100)
+  tags             String[]  @db.VarChar(50)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@index([student_id])
+  @@map("student_notes")
+}
+
+// AI Books
+model AIBook {
+  book_id          Int       @id @default(autoincrement()) @map("book_id")
+  title            String    @db.VarChar(200)
+  subject_id       Int?      @map("subject_id")
+  grade_level      Int       // 9, 10, 11, 12
+  description      String?   @db.Text
+  content          Json      // Book content structure
+  author           String?   @db.VarChar(100)
+  cover_image_url  String?   @db.Text
+  is_active        Boolean   @default(true)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  subject          Subject?  @relation(fields: [subject_id], references: [subject_id], onDelete: SetNull)
+  book_progress    BookProgress[]
+  book_quizzes     BookQuiz[]
+
+  @@map("ai_books")
+}
+
+model BookProgress {
+  progress_id      Int       @id @default(autoincrement()) @map("progress_id")
+  book_id          Int       @map("book_id")
+  student_id       Int       @map("student_id")
+  current_page     Int       @default(0)
+  total_pages      Int       @default(0)
+  completion_percentage Decimal @default(0) @db.Decimal(5, 2)
+  last_read_at     DateTime  @default(now())
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  book             AIBook    @relation(fields: [book_id], references: [book_id], onDelete: Cascade)
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([book_id, student_id])
+  @@map("book_progress")
+}
+
+model BookBookmark {
+  bookmark_id      Int       @id @default(autoincrement()) @map("bookmark_id")
+  book_id          Int       @map("book_id")
+  student_id       Int       @map("student_id")
+  page_number      Int
+  section_title    String?   @db.VarChar(200)
+  note             String?   @db.Text
+  created_at       DateTime  @default(now())
+
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([book_id, student_id, page_number])
+  @@map("book_bookmarks")
+}
+
+model BookHighlight {
+  highlight_id     Int       @id @default(autoincrement()) @map("highlight_id")
+  book_id          Int       @map("book_id")
+  student_id       Int       @map("student_id")
+  page_number      Int
+  text_content     String    @db.Text
+  color            String    @default("yellow") @db.VarChar(20)
+  note             String?   @db.Text
+  created_at       DateTime  @default(now())
+
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@map("book_highlights")
+}
+
+model BookAnnotation {
+  annotation_id    Int       @id @default(autoincrement()) @map("annotation_id")
+  book_id          Int       @map("book_id")
+  student_id       Int       @map("student_id")
+  page_number      Int
+  annotation_type  String    @db.VarChar(20) // NOTE, QUESTION, SUMMARY
+  content          String    @db.Text
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@map("book_annotations")
+}
+
+model BookQuiz {
+  quiz_id          Int       @id @default(autoincrement()) @map("quiz_id")
+  book_id          Int       @map("book_id")
+  title            String    @db.VarChar(200)
+  questions        Json      // Array of quiz questions
+  passing_score    Decimal   @db.Decimal(5, 2)
+  created_at       DateTime  @default(now())
+
+  book             AIBook    @relation(fields: [book_id], references: [book_id], onDelete: Cascade)
+  quiz_attempts    QuizAttempt[]
+
+  @@map("book_quizzes")
+}
+
+model QuizAttempt {
+  attempt_id       Int       @id @default(autoincrement()) @map("attempt_id")
+  quiz_id          Int       @map("quiz_id")
+  student_id       Int       @map("student_id")
+  answers          Json      // Student's answers
+  score            Decimal   @db.Decimal(5, 2)
+  percentage       Decimal   @db.Decimal(5, 2)
+  passed           Boolean   @default(false)
+  attempted_at     DateTime  @default(now())
+
+  quiz             BookQuiz  @relation(fields: [quiz_id], references: [quiz_id], onDelete: Cascade)
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
+// Student Notification Preferences
+model StudentNotificationPreference {
+  preference_id     Int       @id @default(autoincrement()) @map("preference_id")
+  student_id        Int       @unique @map("student_id")
+  email_grades      Boolean   @default(true)
+  email_attendance  Boolean   @default(true)
+  email_conduct     Boolean   @default(true)
+  email_assignments Boolean   @default(true)
+  email_announcements Boolean @default(true)
+  sms_grades        Boolean   @default(false)
+  sms_attendance    Boolean   @default(false)
+  sms_conduct       Boolean   @default(false)
+  sms_assignments   Boolean   @default(false)
+  sms_announcements Boolean   @default(false)
+  in_app_grades     Boolean   @default(true)
+  in_app_attendance Boolean   @default(true)
+  in_app_conduct    Boolean   @default(true)
+  in_app_assignments Boolean @default(true)
+  in_app_announcements Boolean @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@map("student_notification_preferences")
+}
+
+// Student Login History
+model StudentLoginHistory {
+  login_id          Int       @id @default(autoincrement()) @map("login_id")
+  student_id        Int       @map("student_id")
+  login_time        DateTime  @default(now())
+  logout_time       DateTime?
+  ip_address        String?   @db.VarChar(50)
+  user_agent        String?   @db.Text
+  device_type       String?   @db.VarChar(50) // MOBILE, DESKTOP, TABLET
+  login_status      String    @default("SUCCESS") @db.VarChar(20) // SUCCESS, FAILED
+
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@map("student_login_history")
+}
+
+// Student Profile Settings
+model StudentProfile {
+  profile_id        Int       @id @default(autoincrement()) @map("profile_id")
+  student_id        Int       @unique @map("student_id")
+  phone_number      String?   @db.VarChar(20)
+  email_address     String?   @db.VarChar(100)
+  home_address      String?   @db.Text
+  profile_picture_url String?  @db.Text
+  bio               String?   @db.Text
+  interests         String[]  @db.VarChar(50)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@map("student_profiles")
+}
+
+// ----------------------------
+// 17. ONLINE LEARNING SYSTEM
+// ----------------------------
+
+// Virtual Classes
+model VirtualClass {
+  virtual_class_id Int       @id @default(autoincrement()) @map("virtual_class_id")
+  class_subject_id Int       @map("class_subject_id")
+  title            String    @db.VarChar(200)
+  description      String?   @db.Text
+  meeting_link     String    @db.Text // Zoom/Google Meet link
+  meeting_id       String?   @db.VarChar(100) // Meeting ID
+  meeting_password String?   @db.VarChar(50)
+  is_recurring     Boolean   @default(false)
+  recurring_pattern String?  @db.VarChar(50) // DAILY, WEEKLY, BIWEEKLY
+  max_participants Int?
+  is_active        Boolean   @default(true)
+  created_by       Int       @map("created_by")
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  class_subject    ClassSubject @relation(fields: [class_subject_id], references: [class_subject_id], onDelete: Cascade)
+  live_sessions    LiveSession[]
+
+  @@map("virtual_classes")
+}
+
+// Live Sessions
+model LiveSession {
+  session_id       Int       @id @default(autoincrement()) @map("session_id")
+  virtual_class_id Int       @map("virtual_class_id")
+  title            String    @db.VarChar(200)
+  scheduled_start  DateTime
+  scheduled_end    DateTime
+  actual_start     DateTime?
+  actual_end       DateTime?
+  status           String    @default("SCHEDULED") @db.VarChar(20) // SCHEDULED, LIVE, ENDED, CANCELLED
+  recording_url    String?   @db.Text
+  chat_enabled     Boolean   @default(true)
+  recording_enabled Boolean  @default(false)
+  notes            String?   @db.Text
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  virtual_class    VirtualClass @relation(fields: [virtual_class_id], references: [virtual_class_id], onDelete: Cascade)
+  session_attendances SessionAttendance[]
+
+  @@map("live_sessions")
+}
+
+// Session Attendance
+model SessionAttendance {
+  attendance_id    Int       @id @default(autoincrement()) @map("attendance_id")
+  session_id       Int       @map("session_id")
+  student_id       Int       @map("student_id")
+  join_time        DateTime?
+  leave_time       DateTime?
+  duration_minutes Int?
+  attended         Boolean   @default(false)
+  engagement_score Decimal?  @db.Decimal(3, 2) // Based on participation
+  notes            String?   @db.Text
+  created_at       DateTime  @default(now())
+
+  session          LiveSession @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([session_id, student_id])
+  @@map("session_attendances")
+}
+
+// Course Materials (for online learning)
+model CourseMaterial {
+  material_id      Int       @id @default(autoincrement()) @map("material_id")
+  class_subject_id Int       @map("class_subject_id")
+  title            String    @db.VarChar(200)
+  description      String?   @db.Text
+  material_type    String    @db.VarChar(50) // VIDEO, PDF, DOCUMENT, LINK, AUDIO
+  file_url         String    @db.Text
+  file_size        Int?      // in bytes
+  duration_minutes Int?      // For videos/audio
+  order            Int       @default(0)
+  is_published     Boolean   @default(true)
+  created_by       Int       @map("created_by")
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  class_subject    ClassSubject @relation(fields: [class_subject_id], references: [class_subject_id], onDelete: Cascade)
+
+  @@map("course_materials")
+}
+
+// Student Progress on Course Materials
+model MaterialProgress {
+  progress_id      Int       @id @default(autoincrement()) @map("progress_id")
+  material_id      Int       @map("material_id")
+  student_id       Int       @map("student_id")
+  completed        Boolean   @default(false)
+  completion_percentage Decimal @default(0) @db.Decimal(5, 2)
+  last_accessed    DateTime  @default(now())
+  time_spent_minutes Int      @default(0)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([material_id, student_id])
+  @@map("material_progress")
+}
+
+// Discussion Forums
+model DiscussionForum {
+  forum_id         Int       @id @default(autoincrement()) @map("forum_id")
+  class_subject_id Int       @map("class_subject_id")
+  title            String    @db.VarChar(200)
+  description      String?   @db.Text
+  is_active        Boolean   @default(true)
+  created_by       Int       @map("created_by")
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  class_subject    ClassSubject @relation(fields: [class_subject_id], references: [class_subject_id], onDelete: Cascade)
+  forum_posts      ForumPost[]
+
+  @@map("discussion_forums")
+}
+
+model ForumPost {
+  post_id          Int       @id @default(autoincrement()) @map("post_id")
+  forum_id         Int       @map("forum_id")
+  student_id       Int?      @map("student_id")
+  teacher_id       Int?      @map("teacher_id")
+  parent_post_id   Int?      @map("parent_post_id")
+  content          String    @db.Text
+  is_pinned        Boolean   @default(false)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  forum            DiscussionForum @relation(fields: [forum_id], references: [forum_id], onDelete: Cascade)
+  student          Student?   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  replies          ForumPost[] @relation("ForumPostReplies")
+  parent_post      ForumPost? @relation("ForumPostReplies", fields: [parent_post_id], references: [post_id], onDelete: SetNull)
+
+  @@map("forum_posts")
+}
+
+// ----------------------------
+// 18. TEACHER-SPECIFIC TABLES
+// ----------------------------
+
+// Teacher Settings & Preferences
+model TeacherSettings {
+  settings_id      Int       @id @default(autoincrement()) @map("settings_id")
+  teacher_id       Int       @unique @map("teacher_id")
+  grading_rubric   Json?     // Custom grading rubric preferences
+  assignment_defaults Json?   // Default assignment settings
+  notification_preferences Json?
+  teaching_preferences Json?  // Teaching style preferences
+  timezone         String    @default("Africa/Addis_Ababa") @db.VarChar(50)
+  language         String    @default("en") @db.VarChar(10)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+
+  teacher          Teacher   @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+
+  @@map("teacher_settings")
 }

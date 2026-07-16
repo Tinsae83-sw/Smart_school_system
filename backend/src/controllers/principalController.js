@@ -5,6 +5,26 @@ const prisma = require('../config/prisma');
  * Comprehensive controller for Principal operations
  */
 
+// Helper function to get principal ID (with or without authentication)
+async function getPrincipalId(req) {
+  // If authenticated, use the authenticated principal ID
+  if (req.user_id) {
+    return req.user_id;
+  }
+  
+  // For development without authentication, use the first principal in the database
+  const principal = await prisma.principal.findFirst({
+    where: { user: { role: 'PRINCIPAL' } },
+    include: { user: true }
+  });
+  
+  if (!principal) {
+    throw new Error('No principal found in database');
+  }
+  
+  return principal.user_id;
+}
+
 // ==================== DASHBOARD & OVERVIEW ====================
 
 /**
@@ -221,7 +241,7 @@ async function getRecentAlerts(req, res) {
   } catch (error) {
     console.error('Alerts error:', error);
     return res.status(500).json({ error: 'Internal server error' });
-  */
+  }
 }
 
 // ==================== STAFF MANAGEMENT ====================
@@ -445,9 +465,10 @@ async function terminateSeniorStaff(req, res) {
     }
 
     // Create audit log
+    const user_id = await getPrincipalId(req);
     await prisma.auditLog.create({
       data: {
-        user_id: req.user.user_id,
+        user_id: user_id,
         action: 'TERMINATE_SENIOR_STAFF',
         details: {
           target_user_id: parseInt(id),
@@ -799,7 +820,7 @@ async function approveExpenditure(req, res) {
       where: { expenditure_id: parseInt(id) },
       data: {
         status: 'APPROVED',
-        approved_by: req.user.user_id
+        approved_by: await getPrincipalId(req)
       }
     });
 
@@ -863,7 +884,7 @@ async function approveFacilityBooking(req, res) {
       where: { booking_id: parseInt(id) },
       data: {
         status: 'APPROVED',
-        approved_by: req.user.user_id
+        approved_by: await getPrincipalId(req)
       }
     });
 
@@ -915,7 +936,7 @@ async function approveSIP(req, res) {
       where: { sip_id: parseInt(id) },
       data: {
         status: 'APPROVED',
-        approved_by: req.user.user_id,
+        approved_by: await getPrincipalId(req),
         approved_at: new Date()
       }
     });
@@ -944,7 +965,7 @@ async function recognizePTSAExecutive(req, res) {
         position,
         term_start: new Date(term_start),
         term_end: new Date(term_end),
-        recognized_by: req.user.user_id,
+        recognized_by: await getPrincipalId(req),
         recognized_at: new Date()
       }
     });
@@ -986,7 +1007,7 @@ async function respondPTSAFeedback(req, res) {
       where: { feedback_id: parseInt(id) },
       data: {
         response,
-        responded_by: req.user.user_id,
+        responded_by: await getPrincipalId(req),
         responded_at: new Date(),
         status: 'RESPONDED'
       }
@@ -1069,7 +1090,7 @@ async function approveDisciplinaryAction(req, res) {
       where: { action_id: parseInt(id) },
       data: {
         status: 'APPROVED',
-        approved_by: req.user.user_id
+        approved_by: await getPrincipalId(req)
       }
     });
 
@@ -1123,7 +1144,7 @@ async function approveStaffLeave(req, res) {
       where: { leave_id: parseInt(id) },
       data: {
         status: approval ? 'APPROVED' : 'REJECTED',
-        approved_by: req.user.user_id,
+        approved_by: await getPrincipalId(req),
         approved_at: new Date(),
         rejection_reason: approval ? null : req.body.rejection_reason
       }
@@ -1176,7 +1197,7 @@ async function approveStaffTransfer(req, res) {
       where: { transfer_id: parseInt(id) },
       data: {
         status: 'COMPLETED',
-        approved_by: req.user.user_id,
+        approved_by: await getPrincipalId(req),
         approved_at: new Date()
       }
     });
@@ -1207,7 +1228,7 @@ async function createAnnouncement(req, res) {
         content,
         announcement_type,
         target_audience: target_audience || 'ALL',
-        created_by: req.user.user_id,
+        created_by: await getPrincipalId(req),
         is_urgent: is_urgent || false,
         attachment_url,
         status: 'PUBLISHED',
@@ -1221,7 +1242,7 @@ async function createAnnouncement(req, res) {
         communication_type: 'ANNOUNCEMENT',
         title,
         recipient_count: 0, // Would calculate based on target audience
-        sent_by: req.user.user_id,
+        sent_by: await getPrincipalId(req),
         status: 'SENT',
         details: { target_audience }
       }
@@ -1265,7 +1286,7 @@ async function sendUrgentAlert(req, res) {
         title,
         message,
         severity: severity || 'HIGH',
-        created_by: req.user.user_id,
+        created_by: await getPrincipalId(req),
         target_audience: target_audience || 'ALL',
         delivery_method: delivery_method || 'SMS_EMAIL',
         status: 'SENT'
@@ -1278,7 +1299,7 @@ async function sendUrgentAlert(req, res) {
         communication_type: 'ALERT',
         title,
         recipient_count: 0,
-        sent_by: req.user.user_id,
+        sent_by: await getPrincipalId(req),
         status: 'SENT',
         details: { alert_type, severity }
       }
@@ -1334,7 +1355,7 @@ async function generateAnnualReport(req, res) {
       data: {
         academic_year,
         report_data: reportData,
-        generated_by: req.user.user_id
+        generated_by: await getPrincipalId(req)
       }
     });
 
@@ -1476,7 +1497,7 @@ async function createSchoolEvent(req, res) {
         start_time: new Date(start_time),
         end_time: new Date(end_time),
         location,
-        organized_by: req.user.user_id
+        organized_by: await getPrincipalId(req)
       }
     });
 

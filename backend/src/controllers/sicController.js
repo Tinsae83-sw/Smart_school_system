@@ -5,6 +5,26 @@ const prisma = require('../config/prisma');
  * Comprehensive controller for SIC Member operations
  */
 
+// Helper function to get SIC member ID (with or without authentication)
+async function getSICMemberId(req) {
+  // If authenticated, use the authenticated SIC member ID
+  if (req.user_id) {
+    return req.user_id;
+  }
+  
+  // For development without authentication, use the first SIC member in the database
+  const sicMember = await prisma.sICMember.findFirst({
+    where: { user: { role: 'SIC_MEMBER' } },
+    include: { user: true }
+  });
+  
+  if (!sicMember) {
+    throw new Error('No SIC member found in database');
+  }
+  
+  return sicMember.user_id;
+}
+
 // ==================== DASHBOARD & OVERVIEW ====================
 
 /**
@@ -13,7 +33,7 @@ const prisma = require('../config/prisma');
  */
 async function getSICDashboard(req, res) {
   try {
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
     
     // Get current academic year
     const currentYear = await prisma.academicYear.findFirst({
@@ -217,7 +237,7 @@ async function getSIPProgress(req, res) {
 async function submitSIPFeedback(req, res) {
   try {
     const { sip_id, feedback } = req.body;
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     if (!sip_id || !feedback) {
       return res.status(400).json({ error: 'SIP ID and feedback are required' });
@@ -245,7 +265,7 @@ async function submitSIPFeedback(req, res) {
 async function proposeSIPAmendment(req, res) {
   try {
     const { sip_id, amendment_title, amendment_description, priority } = req.body;
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     if (!sip_id || !amendment_title || !amendment_description) {
       return res.status(400).json({ error: 'SIP ID, title, and description are required' });
@@ -507,7 +527,7 @@ async function getMeetingMinutes(req, res) {
 async function submitAgendaItem(req, res) {
   try {
     const { meeting_id, title, description, priority } = req.body;
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     if (!meeting_id || !title) {
       return res.status(400).json({ error: 'Meeting ID and title are required' });
@@ -538,7 +558,7 @@ async function voteOnResolution(req, res) {
   try {
     const { resolutionId } = req.params;
     const { vote } = req.body; // 'for', 'against', 'abstain'
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     if (!vote || !['for', 'against', 'abstain'].includes(vote)) {
       return res.status(400).json({ error: 'Invalid vote' });
@@ -600,7 +620,7 @@ async function getNeedsAssessments(req, res) {
 async function createNeedsAssessment(req, res) {
   try {
     const { assessment_name, academic_year, assessment_type, questions, target_audience } = req.body;
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     if (!assessment_name || !assessment_type || !questions) {
       return res.status(400).json({ error: 'Assessment name, type, and questions are required' });
@@ -766,7 +786,7 @@ async function getInspectionReports(req, res) {
 async function submitAnnualReport(req, res) {
   try {
     const { academic_year, report_data, achievements, recommendations } = req.body;
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     if (!academic_year || !report_data) {
       return res.status(400).json({ error: 'Academic year and report data are required' });
@@ -798,7 +818,7 @@ async function submitAnnualReport(req, res) {
  */
 async function getRecommendations(req, res) {
   try {
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     const recommendations = await prisma.sICRecommendation.findMany({
       where: { submitted_by: userId },
@@ -819,7 +839,7 @@ async function getRecommendations(req, res) {
 async function submitRecommendation(req, res) {
   try {
     const { title, description, category, priority } = req.body;
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     if (!title || !description || !category) {
       return res.status(400).json({ error: 'Title, description, and category are required' });
@@ -873,7 +893,7 @@ async function getAnnouncements(req, res) {
 async function postAnnouncement(req, res) {
   try {
     const { title, content, announcement_type, target_audience } = req.body;
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content are required' });
@@ -910,7 +930,7 @@ async function getTraining(req, res) {
       orderBy: { scheduled_date: 'asc' },
       include: {
         completions: {
-          where: { user_id: req.user?.user_id }
+          where: { user_id: await getSICMemberId(req) }
         }
       }
     });
@@ -930,7 +950,7 @@ async function completeTraining(req, res) {
   try {
     const { trainingId } = req.params;
     const { feedback, rating } = req.body;
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     const completion = await prisma.sICTrainingCompletion.create({
       data: {
@@ -956,7 +976,7 @@ async function completeTraining(req, res) {
  */
 async function getProfile(req, res) {
   try {
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     const sicMember = await prisma.sICMember.findUnique({
       where: { user_id: userId },
@@ -990,7 +1010,7 @@ async function getProfile(req, res) {
 async function updateProfile(req, res) {
   try {
     const { full_name, phone_number, profile_picture_url } = req.body;
-    const userId = req.user?.user_id;
+    const userId = await getSICMemberId(req);
 
     const updatedUser = await prisma.user.update({
       where: { user_id: userId },

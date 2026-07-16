@@ -5,6 +5,26 @@ const prisma = require('../config/prisma');
  * Comprehensive controller for all Department Head functionality
  */
 
+// Helper function to get department head ID (with or without authentication)
+async function getDepartmentHeadId(req) {
+  // If authenticated, use the authenticated department head ID
+  if (req.user_id) {
+    return req.user_id;
+  }
+  
+  // For development without authentication, use the first department head in the database
+  const deptHead = await prisma.departmentHead.findFirst({
+    where: { user: { role: 'DEPARTMENT_HEAD' } },
+    include: { user: true }
+  });
+  
+  if (!deptHead) {
+    throw new Error('No department head found in database');
+  }
+  
+  return deptHead.user_id;
+}
+
 // ==================== DASHBOARD & OVERVIEW ====================
 
 /**
@@ -13,7 +33,7 @@ const prisma = require('../config/prisma');
  */
 async function getDashboardMetrics(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     
     // Get department head info
     const deptHead = await prisma.departmentHead.findUnique({
@@ -123,7 +143,7 @@ async function getDashboardMetrics(req, res) {
  */
 async function getActivityFeed(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -168,7 +188,7 @@ async function getActivityFeed(req, res) {
  */
 async function getDepartmentTeachers(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -220,7 +240,7 @@ async function getDepartmentTeachers(req, res) {
  */
 async function addTeachingAssistant(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { full_name, email, phone_number, password, subjects, grade_levels } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -286,7 +306,7 @@ async function addTeachingAssistant(req, res) {
  */
 async function assignTeacherToCourse(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { teacher_id, class_id, subject_id } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -352,7 +372,7 @@ async function assignTeacherToCourse(req, res) {
  */
 async function getTeacherPerformance(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { id } = req.params;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -423,7 +443,7 @@ async function getTeacherPerformance(req, res) {
  */
 async function getLessonPlans(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { status } = req.query;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -485,7 +505,7 @@ async function getLessonPlans(req, res) {
  */
 async function reviewLessonPlan(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { id } = req.params;
     const { status, review_comments } = req.body;
 
@@ -542,7 +562,7 @@ async function reviewLessonPlan(req, res) {
  */
 async function getDepartmentGrades(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { class_id, subject_id } = req.query;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -614,7 +634,7 @@ async function getDepartmentGrades(req, res) {
  */
 async function getGradeDistribution(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
 
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -670,7 +690,7 @@ async function getGradeDistribution(req, res) {
  */
 async function getResources(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
 
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -716,7 +736,7 @@ async function getResources(req, res) {
  */
 async function addResource(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { name, type, description, quantity } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -750,7 +770,7 @@ async function addResource(req, res) {
  */
 async function allocateResource(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { resource_id, teacher_id, quantity, notes } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -805,7 +825,7 @@ async function allocateResource(req, res) {
  */
 async function requestResource(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { name, type, quantity, reason } = req.body;
 
     const request = await prisma.resourceRequest.create({
@@ -834,7 +854,7 @@ async function requestResource(req, res) {
  */
 async function getExams(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
 
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -889,7 +909,7 @@ async function getExams(req, res) {
  */
 async function createExam(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { class_subject_id, title, exam_type, exam_date, duration_minutes, total_marks } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -941,7 +961,7 @@ async function createExam(req, res) {
  */
 async function approveExam(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { id } = req.params;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -983,7 +1003,7 @@ async function approveExam(req, res) {
  */
 async function assignInvigilator(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { id } = req.params;
     const { teacher_id } = req.body;
 
@@ -1027,7 +1047,7 @@ async function assignInvigilator(req, res) {
  */
 async function getExamResults(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { id } = req.params;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -1088,7 +1108,7 @@ async function getExamResults(req, res) {
  */
 async function getEvaluationForms(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
 
     const forms = await prisma.peerEvaluationForm.findMany({
       where: { created_by: user_id },
@@ -1111,7 +1131,7 @@ async function getEvaluationForms(req, res) {
  */
 async function createEvaluationForm(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { title, description, criteria } = req.body;
 
     const form = await prisma.peerEvaluationForm.create({
@@ -1136,7 +1156,7 @@ async function createEvaluationForm(req, res) {
  */
 async function getPeerEvaluations(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
 
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -1174,7 +1194,7 @@ async function getPeerEvaluations(req, res) {
  */
 async function assignPeerEvaluation(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { form_id, evaluator_id, evaluatee_id, term } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -1231,7 +1251,7 @@ async function assignPeerEvaluation(req, res) {
  */
 async function getMeetings(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
 
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -1266,7 +1286,7 @@ async function getMeetings(req, res) {
  */
 async function createMeeting(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { title, description, scheduled_date, scheduled_time, location, attendee_ids } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -1312,7 +1332,7 @@ async function createMeeting(req, res) {
  */
 async function sendAnnouncement(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { title, message, target_class_id } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -1348,7 +1368,7 @@ async function sendAnnouncement(req, res) {
  */
 async function getAtRiskStudents(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
 
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -1458,7 +1478,7 @@ async function getAtRiskStudents(req, res) {
  */
 async function createIntervention(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { student_id, type, description, actions, start_date, end_date } = req.body;
 
     const intervention = await prisma.interventionPlan.create({
@@ -1490,7 +1510,7 @@ async function createIntervention(req, res) {
  */
 async function getInterventions(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
 
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -1534,7 +1554,7 @@ async function getInterventions(req, res) {
  */
 async function generateDepartmentReport(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { format } = req.query; // json, csv
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -1624,7 +1644,7 @@ async function generateDepartmentReport(req, res) {
  */
 async function getDepartmentSettings(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
 
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -1668,7 +1688,7 @@ async function getDepartmentSettings(req, res) {
  */
 async function updateDepartmentSettings(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { goals, grading_scale, academic_calendar, notification_preferences } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -1711,7 +1731,7 @@ async function updateDepartmentSettings(req, res) {
  */
 async function getCurriculumMaps(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { subject_id, grade_level, term } = req.query;
 
     const deptHead = await prisma.departmentHead.findUnique({
@@ -1749,7 +1769,7 @@ async function getCurriculumMaps(req, res) {
  */
 async function createCurriculumMap(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { subject_id, grade_level, term, topics, learning_objectives, alignment_standards } = req.body;
 
     const curriculumMap = await prisma.curriculumMap.create({
@@ -1782,7 +1802,7 @@ async function createCurriculumMap(req, res) {
  */
 async function getAuditLog(req, res) {
   try {
-    const { user_id } = req.user;
+    const user_id = await getDepartmentHeadId(req);
     const { limit = 50 } = req.query;
 
     const deptHead = await prisma.departmentHead.findUnique({

@@ -6,6 +6,26 @@ const prisma = require('../config/prisma');
  * Focus: Curriculum, timetable, teachers, students, examinations, academic monitoring
  */
 
+// Helper function to get VP academic ID (with or without authentication)
+async function getVPAcademicId(req) {
+  // If authenticated, use the authenticated VP academic ID
+  if (req.user_id) {
+    return req.user_id;
+  }
+  
+  // For development without authentication, use the first VP academic in the database
+  const vpAcademic = await prisma.vPAcademic.findFirst({
+    where: { user: { role: 'VP_ACADEMIC' } },
+    include: { user: true }
+  });
+  
+  if (!vpAcademic) {
+    throw new Error('No VP academic found in database');
+  }
+  
+  return vpAcademic.user_id;
+}
+
 // ==================== DASHBOARD & OVERVIEW ====================
 
 /**
@@ -276,7 +296,7 @@ async function getRecentActivity(req, res) {
  */
 async function getNotifications(req, res) {
   try {
-    const userId = req.user?.user_id;
+    const userId = await getVPAcademicId(req);
     
     const notifications = await prisma.notification.findMany({
       where: { user_id: userId },
@@ -373,7 +393,7 @@ async function setCurriculumObjectives(req, res) {
         grade_level,
         objectives,
         outcomes,
-        created_by: req.user?.user_id
+        created_by: await getVPAcademicId(req)
       }
     });
 
@@ -978,7 +998,7 @@ async function removeTeacher(req, res) {
 
     await prisma.auditLog.create({
       data: {
-        user_id: req.user?.user_id,
+        user_id: await getVPAcademicId(req),
         action: `Teacher removed: ${reason}`,
         details: { teacher_id: id, reason }
       }
@@ -1340,7 +1360,7 @@ async function transferStudent(req, res) {
 
     await prisma.auditLog.create({
       data: {
-        user_id: req.user?.user_id,
+        user_id: await getVPAcademicId(req),
         action: `Student transferred: ${reason}`,
         details: { student_id: id, new_class_id, reason, transfer_date }
       }
@@ -1369,7 +1389,7 @@ async function archiveStudent(req, res) {
 
     await prisma.auditLog.create({
       data: {
-        user_id: req.user?.user_id,
+        user_id: await getVPAcademicId(req),
         action: `Student archived: ${reason}`,
         details: { student_id: id, reason }
       }
@@ -1458,7 +1478,7 @@ async function createExamSchedule(req, res) {
         exam_date: new Date(exam_date),
         duration_minutes,
         total_marks,
-        created_by: req.user?.user_id,
+        created_by: await getVPAcademicId(req),
         status: 'DRAFT'
       }
     });
@@ -1506,7 +1526,7 @@ async function approveExamPaper(req, res) {
     const exam = await prisma.exam.update({
       where: { exam_id: parseInt(id) },
       data: {
-        approved_by: req.user?.user_id,
+        approved_by: await getVPAcademicId(req),
         approved_at: new Date(),
         status: 'APPROVED'
       }
@@ -1926,7 +1946,7 @@ async function generateAcademicReport(req, res) {
 
     const report = await prisma.report.create({
       data: {
-        generated_by: req.user?.user_id,
+        generated_by: await getVPAcademicId(req),
         title: `${report_type} Report`,
         data: {
           report_type,
@@ -1957,7 +1977,7 @@ async function generateTranscript(req, res) {
     const transcript = await prisma.transcript.create({
       data: {
         student_id: parseInt(student_id),
-        generated_by: req.user?.user_id,
+        generated_by: await getVPAcademicId(req),
         data: {}
       }
     });
@@ -2054,7 +2074,7 @@ async function reviewLessonPlan(req, res) {
       data: {
         status,
         review_comments,
-        reviewed_by: req.user?.user_id,
+        reviewed_by: await getVPAcademicId(req),
         reviewed_at: new Date()
       }
     });
@@ -2183,7 +2203,7 @@ async function scheduleConference(req, res) {
         scheduled_date: new Date(scheduled_date),
         scheduled_time,
         location,
-        created_by: req.user?.user_id,
+        created_by: await getVPAcademicId(req),
         status: 'SCHEDULED'
       }
     });
@@ -2342,7 +2362,7 @@ async function createAnnouncement(req, res) {
       data: {
         title,
         message,
-        created_by: req.user?.user_id,
+        created_by: await getVPAcademicId(req),
         target_roles: target_roles || 'ALL',
         target_class_id: target_class_id ? parseInt(target_class_id) : null
       }
@@ -2432,7 +2452,7 @@ async function updateProfile(req, res) {
     const { full_name, email, phone_number } = req.body;
 
     const user = await prisma.user.update({
-      where: { user_id: req.user?.user_id },
+      where: { user_id: await getVPAcademicId(req) },
       data: {
         full_name,
         email,

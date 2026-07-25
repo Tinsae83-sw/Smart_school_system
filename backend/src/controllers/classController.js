@@ -13,33 +13,43 @@ function buildClassName({ class_name, grade_level, section }) {
 
 async function getClasses(req, res) {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
     const classes = await prisma.schoolClass.findMany({
+      skip,
+      take: limit,
       include: {
         homeroom_teacher: {
-          include: {
+          select: {
+            teacher_id: true,
             user: {
               select: { full_name: true }
             }
           }
         },
+        _count: {
+          select: { students: true }
+        },
         class_subjects: {
           include: {
-            subject: true,
+            subject: {
+              select: { subject_id: true, subject_name: true, subject_code: true }
+            },
             teacher: {
-              include: {
-                user: {
-                  select: { full_name: true }
-                }
+              select: {
+                teacher_id: true,
+                user: { select: { full_name: true } }
               }
             }
           }
-        },
-        _count: {
-          select: { students: true }
         }
       },
       orderBy: { class_name: 'asc' }
     });
+
+    const total = await prisma.schoolClass.count();
 
     const payload = classes.map((cls) => ({
       class_id: cls.class_id,
@@ -48,17 +58,25 @@ async function getClasses(req, res) {
       homeroom_teacher_id: cls.homeroom_teacher_id,
       homeroom_teacher_name: cls.homeroom_teacher?.user?.full_name || null,
       student_count: cls._count?.students || 0,
-      assigned_subjects: cls.class_subjects.map((assignment) => ({
-        class_subject_id: assignment.class_subject_id,
-        subject_id: assignment.subject.subject_id,
-        subject_name: assignment.subject.subject_name,
-        subject_code: assignment.subject.subject_code,
-        teacher_id: assignment.teacher.teacher_id,
-        teacher_name: assignment.teacher.user?.full_name || 'Unknown'
+      assigned_subjects: cls.class_subjects.map(cs => ({
+        class_subject_id: cs.class_subject_id,
+        subject_id: cs.subject.subject_id,
+        subject_name: cs.subject.subject_name,
+        subject_code: cs.subject.subject_code,
+        teacher_id: cs.teacher.teacher_id,
+        teacher_name: cs.teacher.user?.full_name || 'Unknown'
       }))
     }));
 
-    return res.json(payload);
+    return res.json({
+      classes: payload,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Error fetching classes:', error);
     return res.status(500).json({ error: 'Unable to load classes.' });

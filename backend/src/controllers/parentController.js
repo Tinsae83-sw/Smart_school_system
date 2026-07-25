@@ -461,7 +461,7 @@ exports.getCurrentGrades = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Get grades with subject information
+    // Get grades with submission and assignment information
     const grades = await prisma.grade.findMany({
       where: {
         submission: {
@@ -475,49 +475,34 @@ exports.getCurrentGrades = async (req, res) => {
               include: {
                 class_subject: {
                   include: {
-                    subject: true,
-                    teacher: true
+                    subject: true
                   }
                 }
               }
             }
           }
-        },
-        teacher: true
+        }
+      },
+      orderBy: {
+        graded_at: 'desc'
       }
     });
 
-    // Group by subject
-    const subjectGrades = {};
-    grades.forEach(grade => {
-      const subject = grade.submission.assignment.class_subject.subject;
-      const teacher = grade.submission.assignment.class_subject.teacher;
-      
-      if (!subjectGrades[subject.subject_id]) {
-        subjectGrades[subject.subject_id] = {
-          subject_id: subject.subject_id,
-          subject_name: subject.subject_name,
-          subject_code: subject.subject_code,
-          teacher_name: teacher.user.full_name,
-          term_grade: 0,
-          letter_grade: null,
-          exam_scores: [],
-          continuous_assessment: []
-        };
-      }
-      
-      subjectGrades[subject.subject_id].term_grade += parseFloat(grade.score);
-      if (grade.letter_grade) {
-        subjectGrades[subject.subject_id].letter_grade = grade.letter_grade;
-      }
-    });
+    // Format grades for frontend
+    const formattedGrades = grades.map(grade => ({
+      submission_id: grade.submission.submission_id,
+      assignment_title: grade.submission.assignment.title,
+      subject: grade.submission.assignment.class_subject.subject.subject_name,
+      score: grade.score ? parseFloat(grade.score) : null,
+      grade: grade.letter_grade,
+      feedback: grade.feedback,
+      is_late: grade.submission.submitted_at > grade.submission.assignment.due_date,
+      status: grade.submission.status,
+      submitted_at: grade.submission.submitted_at,
+      max_score: grade.submission.assignment.max_score
+    }));
 
-    // Calculate averages
-    Object.values(subjectGrades).forEach(sg => {
-      sg.term_grade = Math.round(sg.term_grade);
-    });
-
-    res.json({ grades: Object.values(subjectGrades) });
+    res.json(formattedGrades);
   } catch (error) {
     console.error('Error in getCurrentGrades:', error);
     res.status(500).json({ error: 'Failed to fetch grades' });
@@ -546,48 +531,48 @@ exports.getGradeDistribution = async (req, res) => {
         submission: {
           student_id: parseInt(childId)
         }
-      },
-      include: {
-        submission: {
-          include: {
-            assignment: {
-              include: {
-                class_subject: {
-                  include: {
-                    subject: true
-                  }
-                }
-              }
-            }
-          }
+      }
+    });
+
+    // Calculate average score
+    const averageScore = grades.length > 0 
+      ? grades.reduce((sum, g) => sum + parseFloat(g.score), 0) / grades.length 
+      : 0;
+
+    // Get attendance for attendance rate
+    const attendanceRecords = await prisma.attendanceRecord.findMany({
+      where: {
+        student_id: parseInt(childId),
+        date: {
+          gte: new Date(new Date().setMonth(new Date().getMonth() - 3))
         }
       }
     });
 
-    // Group by subject
-    const distribution = {};
-    grades.forEach(grade => {
-      const subject = grade.submission.assignment.class_subject.subject;
-      
-      if (!distribution[subject.subject_name]) {
-        distribution[subject.subject_name] = { score: 0, count: 0 };
-      }
-      distribution[subject.subject_name].score += parseFloat(grade.score);
-      distribution[subject.subject_name].count++;
-    });
+    const presentDays = attendanceRecords.filter(ar => ar.status === 'PRESENT').length;
+    const attendanceRate = attendanceRecords.length > 0 
+      ? (presentDays / attendanceRecords.length) * 100 
+      : 0;
 
-    const distributionArray = Object.entries(distribution).map(([subject, data]) => ({
-      subject,
-      score: Math.round(data.score / data.count),
-      letter: data.score / data.count >= 90 ? 'A' : data.score / data.count >= 80 ? 'B+' : data.score / data.count >= 70 ? 'B' : 'C'
-    }));
+    // Determine predicted grade and risk level
+    const predictedGrade = averageScore >= 90 ? 'A' : averageScore >= 85 ? 'A-' : averageScore >= 80 ? 'B+' : averageScore >= 75 ? 'B' : averageScore >= 70 ? 'B-' : averageScore >= 65 ? 'C+' : averageScore >= 60 ? 'C' : 'F';
+    const riskLevel = averageScore >= 80 ? 'LOW' : averageScore >= 65 ? 'MEDIUM' : 'HIGH';
 
+    // Generate recommendation based on performance
+    let recommendation = 'Continue maintaining good study habits.';
+    if (averageScore < 70) {
+      recommendation = 'Consider increasing study time and seeking additional help from teachers.';
+    } else if (averageScore < 80) {
+      recommendation = 'Focus on improving weak areas through consistent practice.';
+    }
+
+    // Return performance data format expected by frontend
     res.json({
-      distribution: distributionArray,
-      chart_data: {
-        labels: distributionArray.map(d => d.subject),
-        data: distributionArray.map(d => d.score)
-      }
+      predicted_grade: predictedGrade,
+      risk_level: riskLevel,
+      average_score: Math.round(averageScore),
+      recommendation: recommendation,
+      attendance_rate: Math.round(attendanceRate)
     });
   } catch (error) {
     console.error('Error in getGradeDistribution:', error);
@@ -887,27 +872,52 @@ exports.getAttendanceSummary = async (req, res) => {
       where: {
         student_id: parseInt(childId),
         date: {
-          gte: new Date(new Date().setMonth(new Date().getMonth() - 3))
+          gte: new Date(new Date().setMonth(new Date().getMonth() - 6))
         }
       }
     });
 
-    const totalDays = attendanceRecords.length;
-    const presentDays = attendanceRecords.filter(ar => ar.status === 'PRESENT').length;
-    const absentDays = attendanceRecords.filter(ar => ar.status === 'ABSENT').length;
-    const lateDays = attendanceRecords.filter(ar => ar.status === 'LATE').length;
-    const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 0;
-
-    res.json({
-      summary: {
-        total_days: totalDays,
-        present_days: presentDays,
-        absent_days: absentDays,
-        late_days: lateDays,
-        attendance_rate: Math.round(attendanceRate),
-        term: term || '2025/2026 - Semester 1'
+    // Group by month
+    const monthlyData = {};
+    attendanceRecords.forEach(ar => {
+      const date = new Date(ar.date);
+      const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {
+          month: monthKey,
+          present: 0,
+          absent: 0,
+          late: 0,
+          total: 0
+        };
+      }
+      
+      monthlyData[monthKey].total++;
+      if (ar.status === 'PRESENT') {
+        monthlyData[monthKey].present++;
+      } else if (ar.status === 'ABSENT') {
+        monthlyData[monthKey].absent++;
+      } else if (ar.status === 'LATE') {
+        monthlyData[monthKey].late++;
       }
     });
+
+    // Calculate percentages and convert to array
+    const summaryArray = Object.values(monthlyData).map(month => ({
+      month: month.month,
+      present: month.present,
+      absent: month.absent,
+      late: month.late,
+      percentage: month.total > 0 ? Math.round((month.present / month.total) * 100) : 0
+    })).sort((a, b) => {
+      // Sort by date (most recent first)
+      const dateA = new Date(a.month);
+      const dateB = new Date(b.month);
+      return dateB - dateA;
+    });
+
+    res.json(summaryArray);
   } catch (error) {
     console.error('Error in getAttendanceSummary:', error);
     res.status(500).json({ error: 'Failed to fetch attendance summary' });
@@ -959,21 +969,33 @@ exports.getDailyAttendance = async (req, res) => {
 
     const total = await prisma.attendanceRecord.count({ where: whereClause });
 
-    res.json({
-      attendance: attendanceRecords.map(ar => ({
+    // Return array format for /attendance endpoint, object with pagination for /attendance/daily
+    if (!start_date && !end_date && page === '1' && limit === '30') {
+      // Simplified format for frontend /attendance endpoint
+      res.json(attendanceRecords.map(ar => ({
         attendance_id: ar.record_id,
         date: ar.date.toISOString().split('T')[0],
         status: ar.status,
-        remarks: ar.remarks || '',
-        class_name: studentParent.student.current_class?.class_name || 'Not assigned'
-      })),
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total_pages: Math.ceil(total / parseInt(limit))
-      }
-    });
+        remark: ar.remarks || ''
+      })));
+    } else {
+      // Full format with pagination for /attendance/daily endpoint
+      res.json({
+        attendance: attendanceRecords.map(ar => ({
+          attendance_id: ar.record_id,
+          date: ar.date.toISOString().split('T')[0],
+          status: ar.status,
+          remarks: ar.remarks || '',
+          class_name: studentParent.student.current_class?.class_name || 'Not assigned'
+        })),
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total_pages: Math.ceil(total / parseInt(limit))
+        }
+      });
+    }
   } catch (error) {
     console.error('Error in getDailyAttendance:', error);
     res.status(500).json({ error: 'Failed to fetch daily attendance' });
@@ -1222,6 +1244,14 @@ exports.getConductSummary = async (req, res) => {
       where: {
         parent_id: parentId,
         student_id: parseInt(childId)
+      },
+      include: {
+        student: {
+          include: {
+            user: true,
+            current_class: true
+          }
+        }
       }
     });
 
@@ -1229,15 +1259,29 @@ exports.getConductSummary = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Mock conduct data
-    res.json({
-      conduct: {
-        current_grade: 'Good',
-        rating: 3.5,
-        scale: 5,
-        term: '2025/2026 - Semester 1'
+    // Get conduct grades for the student
+    const conductGrades = await prisma.conductGrade.findMany({
+      where: {
+        student_id: parseInt(childId)
+      },
+      include: {
+        comments: true
+      },
+      orderBy: {
+        graded_at: 'desc'
       }
     });
+
+    // Format for frontend
+    const conductRecords = conductGrades.map(cg => ({
+      student_id: studentParent.student.student_id,
+      student_name: studentParent.student.user.full_name,
+      class_id: studentParent.student.current_class_id,
+      conduct: cg.grade,
+      notes: cg.comments.length > 0 ? cg.comments.map(c => c.comment).join('; ') : null
+    }));
+
+    res.json(conductRecords);
   } catch (error) {
     console.error('Error in getConductSummary:', error);
     res.status(500).json({ error: 'Failed to fetch conduct summary' });
@@ -1416,6 +1460,7 @@ exports.getOfficialTranscript = async (req, res) => {
       include: {
         student: {
           include: {
+            user: true,
             current_class: true
           }
         }
@@ -1426,7 +1471,64 @@ exports.getOfficialTranscript = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Mock transcript data
+    // Get grades for transcript
+    const grades = await prisma.grade.findMany({
+      where: {
+        submission: {
+          student_id: parseInt(childId)
+        }
+      },
+      include: {
+        submission: {
+          include: {
+            assignment: {
+              include: {
+                class_subject: {
+                  include: {
+                    subject: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Group by subject
+    const subjectGrades = {};
+    grades.forEach(grade => {
+      const subject = grade.submission.assignment.class_subject.subject;
+      
+      if (!subjectGrades[subject.subject_name]) {
+        subjectGrades[subject.subject_name] = {
+          subject: subject.subject_name,
+          grade: 0,
+          letter_grade: null,
+          credits: 4
+        };
+      }
+      
+      subjectGrades[subject.subject_name].grade += parseFloat(grade.score);
+      if (grade.letter_grade) {
+        subjectGrades[subject.subject_name].letter_grade = grade.letter_grade;
+      }
+    });
+
+    // Calculate averages
+    const subjects = Object.values(subjectGrades).map(sg => ({
+      subject: sg.subject,
+      grade: Math.round(sg.grade),
+      letter_grade: sg.letter_grade || (sg.grade >= 90 ? 'A' : sg.grade >= 85 ? 'A-' : sg.grade >= 80 ? 'B+' : sg.grade >= 75 ? 'B' : sg.grade >= 70 ? 'B-' : 'C'),
+      credits: sg.credits
+    }));
+
+    const totalCredits = subjects.length * 4;
+    const averageGrade = subjects.length > 0 
+      ? subjects.reduce((sum, s) => sum + s.grade, 0) / subjects.length 
+      : 0;
+    const gpa = (averageGrade / 25).toFixed(2); // Convert to 4.0 scale
+
     const transcript = {
       student: {
         student_id: studentParent.student.student_id,
@@ -1435,15 +1537,11 @@ exports.getOfficialTranscript = async (req, res) => {
         class_name: studentParent.student.current_class?.class_name || 'Not assigned'
       },
       term: term || '2025/2026 - Semester 1',
-      gpa: 3.2,
-      subjects: [
-        { subject: 'Mathematics', grade: 85, letter_grade: 'B+', credits: 4 },
-        { subject: 'English', grade: 92, letter_grade: 'A-', credits: 4 },
-        { subject: 'Physics', grade: 78, letter_grade: 'B', credits: 4 },
-        { subject: 'Chemistry', grade: 88, letter_grade: 'B+', credits: 4 }
-      ],
-      total_credits: 32,
-      cumulative_gpa: 3.15
+      gpa: parseFloat(gpa),
+      subjects,
+      total_credits: totalCredits,
+      cumulative_gpa: parseFloat(gpa),
+      pdf_url: `/api/parent/children/${childId}/transcript/download`
     };
 
     res.json({ transcript });
@@ -1667,41 +1765,48 @@ exports.getCurrentAssignments = async (req, res) => {
         const hasSubmission = a.submissions.length > 0;
         const isOverdue = new Date(a.due_date) < now;
         
-        if (status === 'PENDING') return !hasSubmission && !isOverdue;
+        if (status === 'OPEN') return !hasSubmission && !isOverdue;
         if (status === 'SUBMITTED') return hasSubmission && !a.submissions[0].grade;
         if (status === 'GRADED') return hasSubmission && a.submissions[0].grade;
-        if (status === 'OVERDUE') return !hasSubmission && isOverdue;
+        if (status === 'CLOSED') return !hasSubmission && isOverdue;
         return true;
       });
     }
 
-    res.json({
-      assignments: filteredAssignments.map(a => {
-        const submission = a.submissions[0];
-        const now = new Date();
-        const dueDate = new Date(a.due_date);
-        
-        return {
-          assignment_id: a.assignment_id,
-          title: a.title,
-          subject: a.class_subject.subject.subject_name,
-          subject_code: a.class_subject.subject.subject_code,
-          teacher_name: a.class_subject.teacher.user.full_name,
-          due_date: a.due_date,
-          max_score: parseFloat(a.max_score),
-          status: submission 
-            ? (submission.grade ? 'GRADED' : 'SUBMITTED')
-            : (dueDate < now ? 'OVERDUE' : 'PENDING'),
-          submission: submission ? {
-            submitted_at: submission.submitted_at,
-            is_late: submission.is_late,
-            score: submission.grade ? parseFloat(submission.grade.score) : null,
-            grade: submission.grade?.letter_grade || null,
-            feedback: submission.grade?.feedback || null
-          } : null
-        };
-      })
-    });
+    // Return array format for frontend
+    res.json(filteredAssignments.map(a => {
+      const submission = a.submissions[0];
+      const now = new Date();
+      const dueDate = new Date(a.due_date);
+      
+      // Map status to frontend expectations
+      let assignmentStatus;
+      if (submission) {
+        assignmentStatus = submission.grade ? 'GRADED' : 'SUBMITTED';
+      } else {
+        assignmentStatus = dueDate < now ? 'CLOSED' : 'OPEN';
+      }
+      
+      return {
+        assignment_id: a.assignment_id,
+        title: a.title,
+        subject: a.class_subject.subject.subject_name,
+        subject_code: a.class_subject.subject.subject_code,
+        teacher_name: a.class_subject.teacher.user.full_name,
+        due_date: a.due_date,
+        max_score: parseFloat(a.max_score),
+        description: a.description || null,
+        status: assignmentStatus,
+        submission: submission ? {
+          submitted_at: submission.submitted_at,
+          is_late: submission.is_late,
+          score: submission.grade ? parseFloat(submission.grade.score) : null,
+          grade: submission.grade?.letter_grade || null,
+          feedback: submission.grade?.feedback || null,
+          file_url: submission.file_url || null
+        } : null
+      };
+    }));
   } catch (error) {
     console.error('Error in getCurrentAssignments:', error);
     res.status(500).json({ error: 'Failed to fetch assignments' });
@@ -2927,6 +3032,13 @@ exports.getPeerEvaluationSummary = async (req, res) => {
       where: {
         parent_id: parentId,
         student_id: parseInt(childId)
+      },
+      include: {
+        student: {
+          include: {
+            current_class: true
+          }
+        }
       }
     });
 
@@ -2934,21 +3046,60 @@ exports.getPeerEvaluationSummary = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Mock peer evaluation data
-    const evaluations = [
-      {
-        evaluation_id: 1,
-        title: 'Group Project Feedback',
-        subject: 'Mathematics',
-        due_date: '2025-10-15',
-        average_rating: 9.3,
-        total_evaluators: 3,
-        max_rating: 10,
-        status: 'RELEASED'
+    // Get peer evaluations where the student was evaluated
+    const peerEvaluations = await prisma.studentPeerEvaluation.findMany({
+      where: {
+        student_id: parseInt(childId)
+      },
+      include: {
+        evaluator: {
+          include: {
+            user: true
+          }
+        }
+      },
+      orderBy: {
+        evaluation_date: 'desc'
       }
-    ];
+    });
 
-    res.json({ evaluations });
+    // Group by evaluation period (term/academic_year)
+    const evaluationGroups = {};
+    peerEvaluations.forEach(pe => {
+      const key = `${pe.term}-${pe.academic_year}`;
+      if (!evaluationGroups[key]) {
+        evaluationGroups[key] = {
+          evaluation_id: pe.evaluation_id,
+          title: `${pe.term} Peer Evaluation`,
+          due_date: pe.evaluation_date,
+          status: 'OPEN',
+          released: true,
+          questions: ['Teamwork', 'Participation', 'Collaboration', 'Respect'],
+          results: []
+        };
+      }
+      
+      evaluationGroups[key].results.push({
+        reviewer_name: pe.evaluator.user.full_name,
+        comments: pe.comments,
+        score: (pe.teamwork_score + pe.participation_score + pe.collaboration_score + pe.respect_score) / 4
+      });
+    });
+
+    // Calculate averages and format
+    const evaluationsArray = Object.values(evaluationGroups).map(evaluation => {
+      const averageScore = evaluation.results.length > 0 
+        ? evaluation.results.reduce((sum, r) => sum + r.score, 0) / evaluation.results.length 
+        : 0;
+      
+      return {
+        ...evaluation,
+        status: 'OPEN',
+        released: true
+      };
+    });
+
+    res.json(evaluationsArray);
   } catch (error) {
     console.error('Error in getPeerEvaluationSummary:', error);
     res.status(500).json({ error: 'Failed to fetch peer evaluation summary' });
@@ -3086,31 +3237,42 @@ exports.getFeeStructure = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Mock fee structure
-    const fee_structure = [
-      {
-        fee_id: 1,
-        name: 'Tuition Fee',
-        amount: 15000,
-        currency: 'ETB',
-        term: '2025/2026 - Semester 1',
-        description: 'Regular tuition fee'
+    // Get fee structure from database
+    const feeStructure = await prisma.feeStructure.findMany({
+      where: {
+        student_id: parseInt(childId)
       },
-      {
-        fee_id: 2,
-        name: 'Lab Fee',
-        amount: 2000,
-        currency: 'ETB',
-        term: '2025/2026 - Semester 1',
-        description: 'Science laboratory fee'
+      orderBy: {
+        due_date: 'asc'
       }
-    ];
+    });
 
-    const totalFees = fee_structure.reduce((sum, f) => sum + f.amount, 0);
+    // Get payments to calculate paid amount
+    const payments = await prisma.payment.findMany({
+      where: {
+        parent_id: parentId,
+        student_id: parseInt(childId),
+        status: 'COMPLETED'
+      }
+    });
 
+    const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+    const totalFees = feeStructure.reduce((sum, f) => sum + parseFloat(f.amount), 0);
+    const balance = totalFees - totalPaid;
+
+    // Format for frontend
     res.json({
-      fee_structure,
-      total_fees: totalFees,
+      fees: feeStructure.map(f => ({
+        fee_id: f.fee_id,
+        name: f.fee_name,
+        amount: parseFloat(f.amount),
+        currency: f.currency,
+        term: f.term,
+        description: f.description
+      })),
+      totalFees,
+      totalPaid,
+      balance,
       currency: 'ETB'
     });
   } catch (error) {
@@ -3144,18 +3306,17 @@ exports.getPaymentHistory = async (req, res) => {
       orderBy: { created_at: 'desc' }
     });
 
-    res.json({
-      payments: payments.map(p => ({
-        payment_id: p.payment_id,
-        amount: parseFloat(p.amount),
-        currency: p.currency,
-        status: p.status,
-        payment_method: p.payment_method,
-        transaction_id: p.transaction_id,
-        receipt_url: p.receipt_url,
-        created_at: p.created_at
-      }))
-    });
+    // Return array format for frontend
+    res.json(payments.map(p => ({
+      payment_id: p.payment_id,
+      amount: parseFloat(p.amount),
+      currency: p.currency,
+      status: p.status,
+      payment_method: p.payment_method,
+      transaction_id: p.transaction_id,
+      receipt_url: p.receipt_url,
+      created_at: p.created_at
+    })));
   } catch (error) {
     console.error('Error in getPaymentHistory:', error);
     res.status(500).json({ error: 'Failed to fetch payment history' });
@@ -3193,6 +3354,64 @@ exports.getOutstandingBalance = async (req, res) => {
   } catch (error) {
     console.error('Error in getOutstandingBalance:', error);
     res.status(500).json({ error: 'Failed to fetch outstanding balance' });
+  }
+};
+
+exports.processPayment = async (req, res) => {
+  try {
+    const { childId } = req.params;
+    const parentId = await getParentId(req);
+    const { amount, payment_method } = req.body;
+
+    // Verify access
+    const studentParent = await prisma.studentParent.findFirst({
+      where: {
+        parent_id: parentId,
+        student_id: parseInt(childId)
+      }
+    });
+
+    if (!studentParent) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+
+    // Generate transaction ID
+    const transactionId = `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+    // Create payment record
+    const payment = await prisma.payment.create({
+      data: {
+        parent_id: parentId,
+        student_id: parseInt(childId),
+        amount: amount,
+        currency: 'ETB',
+        payment_method: payment_method,
+        transaction_id: transactionId,
+        status: 'COMPLETED',
+        receipt_url: `/api/parent/children/${childId}/payments/${transactionId}/receipt`
+      }
+    });
+
+    res.json({
+      success: true,
+      payment: {
+        payment_id: payment.payment_id,
+        amount: parseFloat(payment.amount),
+        currency: payment.currency,
+        status: payment.status,
+        payment_method: payment.payment_method,
+        transaction_id: payment.transaction_id,
+        receipt_url: payment.receipt_url,
+        created_at: payment.created_at
+      }
+    });
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    res.status(500).json({ error: 'Failed to process payment' });
   }
 };
 
@@ -3276,17 +3495,16 @@ exports.getParentProfile = async (req, res) => {
       return res.status(404).json({ error: 'Parent profile not found' });
     }
 
+    // Return direct object for frontend
     res.json({
-      profile: {
-        user_id: parent.user_id,
-        full_name: parent.user.full_name,
-        email: parent.user.email,
-        phone_number: parent.user.phone_number,
-        address: parent.address,
-        relationship: parent.relationship,
-        preferred_language: parent.preferred_language || 'en',
-        profile_picture_url: parent.user.profile_picture_url
-      }
+      user_id: parent.user_id,
+      full_name: parent.user.full_name,
+      email: parent.user.email,
+      phone_number: parent.user.phone_number,
+      address: parent.address,
+      relationship: parent.relationship,
+      preferred_language: parent.preferred_language || 'English',
+      profile_picture_url: parent.user.profile_picture_url
     });
   } catch (error) {
     console.error('Error in getParentProfile:', error);
@@ -3296,7 +3514,7 @@ exports.getParentProfile = async (req, res) => {
 
 exports.updateParentProfile = async (req, res) => {
   try {
-    const { full_name, phone_number, address, preferred_language } = req.body;
+    const { full_name, phone_number, address, preferred_language, relationship } = req.body;
     const parentId = await getParentId(req);
     const parent = await prisma.parent.findUnique({
       where: { parent_id: parentId },
@@ -3315,7 +3533,8 @@ exports.updateParentProfile = async (req, res) => {
       where: { parent_id: parentId },
       data: {
         address,
-        preferred_language
+        preferred_language,
+        relationship
       }
     });
 
@@ -3381,10 +3600,31 @@ exports.updateNotificationPreferences = async (req, res) => {
 
 exports.changePassword = async (req, res) => {
   try {
-    const { current_password, new_password } = req.body;
+    const { currentPassword, newPassword } = req.body;
+    const parentId = await getParentId(req);
 
-    // In a real implementation, verify current password and update
-    // For now, just return success
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+
+    if (!parent) {
+      return res.status(404).json({ error: 'Parent not found' });
+    }
+
+    // Verify current password (in production, use bcrypt compare)
+    if (parent.user.password !== currentPassword) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    // Update password (in production, use bcrypt hash)
+    await prisma.user.update({
+      where: { user_id: parent.user_id },
+      data: {
+        password: newPassword
+      }
+    });
+
     res.json({
       status: 'SUCCESS',
       message: 'Password changed successfully'
@@ -4267,18 +4507,56 @@ exports.getNotifications = async (req, res) => {
       take: 20
     });
 
-    res.json({
-      notifications: notifications.map(n => ({
-        id: n.notification_id,
-        type: n.type,
-        title: n.content.split(':')[0] || 'Notification',
-        body: n.content,
-        read: n.is_sent,
-        created_at: n.sent_at
-      }))
-    });
+    // Return array format for frontend
+    res.json(notifications.map(n => ({
+      id: n.notification_id,
+      type: n.type,
+      title: n.content.split(':')[0] || 'Notification',
+      body: n.content,
+      read: n.is_sent,
+      created_at: n.sent_at
+    })));
   } catch (error) {
     console.error('Error in getNotifications:', error);
     res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+};
+
+exports.markNotificationRead = async (req, res) => {
+  try {
+    const parentId = await getParentId(req);
+    const { notificationId } = req.body;
+
+    const parent = await prisma.parent.findUnique({
+      where: { parent_id: parentId },
+      include: { user: true }
+    });
+
+    if (!parent) {
+      return res.status(404).json({ error: 'Parent not found' });
+    }
+
+    // Verify notification belongs to parent
+    const notification = await prisma.notification.findFirst({
+      where: {
+        notification_id: parseInt(notificationId),
+        user_id: parent.user_id
+      }
+    });
+
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    // Mark as read
+    await prisma.notification.update({
+      where: { notification_id: parseInt(notificationId) },
+      data: { is_sent: true }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({ error: 'Failed to mark notification as read' });
   }
 };

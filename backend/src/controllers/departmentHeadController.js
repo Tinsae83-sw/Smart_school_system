@@ -8,21 +8,39 @@ const prisma = require('../config/prisma');
 // Helper function to get department head ID (with or without authentication)
 async function getDepartmentHeadId(req) {
   // If authenticated, use the authenticated department head ID
-  if (req.user_id) {
-    return req.user_id;
+  if (req.user?.user_id) {
+    return req.user.user_id;
   }
-  
-  // For development without authentication, use the first department head in the database
+
+  // For development without authentication, use the first department head with a department assigned
   const deptHead = await prisma.departmentHead.findFirst({
-    where: { user: { role: 'DEPARTMENT_HEAD' } },
-    include: { user: true }
+    where: {
+      department: { not: null }
+    }
   });
-  
+
   if (!deptHead) {
-    throw new Error('No department head found in database');
+    throw new Error('No department head with assigned department found in database');
   }
-  
+
   return deptHead.user_id;
+}
+
+/**
+ * Get All Subjects
+ * GET /api/department-head/subjects
+ */
+async function getSubjectsByGrade(req, res) {
+  try {
+    const subjects = await prisma.subject.findMany({
+      orderBy: { subject_name: 'asc' }
+    });
+
+    res.json(subjects);
+  } catch (error) {
+    console.error('Error fetching subjects:', error);
+    res.status(500).json({ error: 'Failed to fetch subjects' });
+  }
 }
 
 // ==================== DASHBOARD & OVERVIEW ====================
@@ -198,36 +216,80 @@ async function getDepartmentTeachers(req, res) {
       return res.status(404).json({ error: 'Department Head not found' });
     }
 
+    if (!deptHead.department) {
+      return res.status(400).json({ error: 'Department Head has no department assigned' });
+    }
+
+    console.log(`Department Head ${user_id} is in department: ${deptHead.department}`);
+
     const teachers = await prisma.teacher.findMany({
       where: { department: deptHead.department },
       include: {
-        user: true,
-        class_subjects: {
-          include: { subject: true, school_class: true }
+        user: {
+          select: {
+            full_name: true,
+            email: true,
+            phone_number: true,
+            is_active: true
+          }
         }
       }
     });
 
-    const teachersWithWorkload = teachers.map(teacher => ({
-      teacher_id: teacher.teacher_id,
-      full_name: teacher.user.full_name,
-      email: teacher.user.email,
-      phone_number: teacher.user.phone_number,
-      department: teacher.department,
-      subjects: teacher.subjects,
-      grade_levels: teacher.grade_levels,
-      degree_level: teacher.degree_level,
-      experience_years: teacher.experience_years,
-      hire_date: teacher.hire_date,
-      workload: teacher.class_subjects.length,
-      classes: teacher.class_subjects.map(cs => ({
-        class_name: cs.school_class.class_name,
-        subject: cs.subject.subject_name
-      })),
-      status: teacher.user.is_active ? 'Active' : 'Inactive'
-    }));
+    const teacherIds = teachers.map(t => t.teacher_id);
 
-    res.json(teachersWithWorkload);
+    const classSubjects = await prisma.classSubject.findMany({
+      where: { teacher_id: { in: teacherIds } },
+      include: {
+        subject: {
+          select: {
+            subject_name: true
+          }
+        },
+        school_class: {
+          select: {
+            class_name: true
+          }
+        }
+      }
+    });
+
+    const classSubjectsByTeacher = {};
+    classSubjects.forEach(cs => {
+      if (!classSubjectsByTeacher[cs.teacher_id]) {
+        classSubjectsByTeacher[cs.teacher_id] = [];
+      }
+      classSubjectsByTeacher[cs.teacher_id].push(cs);
+    });
+
+    console.log(`Found ${teachers.length} teachers in department ${deptHead.department}`);
+
+    const teachersWithWorkload = teachers.map(teacher => {
+      const teacherClassSubjects = classSubjectsByTeacher[teacher.teacher_id] || [];
+      return {
+        teacher_id: teacher.teacher_id,
+        full_name: teacher.user.full_name,
+        email: teacher.user.email,
+        phone_number: teacher.user.phone_number,
+        department: teacher.department,
+        subjects: teacher.subjects,
+        grade_levels: teacher.grade_levels,
+        degree_level: teacher.degree_level,
+        experience_years: teacher.experience_years,
+        hire_date: teacher.hire_date,
+        workload: teacherClassSubjects.length,
+        classes: teacherClassSubjects.map(cs => ({
+          class_name: cs.school_class.class_name,
+          subject: cs.subject.subject_name
+        })),
+        status: teacher.user.is_active ? 'Active' : 'Inactive'
+      };
+    });
+
+    res.json({
+      department: deptHead.department,
+      teachers: teachersWithWorkload
+    });
   } catch (error) {
     console.error('Error getting department teachers:', error);
     res.status(500).json({ error: 'Failed to get department teachers' });
@@ -682,6 +744,141 @@ async function getGradeDistribution(req, res) {
   }
 }
 
+/**
+ * Get Subject-wise Performance
+ * GET /api/department-head/academics/subject-performance
+ */
+async function getSubjectPerformance(req, res) {
+  try {
+    const user_id = await getDepartmentHeadId(req);
+
+    const deptHead = await prisma.departmentHead.findUnique({
+      where: { user_id }
+    });
+
+    if (!deptHead) {
+      return res.status(404).json({ error: 'Department Head not found' });
+    }
+
+    const grades = await prisma.grade.findMany({
+      where: {
+        submission: {
+          assignment: {
+            class_subject: {
+              teacher: { department: deptHead.department }
+            }
+          }
+        }
+      },
+      include: {
+        submission: {
+          include: {
+            assignment: {
+              include: {
+                class_subject: {
+                  include: { subject: true }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Group by subject
+    const subjectGrades = {};
+    grades.forEach(g => {
+      const subjectName = g.submission.assignment.class_subject.subject.subject_name;
+      if (!subjectGrades[subjectName]) {
+        subjectGrades[subjectName] = [];
+      }
+      subjectGrades[subjectName].push(Number(g.score));
+    });
+
+    const performance = Object.entries(subjectGrades).map(([subject, scores]) => {
+      const avg = scores.length > 0 ? scores.reduce((sum, s) => sum + s, 0) / scores.length : 0;
+      return {
+        subject,
+        avg: Math.round(avg),
+        trend: "+0%" // Could be calculated by comparing with previous period
+      };
+    });
+
+    res.json(performance);
+  } catch (error) {
+    console.error('Error getting subject performance:', error);
+    res.status(500).json({ error: 'Failed to get subject performance' });
+  }
+}
+
+/**
+ * Get Attendance Trends
+ * GET /api/department-head/academics/attendance-trends
+ */
+async function getAttendanceTrends(req, res) {
+  try {
+    const user_id = await getDepartmentHeadId(req);
+
+    const deptHead = await prisma.departmentHead.findUnique({
+      where: { user_id }
+    });
+
+    if (!deptHead) {
+      return res.status(404).json({ error: 'Department Head not found' });
+    }
+
+    // Get attendance records for the last 6 months
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const attendanceRecords = await prisma.attendanceRecord.findMany({
+      where: {
+        date: { gte: sixMonthsAgo },
+        school_class: {
+          class_subjects: {
+            some: {
+              teacher: { department: deptHead.department }
+            }
+          }
+        }
+      },
+      select: {
+        date: true,
+        status: true
+      }
+    });
+
+    // Group by month
+    const monthlyData = {};
+    const months = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
+    
+    attendanceRecords.forEach(record => {
+      const month = months[new Date(record.date).getMonth()] || 'Other';
+      if (!monthlyData[month]) {
+        monthlyData[month] = { present: 0, total: 0 };
+      }
+      monthlyData[month].total++;
+      if (record.status === 'PRESENT') {
+        monthlyData[month].present++;
+      }
+    });
+
+    const trends = months.map(month => {
+      const data = monthlyData[month] || { present: 0, total: 0 };
+      const rate = data.total > 0 ? Math.round((data.present / data.total) * 100) : 0;
+      return {
+        month,
+        rate
+      };
+    });
+
+    res.json(trends);
+  } catch (error) {
+    console.error('Error getting attendance trends:', error);
+    res.status(500).json({ error: 'Failed to get attendance trends' });
+  }
+}
+
 // ==================== RESOURCE MANAGEMENT ====================
 
 /**
@@ -761,6 +958,57 @@ async function addResource(req, res) {
   } catch (error) {
     console.error('Error adding resource:', error);
     res.status(500).json({ error: 'Failed to add resource' });
+  }
+}
+
+/**
+ * Delete Resource
+ * DELETE /api/department-head/resources/:id
+ */
+async function deleteResource(req, res) {
+  try {
+    const user_id = await getDepartmentHeadId(req);
+    const resource_id = parseInt(req.params.id);
+
+    if (!resource_id || isNaN(resource_id)) {
+      return res.status(400).json({ error: 'Invalid resource ID' });
+    }
+
+    const deptHead = await prisma.departmentHead.findUnique({
+      where: { user_id }
+    });
+
+    if (!deptHead) {
+      return res.status(404).json({ error: 'Department Head not found' });
+    }
+
+    // Check if resource exists and belongs to department
+    const resource = await prisma.resource.findUnique({
+      where: { resource_id }
+    });
+
+    if (!resource) {
+      return res.status(404).json({ error: 'Resource not found' });
+    }
+
+    if (resource.department !== deptHead.department) {
+      return res.status(403).json({ error: 'You can only delete resources from your department' });
+    }
+
+    // Delete resource allocations first
+    await prisma.resourceAllocation.deleteMany({
+      where: { resource_id }
+    });
+
+    // Delete the resource
+    await prisma.resource.delete({
+      where: { resource_id }
+    });
+
+    res.json({ message: 'Resource deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting resource:', error);
+    res.status(500).json({ error: 'Failed to delete resource' });
   }
 }
 
@@ -910,7 +1158,7 @@ async function getExams(req, res) {
 async function createExam(req, res) {
   try {
     const user_id = await getDepartmentHeadId(req);
-    const { class_subject_id, title, exam_type, exam_date, duration_minutes, total_marks } = req.body;
+    const { title, exam_type, grade, selected_subjects, exam_date, duration_minutes, total_marks } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -920,35 +1168,58 @@ async function createExam(req, res) {
       return res.status(404).json({ error: 'Department Head not found' });
     }
 
-    // Check class subject is in department
-    const classSubject = await prisma.classSubject.findUnique({
-      where: { class_subject_id: parseInt(class_subject_id) },
-      include: { teacher: true }
-    });
-
-    if (!classSubject || classSubject.teacher.department !== deptHead.department) {
-      return res.status(400).json({ error: 'Class subject not found in your department' });
-    }
-
-    const exam = await prisma.exam.create({
-      data: {
-        class_subject_id: parseInt(class_subject_id),
-        title,
-        exam_type,
-        exam_date: new Date(exam_date),
-        duration_minutes: parseInt(duration_minutes),
-        total_marks: parseFloat(total_marks),
-        created_by: user_id,
-        status: 'DRAFT'
-      },
-      include: {
-        class_subject: {
-          include: { subject: true, school_class: true }
+    // Find classes matching the grade
+    const classes = await prisma.schoolClass.findMany({
+      where: {
+        class_name: {
+          contains: `Grade ${grade}`
         }
       }
     });
 
-    res.status(201).json({ message: 'Exam created successfully', exam });
+    const classIds = classes.map(c => c.class_id);
+
+    // Get class subjects for these classes and selected subjects that belong to department
+    const classSubjects = await prisma.classSubject.findMany({
+      where: {
+        class_id: { in: classIds },
+        subject_id: { in: selected_subjects },
+        teacher: { department: deptHead.department }
+      },
+      include: {
+        subject: true,
+        school_class: true
+      }
+    });
+
+    if (classSubjects.length === 0) {
+      return res.status(400).json({ error: 'No class subjects found for the selected grade and subjects in your department' });
+    }
+
+    // Create exams for each class subject
+    const exams = await Promise.all(
+      classSubjects.map(classSubject =>
+        prisma.exam.create({
+          data: {
+            class_subject_id: classSubject.class_subject_id,
+            title,
+            exam_type,
+            exam_date: new Date(exam_date),
+            duration_minutes: parseInt(duration_minutes),
+            total_marks: parseFloat(total_marks),
+            created_by: user_id,
+            status: 'PENDING_APPROVAL'
+          },
+          include: {
+            class_subject: {
+              include: { subject: true, school_class: true }
+            }
+          }
+        })
+      )
+    );
+
+    res.status(201).json({ message: `${exams.length} exam(s) created successfully`, exams });
   } catch (error) {
     console.error('Error creating exam:', error);
     res.status(500).json({ error: 'Failed to create exam' });
@@ -1075,8 +1346,8 @@ async function getExamResults(req, res) {
     });
 
     const passCount = results.filter(r => Number(r.score) >= Number(exam.total_marks) * 0.5).length;
-    const avgScore = results.length > 0 
-      ? results.reduce((sum, r) => sum + Number(r.score), 0) / results.length 
+    const avgScore = results.length > 0
+      ? results.reduce((sum, r) => sum + Number(r.score), 0) / results.length
       : 0;
 
     res.json({
@@ -1091,12 +1362,104 @@ async function getExamResults(req, res) {
         student_name: r.student.user.full_name,
         score: Number(r.score),
         letter_grade: r.letter_grade,
-        remarks: r.remarks
       }))
     });
   } catch (error) {
-    console.error('Error getting exam results:', error);
-    res.status(500).json({ error: 'Failed to get exam results' });
+    console.error('Error fetching exam results:', error);
+    res.status(500).json({ error: 'Failed to fetch exam results' });
+  }
+}
+
+/**
+ * Delete Exam
+ * DELETE /api/department-head/exams/:id
+ */
+async function deleteExam(req, res) {
+  try {
+    const user_id = await getDepartmentHeadId(req);
+    const { id } = req.params;
+
+    const deptHead = await prisma.departmentHead.findUnique({
+      where: { user_id }
+    });
+
+    if (!deptHead) {
+      return res.status(404).json({ error: 'Department Head not found' });
+    }
+
+    const exam = await prisma.exam.findUnique({
+      where: { exam_id: parseInt(id) },
+      include: { class_subject: { include: { teacher: true } } }
+    });
+
+    if (!exam || exam.class_subject.teacher.department !== deptHead.department) {
+      return res.status(404).json({ error: 'Exam not found in your department' });
+    }
+
+    // Delete exam results first
+    await prisma.examResult.deleteMany({
+      where: { exam_id: parseInt(id) }
+    });
+
+    // Delete exam
+    await prisma.exam.delete({
+      where: { exam_id: parseInt(id) }
+    });
+
+    res.json({ message: 'Exam deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting exam:', error);
+    res.status(500).json({ error: 'Failed to delete exam' });
+  }
+}
+
+/**
+ * Update Exam
+ * PUT /api/department-head/exams/:id
+ */
+async function updateExam(req, res) {
+  try {
+    const user_id = await getDepartmentHeadId(req);
+    const { id } = req.params;
+    const { title, exam_type, exam_date, duration_minutes, total_marks } = req.body;
+
+    const deptHead = await prisma.departmentHead.findUnique({
+      where: { user_id }
+    });
+
+    if (!deptHead) {
+      return res.status(404).json({ error: 'Department Head not found' });
+    }
+
+    const exam = await prisma.exam.findUnique({
+      where: { exam_id: parseInt(id) },
+      include: { class_subject: { include: { teacher: true } } }
+    });
+
+    if (!exam || exam.class_subject.teacher.department !== deptHead.department) {
+      return res.status(404).json({ error: 'Exam not found in your department' });
+    }
+
+    const updatedExam = await prisma.exam.update({
+      where: { exam_id: parseInt(id) },
+      data: {
+        title: title || exam.title,
+        exam_type: exam_type || exam.exam_type,
+        exam_date: exam_date ? new Date(exam_date) : exam.exam_date,
+        duration_minutes: duration_minutes ? parseInt(duration_minutes) : exam.duration_minutes,
+        total_marks: total_marks ? parseFloat(total_marks) : exam.total_marks
+      },
+      include: {
+        class_subject: {
+          include: { subject: true, school_class: true }
+        }
+      }
+    });
+
+    res.json({ message: 'Exam updated successfully', exam: updatedExam });
+  } catch (error) {
+    console.error('Error updating exam:', error);
+    res.status(500).json({ error: 'Failed to update exam' });
   }
 }
 
@@ -1126,7 +1489,7 @@ async function getEvaluationForms(req, res) {
 }
 
 /**
- * Create Peer Evaluation Form
+ * Create Custom Evaluation Form
  * POST /api/department-head/evaluations/forms
  */
 async function createEvaluationForm(req, res) {
@@ -1189,13 +1552,12 @@ async function getPeerEvaluations(req, res) {
 }
 
 /**
- * Assign Peer Evaluation
- * POST /api/department-head/evaluations/assign
+ * Get Department Head Evaluations
+ * GET /api/department-head/evaluations/direct
  */
-async function assignPeerEvaluation(req, res) {
+async function getDepartmentHeadEvaluations(req, res) {
   try {
     const user_id = await getDepartmentHeadId(req);
-    const { form_id, evaluator_id, evaluatee_id, term } = req.body;
 
     const deptHead = await prisma.departmentHead.findUnique({
       where: { user_id }
@@ -1205,29 +1567,162 @@ async function assignPeerEvaluation(req, res) {
       return res.status(404).json({ error: 'Department Head not found' });
     }
 
-    // Check both teachers are in department
-    const evaluator = await prisma.teacher.findUnique({
-      where: { teacher_id: parseInt(evaluator_id) }
+    const evaluations = await prisma.departmentHeadEvaluation.findMany({
+      where: {
+        department_head_id: deptHead.dept_head_id
+      },
+      include: {
+        teacher: {
+          include: { user: true }
+        },
+        department_head: {
+          include: { user: true }
+        }
+      },
+      orderBy: { submitted_at: 'desc' }
     });
 
-    const evaluatee = await prisma.teacher.findUnique({
-      where: { teacher_id: parseInt(evaluatee_id) }
+    res.json(evaluations);
+  } catch (error) {
+    console.error('Error getting department head evaluations:', error);
+    res.status(500).json({ error: 'Failed to get department head evaluations' });
+  }
+}
+
+/**
+ * Submit Direct Teacher Evaluation
+ * POST /api/department-head/evaluations/direct-submit
+ */
+async function submitDirectEvaluation(req, res) {
+  try {
+    const user_id = await getDepartmentHeadId(req);
+    const { 
+      teacher_id, 
+      evaluation_date, 
+      ratings, 
+      strengths, 
+      areas_for_improvement, 
+      evaluator_comments, 
+      overall_recommendation 
+    } = req.body;
+
+    const deptHead = await prisma.departmentHead.findUnique({
+      where: { user_id }
     });
 
-    if (!evaluator || !evaluatee || 
-        evaluator.department !== deptHead.department || 
-        evaluatee.department !== deptHead.department) {
-      return res.status(400).json({ error: 'Both teachers must be in your department' });
+    if (!deptHead) {
+      return res.status(404).json({ error: 'Department Head not found' });
     }
 
-    const evaluation = await prisma.peerEvaluation.create({
+    // Check teacher exists and is in department
+    const teacher = await prisma.teacher.findUnique({
+      where: { teacher_id: parseInt(teacher_id) },
+      include: { user: true }
+    });
+
+    if (!teacher) {
+      return res.status(404).json({ error: 'Teacher not found' });
+    }
+
+    if (teacher.department !== deptHead.department) {
+      return res.status(403).json({ error: 'Teacher not in your department' });
+    }
+
+    // Calculate overall score from ratings
+    const scoreValues = Object.values(ratings).map(s => Number(s));
+    const overallScore = scoreValues.length > 0 
+      ? (scoreValues.reduce((sum, s) => sum + s, 0) / scoreValues.length) * 20 
+      : 0;
+
+    // Create department head evaluation
+    const evaluation = await prisma.departmentHeadEvaluation.create({
       data: {
-        form_id: parseInt(form_id),
-        evaluator_id: parseInt(evaluator_id),
-        evaluatee_id: parseInt(evaluatee_id),
-        term,
-        scores: {},
-        overall_score: 0
+        teacher_id: parseInt(teacher_id),
+        department_head_id: deptHead.dept_head_id,
+        evaluation_date: new Date(evaluation_date),
+        scores: ratings,
+        overall_score: overallScore,
+        strengths,
+        areas_for_improvement,
+        evaluator_comments,
+        overall_recommendation
+      },
+      include: {
+        teacher: {
+          include: { user: true }
+        },
+        department_head: {
+          include: { user: true }
+        }
+      }
+    });
+
+    res.status(201).json({
+      message: 'Teacher evaluation submitted successfully',
+      evaluation: {
+        evaluation_id: evaluation.evaluation_id,
+        teacher_name: evaluation.teacher.user.full_name,
+        evaluator_name: evaluation.department_head.user.full_name,
+        evaluation_date: evaluation.evaluation_date,
+        overall_score: evaluation.overall_score,
+        overall_recommendation: evaluation.overall_recommendation
+      }
+    });
+  } catch (error) {
+    console.error('Error submitting direct evaluation:', error);
+    res.status(500).json({ error: 'Failed to submit evaluation' });
+  }
+}
+
+/**
+ * Submit Evaluation Form
+ * POST /api/department-head/evaluations/submit
+ */
+async function submitEvaluationForm(req, res) {
+  try {
+    const user_id = await getDepartmentHeadId(req);
+    const { evaluation_id, scores, comments } = req.body;
+
+    const deptHead = await prisma.departmentHead.findUnique({
+      where: { user_id }
+    });
+
+    if (!deptHead) {
+      return res.status(404).json({ error: 'Department Head not found' });
+    }
+
+    // Check evaluation exists and is in department
+    const evaluation = await prisma.peerEvaluation.findUnique({
+      where: { evaluation_id: parseInt(evaluation_id) },
+      include: {
+        evaluator: true,
+        evaluatee: true
+      }
+    });
+
+    if (!evaluation) {
+      return res.status(404).json({ error: 'Evaluation not found' });
+    }
+
+    if (evaluation.evaluator.department !== deptHead.department && 
+        evaluation.evaluatee.department !== deptHead.department) {
+      return res.status(403).json({ error: 'Evaluation not in your department' });
+    }
+
+    // Calculate overall score
+    const scoreValues = Object.values(scores).map(s => Number(s));
+    const overallScore = scoreValues.length > 0 
+      ? scoreValues.reduce((sum, s) => sum + s, 0) / scoreValues.length 
+      : 0;
+
+    // Update evaluation
+    const updated = await prisma.peerEvaluation.update({
+      where: { evaluation_id: parseInt(evaluation_id) },
+      data: {
+        scores,
+        comments,
+        overall_score: overallScore,
+        submitted_at: new Date()
       },
       include: {
         form: true,
@@ -1236,10 +1731,123 @@ async function assignPeerEvaluation(req, res) {
       }
     });
 
-    res.status(201).json({ message: 'Peer evaluation assigned', evaluation });
+    res.json({ message: 'Evaluation submitted successfully', evaluation: updated });
   } catch (error) {
-    console.error('Error assigning peer evaluation:', error);
-    res.status(500).json({ error: 'Failed to assign peer evaluation' });
+    console.error('Error submitting evaluation:', error);
+    res.status(500).json({ error: 'Failed to submit evaluation' });
+  }
+}
+
+/**
+ * Send Teacher Evaluation to Student with One-Time Link
+ * POST /api/department-head/evaluations/send-to-student
+ */
+async function sendEvaluationToStudent(req, res) {
+  try {
+    const user_id = await getDepartmentHeadId(req);
+    const { teacher_id, student_id, evaluation_form_id, message, form_type } = req.body;
+
+    const deptHead = await prisma.departmentHead.findUnique({
+      where: { user_id }
+    });
+
+    if (!deptHead) {
+      return res.status(404).json({ error: 'Department Head not found' });
+    }
+
+    // Check teacher is in department
+    const teacher = await prisma.teacher.findUnique({
+      where: { teacher_id: parseInt(teacher_id) },
+      include: { user: true }
+    });
+
+    if (!teacher || teacher.department !== deptHead.department) {
+      return res.status(400).json({ error: 'Teacher not found in your department' });
+    }
+
+    // Check student exists
+    const student = await prisma.student.findUnique({
+      where: { student_id: parseInt(student_id) },
+      include: { user: true }
+    });
+
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    let evaluationForm = null;
+    let formId = null;
+
+    // For simplified form, we don't need a form_id from database
+    if (form_type === 'comprehensive') {
+      // Check evaluation form exists
+      evaluationForm = await prisma.peerEvaluationForm.findUnique({
+        where: { form_id: parseInt(evaluation_form_id) }
+      });
+
+      if (!evaluationForm) {
+        return res.status(404).json({ error: 'Evaluation form not found' });
+      }
+      formId = parseInt(evaluation_form_id);
+    }
+
+    // Generate unique one-time token
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // Token expires in 24 hours
+
+    // Create evaluation link record
+    const evaluationLink = await prisma.evaluationLink.create({
+      data: {
+        token,
+        teacher_id: parseInt(teacher_id),
+        student_id: parseInt(student_id),
+        form_id: formId,
+        created_by: user_id,
+        expires_at: expiresAt,
+        used: false,
+        form_type: form_type || 'comprehensive'
+      }
+    });
+
+    // Create notification for student with the link
+    const evaluationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/student/evaluation/${token}`;
+    
+    const notification = await prisma.notification.create({
+      data: {
+        user_id: student.user_id,
+        title: 'Teacher Evaluation Request',
+        message: message || `Please complete the evaluation for ${teacher.user.full_name}.`,
+        type: 'EVALUATION',
+        read: false,
+        metadata: {
+          evaluation_url: evaluationUrl,
+          teacher_name: teacher.user.full_name,
+          expires_at: expiresAt
+        }
+      }
+    });
+
+    res.status(201).json({ 
+      message: 'Evaluation link sent to student successfully',
+      evaluation_link: evaluationUrl,
+      token,
+      expires_at: expiresAt,
+      notification,
+      student: {
+        student_id: student.student_id,
+        name: student.user.full_name,
+        email: student.user.email
+      },
+      teacher: {
+        teacher_id: teacher.teacher_id,
+        name: teacher.user.full_name
+      }
+    });
+  } catch (error) {
+    console.error('Error sending evaluation to student:', error);
+    res.status(500).json({ error: 'Failed to send evaluation to student' });
   }
 }
 
@@ -1361,6 +1969,67 @@ async function sendAnnouncement(req, res) {
 }
 
 // ==================== STUDENT SUPPORT ====================
+
+/**
+ * Get All Students by Class
+ * GET /api/department-head/students
+ */
+async function getStudentsByClass(req, res) {
+  try {
+    const user_id = await getDepartmentHeadId(req);
+    const { class_id } = req.query;
+
+    const deptHead = await prisma.departmentHead.findUnique({
+      where: { user_id }
+    });
+
+    if (!deptHead) {
+      return res.status(404).json({ error: 'Department Head not found' });
+    }
+
+    // Build where clause for class filter
+    const where = {};
+    if (class_id) {
+      where.current_class_id = parseInt(class_id);
+    }
+
+    // Get students
+    const students = await prisma.student.findMany({
+      where,
+      include: {
+        user: true,
+        current_class: true
+      },
+      orderBy: {
+        user: {
+          full_name: 'asc'
+        }
+      }
+    });
+
+    // Group students by class
+    const studentsByClass = {};
+    students.forEach(student => {
+      const className = student.current_class?.class_name || 'Unassigned';
+      if (!studentsByClass[className]) {
+        studentsByClass[className] = [];
+      }
+      studentsByClass[className].push({
+        student_id: student.student_id,
+        full_name: student.user.full_name,
+        email: student.user.email,
+        class: className,
+        enrollment_status: student.enrollment_status,
+        grade_level: student.grade_level
+      });
+    });
+
+    res.json(studentsByClass);
+  } catch (error) {
+    console.error('Error getting students by class:', error);
+    res.status(500).json({ error: 'Failed to get students by class' });
+  }
+}
 
 /**
  * Get At-Risk Students
@@ -1547,6 +2216,106 @@ async function getInterventions(req, res) {
 }
 
 // ==================== REPORTS ====================
+
+/**
+ * Get Reports Overview
+ * GET /api/department-head/reports
+ */
+async function getReportsOverview(req, res) {
+  try {
+    const user_id = await getDepartmentHeadId(req);
+
+    const deptHead = await prisma.departmentHead.findUnique({
+      where: { user_id }
+    });
+
+    if (!deptHead) {
+      return res.status(404).json({ error: 'Department Head not found' });
+    }
+
+    const department = deptHead.department;
+
+    // Get report statistics
+    const teachers = await prisma.teacher.count({
+      where: { department }
+    });
+
+    const grades = await prisma.grade.count({
+      where: {
+        submission: {
+          assignment: {
+            class_subject: {
+              teacher: { department }
+            }
+          }
+        }
+      }
+    });
+
+    const attendanceRecords = await prisma.attendanceRecord.count({
+      where: {
+        school_class: {
+          class_subjects: {
+            some: {
+              teacher: { department }
+            }
+          }
+        }
+      }
+    });
+
+    const lessonPlans = await prisma.lessonPlan.count({
+      where: {
+        teacher: { department }
+      }
+    });
+
+    res.json({
+      department,
+      available_reports: [
+        {
+          name: 'Department Report',
+          endpoint: '/api/department-head/reports/generate',
+          description: 'Comprehensive department overview including teachers, grades, and attendance',
+          formats: ['json', 'csv']
+        },
+        {
+          name: 'Teacher Performance',
+          endpoint: '/api/department-head/teachers/:id/performance',
+          description: 'Individual teacher performance metrics',
+          formats: ['json']
+        },
+        {
+          name: 'Grade Distribution',
+          endpoint: '/api/department-head/academics/grade-distribution',
+          description: 'Distribution of grades across department',
+          formats: ['json']
+        },
+        {
+          name: 'Subject Performance',
+          endpoint: '/api/department-head/academics/subject-performance',
+          description: 'Performance metrics by subject',
+          formats: ['json']
+        },
+        {
+          name: 'Attendance Trends',
+          endpoint: '/api/department-head/academics/attendance-trends',
+          description: 'Attendance trends over time',
+          formats: ['json']
+        }
+      ],
+      statistics: {
+        total_teachers: teachers,
+        total_grades: grades,
+        total_attendance_records: attendanceRecords,
+        total_lesson_plans: lessonPlans
+      }
+    });
+  } catch (error) {
+    console.error('Error getting reports overview:', error);
+    res.status(500).json({ error: 'Failed to get reports overview' });
+  }
+}
 
 /**
  * Generate Department Report
@@ -1844,26 +2613,32 @@ module.exports = {
   // Dashboard
   getDashboardMetrics,
   getActivityFeed,
-  
+
   // Teacher Management
   getDepartmentTeachers,
   addTeachingAssistant,
   assignTeacherToCourse,
   getTeacherPerformance,
-  
+
   // Lesson Plans
   getLessonPlans,
   reviewLessonPlan,
-  
+
   // Academics
   getDepartmentGrades,
   getGradeDistribution,
-  
+  getSubjectPerformance,
+  getAttendanceTrends,
+
   // Resources
   getResources,
   addResource,
+  deleteResource,
   allocateResource,
   requestResource,
+
+  // Subjects
+  getSubjectsByGrade,
   
   // Exams
   getExams,
@@ -1871,12 +2646,17 @@ module.exports = {
   approveExam,
   assignInvigilator,
   getExamResults,
+  deleteExam,
+  updateExam,
   
   // Peer Evaluations
   getEvaluationForms,
   createEvaluationForm,
   getPeerEvaluations,
-  assignPeerEvaluation,
+  getDepartmentHeadEvaluations,
+  submitEvaluationForm,
+  submitDirectEvaluation,
+  sendEvaluationToStudent,
   
   // Communication
   getMeetings,
@@ -1884,11 +2664,13 @@ module.exports = {
   sendAnnouncement,
   
   // Student Support
+  getStudentsByClass,
   getAtRiskStudents,
   createIntervention,
   getInterventions,
   
   // Reports
+  getReportsOverview,
   generateDepartmentReport,
   
   // Settings

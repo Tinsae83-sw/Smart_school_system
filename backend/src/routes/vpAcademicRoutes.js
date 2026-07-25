@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const vpAcademicController = require('../controllers/vpAcademicController');
+const timetableGeneratorController = require('../controllers/timetableGeneratorController');
 
 /**
  * VP ACADEMIC ROUTES
@@ -8,6 +9,10 @@ const vpAcademicController = require('../controllers/vpAcademicController');
  */
 
 // ==================== DASHBOARD & OVERVIEW ====================
+
+// Get Analytics Overview
+// GET /api/vp-academic/analytics
+router.get('/analytics', vpAcademicController.getAnalyticsOverview);
 
 // Get Academic Dashboard
 // GET /api/vp-academic/dashboard
@@ -56,6 +61,10 @@ router.get('/curriculum/compliance', vpAcademicController.getCurriculumComplianc
 router.get('/curriculum/export', vpAcademicController.exportCurriculumGuide);
 
 // ==================== TIMETABLE & SCHEDULING MANAGEMENT ====================
+
+// Automatic Timetable Generation
+// POST /api/vp-academic/timetable/auto-generate
+router.post('/timetable/auto-generate', timetableGeneratorController.generateTimetable);
 
 // Create Master Timetable
 // POST /api/vp-academic/timetable/master
@@ -131,6 +140,10 @@ router.get('/teachers/:id/workload', vpAcademicController.getTeacherWorkload);
 // GET /api/vp-academic/teachers/:id/performance
 router.get('/teachers/:id/performance', vpAcademicController.getTeacherPerformance);
 
+// Get All Teachers Performance
+// GET /api/vp-academic/teachers/performance
+router.get('/teachers/performance', vpAcademicController.getAllTeachersPerformance);
+
 // ==================== STUDENT MANAGEMENT ====================
 
 // Register New Student
@@ -157,6 +170,10 @@ router.put('/students/:id', vpAcademicController.editStudent);
 // POST /api/vp-academic/students/promote
 router.post('/students/promote', vpAcademicController.promoteStudents);
 
+// Get Parent-Student Relationships
+// GET /api/vp-academic/parent-student-relationships
+router.get('/parent-student-relationships', vpAcademicController.getParentStudentRelationships);
+
 // Transfer Student
 // PUT /api/vp-academic/students/:id/transfer
 router.put('/students/:id/transfer', vpAcademicController.transferStudent);
@@ -171,9 +188,17 @@ router.get('/students/:id/history', vpAcademicController.getStudentHistory);
 
 // ==================== EXAMINATION & ASSESSMENT MANAGEMENT ====================
 
+// Get All Exams
+// GET /api/vp-academic/exams
+router.get('/exams', vpAcademicController.getAllExams);
+
 // Create Examination Schedule
 // POST /api/vp-academic/exams
 router.post('/exams', vpAcademicController.createExamSchedule);
+
+// Delete Exam
+// DELETE /api/vp-academic/exams/:exam_id
+router.delete('/exams/:exam_id', vpAcademicController.deleteExam);
 
 // Assign Invigilators
 // POST /api/vp-academic/exams/:exam_id/invigilators
@@ -204,6 +229,10 @@ router.get('/exams/comparison', vpAcademicController.compareExamResults);
 router.get('/exams/export', vpAcademicController.exportExamResults);
 
 // ==================== ACADEMIC MONITORING & REPORTING ====================
+
+// Get Reports Overview
+// GET /api/vp-academic/reports
+router.get('/reports', vpAcademicController.getReportsOverview);
 
 // View School-Wide Grades
 // GET /api/vp-academic/academic/grades

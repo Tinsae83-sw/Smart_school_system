@@ -137,6 +137,7 @@ model User {
   ptsa_fund_transactions_created PTSAFundTransaction[] @relation("PTSAFundTransactionCreator")
   ptsa_announcements_created PTSAAnnouncement[] @relation("PTSAAnnouncementCreator")
 
+  @@index([role])
   @@map("users")
 }
 
@@ -191,12 +192,30 @@ model DepartmentHead {
   dept_head_id    Int       @id @default(autoincrement()) @map("dept_head_id")
   user_id         Int       @unique @map("user_id")
   employee_id     String    @unique @db.VarChar(20)
-  department      String    @db.VarChar(100)
+  department      String?   @db.VarChar(100)
   appointment_date DateTime? @db.Date
 
   user            User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  managed_departments Department[] @relation("DepartmentHead")
+  department_head_evaluations DepartmentHeadEvaluation[]
 
+  @@index([department])
   @@map("department_heads")
+}
+
+model Department {
+  department_id   Int       @id @default(autoincrement()) @map("department_id")
+  name            String    @unique @db.VarChar(100)
+  code            String?   @unique @db.VarChar(20)
+  description     String?   @db.Text
+  head_of_department_id Int? @map("head_of_department_id")
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  head_of_department DepartmentHead? @relation("DepartmentHead", fields: [head_of_department_id], references: [dept_head_id], onDelete: SetNull)
+
+  @@map("departments")
 }
 
 model PTSARepresentative {
@@ -229,7 +248,7 @@ model Teacher {
   employee_id     String    @unique @db.VarChar(20)
   department      String?   @db.VarChar(100)
   hire_date       DateTime? @db.Date
-  degree_level    DegreeLevel? 
+  degree_level    DegreeLevel?
   gender          Gender?
   age             Int?
   experience_years Int?
@@ -239,6 +258,7 @@ model Teacher {
   user                User                @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   homeroom_classes    SchoolClass[]
   class_subjects      ClassSubject[]
+  class_schedules     ClassSchedule[]
   attendance_records  AttendanceRecord[]
   grades              Grade[]
   lesson_plans        LessonPlan[]
@@ -246,8 +266,15 @@ model Teacher {
   exam_invigilations  ExamInvigilator[]
   peer_evaluations_as_evaluator PeerEvaluation[] @relation("PeerEvaluationEvaluator")
   peer_evaluations_as_evaluatee PeerEvaluation[] @relation("PeerEvaluationEvaluatee")
+  teacher_evaluations TeacherEvaluation[]
+  department_head_evaluations DepartmentHeadEvaluation[]
+  evaluation_links    EvaluationLink[]
   teacher_settings    TeacherSettings?
 
+  @@index([teacher_id])
+  @@index([employee_id])
+  @@index([department])
+  @@index([user_id])
   @@map("teachers")
 }
 
@@ -284,8 +311,11 @@ model Student {
   session_attendances SessionAttendance[]
   material_progress  MaterialProgress[]
   forum_posts         ForumPost[]
+  teacher_evaluations TeacherEvaluation[]
+  evaluation_links    EvaluationLink[]
 
   @@index([current_class_id])
+  @@index([current_class_id, student_id])
   @@map("students")
 }
 
@@ -320,6 +350,11 @@ model SchoolClass {
   announcements       Announcement[]
   class_schedules     ClassSchedule[]
 
+  @@index([class_id])
+  @@index([homeroom_teacher_id])
+  @@index([class_name])
+  @@index([academic_year])
+  @@index([class_name, academic_year])
   @@map("school_classes")
 }
 
@@ -327,12 +362,21 @@ model Subject {
   subject_id    Int       @id @default(autoincrement()) @map("subject_id")
   subject_name  String    @db.VarChar(100)
   subject_code  String    @unique @db.VarChar(20)
+  credit_hour   Int       @default(3) @map("credit_hour")
+  department    String?   @db.VarChar(100)
+  grade_level   Boolean?  @default(false) @map("grade_level")
+  grade_levels  Int[]     @default([]) @map("grade_levels")
 
   class_subjects  ClassSubject[]
   class_schedules ClassSchedule[]
   curriculum_maps CurriculumMap[]
   ai_books        AIBook[]
 
+  @@index([subject_id])
+  @@index([subject_code])
+  @@index([subject_name])
+  @@index([subject_name, subject_id])
+  @@index([department])
   @@map("subjects")
 }
 
@@ -341,6 +385,7 @@ model ClassSubject {
   class_id         Int     @map("class_id")
   subject_id       Int     @map("subject_id")
   teacher_id       Int     @map("teacher_id")
+  credit_hour      Int     @default(3) @map("credit_hour")
 
   school_class      SchoolClass       @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
   subject           Subject           @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
@@ -353,6 +398,11 @@ model ClassSubject {
   discussion_forums DiscussionForum[]
 
   @@unique([class_id, subject_id])
+  @@index([class_id])
+  @@index([subject_id])
+  @@index([teacher_id])
+  @@index([teacher_id, class_id])
+  @@index([class_id, subject_id, teacher_id])
   @@map("class_subject")
 }
 
@@ -462,8 +512,10 @@ model Notification {
   notification_id Int             @id @default(autoincrement()) @map("notification_id")
   user_id         Int             @map("user_id")
   type            NotificationType
+  title           String          @db.VarChar(200)
   content         String          @db.VarChar(500)
-  is_sent         Boolean         @default(false)
+  is_read         Boolean         @default(false) @map("is_read")
+  is_sent         Boolean         @default(false) @map("is_sent")
   sent_at         DateTime        @default(now())
   metadata        Json?
 
@@ -618,6 +670,7 @@ model ClassSchedule {
 
   school_class  SchoolClass @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
   subject       Subject     @relation(fields: [subject_id], references: [subject_id], onDelete: Cascade)
+  teacher       Teacher     @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
 
   @@unique([class_id, day_of_week, period])
   @@map("class_schedules")
@@ -724,10 +777,13 @@ model Exam {
   exam_id          Int       @id @default(autoincrement()) @map("exam_id")
   class_subject_id Int       @map("class_subject_id")
   title            String    @db.VarChar(200)
-  exam_type        String    @db.VarChar(50) // MIDTERM, FINAL, QUIZ
+  exam_type        String    @db.VarChar(50) // MIDTERM, FINAL, QUIZ, TEST
   exam_date        DateTime  @db.Date
+  exam_time        DateTime? @db.Time
   duration_minutes Int
   total_marks      Decimal   @db.Decimal(10, 2)
+  room             String?   @db.VarChar(50)
+  coordinator      String?   @db.VarChar(100)
   created_by       Int       @map("created_by")
   approved_by      Int?      @map("approved_by")
   status           String    @default("DRAFT") @db.VarChar(20) // DRAFT, PENDING_APPROVAL, APPROVED, COMPLETED
@@ -784,6 +840,8 @@ model PeerEvaluationForm {
 
   creator          User      @relation("EvaluationFormCreator", fields: [created_by], references: [user_id], onDelete: Cascade)
   peer_evaluations PeerEvaluation[]
+  teacher_evaluations TeacherEvaluation[]
+  evaluation_links    EvaluationLink[]
 
   @@map("peer_evaluation_forms")
 }
@@ -805,6 +863,65 @@ model PeerEvaluation {
 
   @@unique([form_id, evaluator_id, evaluatee_id, term])
   @@map("peer_evaluations")
+}
+
+// Teacher Evaluation (Student evaluating Teacher)
+model TeacherEvaluation {
+  evaluation_id    Int       @id @default(autoincrement()) @map("evaluation_id")
+  teacher_id       Int       @map("teacher_id")
+  student_id       Int       @map("student_id")
+  form_id          Int       @map("form_id")
+  scores           Json      // Scores for each criterion
+  overall_score    Decimal   @db.Decimal(5, 2)
+  comments         String?   @db.Text
+  submitted_at     DateTime  @default(now())
+
+  teacher          Teacher   @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  form             PeerEvaluationForm @relation(fields: [form_id], references: [form_id], onDelete: Cascade)
+
+  @@map("teacher_evaluations")
+}
+
+// Department Head Evaluation (Department Head evaluating Teacher)
+model DepartmentHeadEvaluation {
+  evaluation_id    Int       @id @default(autoincrement()) @map("evaluation_id")
+  teacher_id       Int       @map("teacher_id")
+  department_head_id Int    @map("department_head_id")
+  evaluation_date  DateTime  @db.Date
+  scores           Json      // Scores for each criterion
+  overall_score    Decimal   @db.Decimal(5, 2)
+  strengths        String?   @db.Text
+  areas_for_improvement String? @db.Text
+  evaluator_comments String? @db.Text
+  overall_recommendation String @db.VarChar(50)
+  submitted_at     DateTime  @default(now())
+
+  teacher          Teacher   @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+  department_head  DepartmentHead @relation(fields: [department_head_id], references: [dept_head_id], onDelete: Cascade)
+
+  @@map("department_head_evaluations")
+}
+
+// One-time Evaluation Link for Students
+model EvaluationLink {
+  link_id          Int       @id @default(autoincrement()) @map("link_id")
+  token            String    @unique @db.VarChar(64)
+  teacher_id       Int       @map("teacher_id")
+  student_id       Int       @map("student_id")
+  form_id          Int?      @map("form_id")
+  created_by       Int       @map("created_by")
+  expires_at       DateTime  @db.Timestamp
+  used             Boolean   @default(false)
+  used_at          DateTime?
+  created_at       DateTime  @default(now())
+  form_type        String    @default("comprehensive") @db.VarChar(20)
+
+  teacher          Teacher   @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+  student          Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  form             PeerEvaluationForm? @relation(fields: [form_id], references: [form_id], onDelete: Cascade)
+
+  @@map("evaluation_links")
 }
 
 // Department Meetings
@@ -922,13 +1039,18 @@ model SchoolProfile {
   phone_number      String    @db.VarChar(20)
   email             String    @db.VarChar(100)
   logo_url          String?   @db.Text
-  motto             String?   @db.VarChar(200)
+  motto             String?   @db.VarChar(500)
   school_code       String    @unique @db.VarChar(20)
   woreda            String    @db.VarChar(100)
   zone              String?   @db.VarChar(100)
   region            String    @db.VarChar(100)
   established_date  DateTime? @db.Date
   principal_name    String    @db.VarChar(100)
+  school_type       String?   @db.VarChar(50)
+  grades_offered    String?   @db.VarChar(20)
+  student_capacity  Int?
+  current_term      String?   @db.VarChar(50)
+  vision_statement  String?   @db.VarChar(500)
   updated_at        DateTime  @default(now()) @updatedAt
 
   @@map("school_profile")
@@ -1038,6 +1160,13 @@ model AssetInventory {
   condition          String    @default("GOOD") @db.VarChar(20) // NEW, GOOD, FAIR, DAMAGED
   status             String    @default("AVAILABLE") @db.VarChar(20) // AVAILABLE, IN_USE, MAINTENANCE, RETIRED
   assigned_to        String?   @db.VarChar(100) // Department or person
+  serial_number      String?   @db.VarChar(100)
+  brand              String?   @db.VarChar(100)
+  model              String?   @db.VarChar(100)
+  warranty_expiry    DateTime? @db.Date
+  supplier           String?   @db.VarChar(200)
+  description        String?   @db.Text
+  notes              String?   @db.Text
   created_at         DateTime  @default(now())
   updated_at         DateTime  @default(now()) @updatedAt
 
@@ -1838,6 +1967,13 @@ model Facility {
   floor              Int?
   amenities          String[]  @db.Text
   status             String    @default("AVAILABLE") @db.VarChar(20) // AVAILABLE, UNDER_MAINTENANCE, CLOSED
+  description        String?   @db.Text
+  contact_person     String?   @db.VarChar(100)
+  contact_phone      String?   @db.VarChar(20)
+  operating_hours    String?   @db.VarChar(100)
+  area_sqft          Int?
+  responsible_department String? @db.VarChar(100)
+  notes              String?   @db.Text
   created_at         DateTime  @default(now())
   updated_at         DateTime  @default(now()) @updatedAt
 
@@ -1915,6 +2051,13 @@ model Supplier {
   is_approved        Boolean   @default(true)
   rating             Int?      // 1-5 scale
   notes              String?   @db.Text
+  tax_id             String?   @db.VarChar(50)
+  website            String?   @db.VarChar(255)
+  payment_terms      String?   @db.VarChar(100)
+  credit_limit       Decimal?  @db.Decimal(10, 2)
+  delivery_time      String?   @db.VarChar(100)
+  business_license   String?   @db.VarChar(100)
+  bank_account       String?   @db.VarChar(100)
   created_at         DateTime  @default(now())
   updated_at         DateTime  @default(now()) @updatedAt
 
@@ -1964,6 +2107,14 @@ model Inventory {
   max_stock          Int?
   unit_cost          Decimal?  @db.Decimal(10, 2)
   location           String?   @db.VarChar(100)
+  brand              String?   @db.VarChar(100)
+  model              String?   @db.VarChar(100)
+  supplier           String?   @db.VarChar(200)
+  reorder_lead_time  Int?      // days
+  shelf_life         String?   @db.VarChar(100)
+  storage_requirements String? @db.Text
+  minimum_order_quantity Int?
+  notes              String?   @db.Text
   supplier_id        Int?      @map("supplier_id")
   last_restocked     DateTime?
   created_at         DateTime  @default(now())
@@ -1986,6 +2137,7 @@ model InventoryTransaction {
   performed_by       Int       @map("performed_by")
   notes              String?   @db.Text
   transaction_date   DateTime  @default(now())
+  document_number    String?   @db.VarChar(50)
 
   inventory          Inventory @relation(fields: [inventory_id], references: [inventory_id], onDelete: Cascade)
 
@@ -2000,13 +2152,20 @@ model Incident {
   incident_date      DateTime  @db.Date
   incident_time      DateTime? @db.Time
   involved_person_id Int?      @map("involved_person_id") // Student or Staff user_id
+  involved_person_name String?  @db.VarChar(200)
   involved_person_type String? @db.VarChar(20) // STUDENT, TEACHER, NON_ACADEMIC_STAFF
   description        String    @db.Text
   location           String?   @db.VarChar(100)
   witnesses          String[]  @db.Text
   priority           String    @default("MEDIUM") @db.VarChar(10) // LOW, MEDIUM, HIGH, URGENT
+  severity           String?   @db.VarChar(20) // MINOR, MODERATE, MAJOR, CRITICAL
   status             String    @default("REPORTED") @db.VarChar(20) // REPORTED, UNDER_INVESTIGATION, RESOLVED, CLOSED
   action_taken       String?   @db.Text
+  immediate_action   String?   @db.Text
+  follow_up_required String?   @db.Text
+  evidence_notes     String?   @db.Text
+  resolution_notes   String?   @db.Text
+  reporter_contact   String?   @db.VarChar(100)
   resolved_by        Int?      @map("resolved_by")
   resolved_at        DateTime?
   notes              String?   @db.Text

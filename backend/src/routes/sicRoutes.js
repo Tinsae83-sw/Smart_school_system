@@ -23,6 +23,10 @@ router.get('/sip/current', sicController.getCurrentSIP);
 // GET /api/sic/sip/progress
 router.get('/sip/progress', sicController.getSIPProgress);
 
+// Get SIP Feedback
+// GET /api/sic/sip/feedback
+router.get('/sip/feedback', sicController.getSIPFeedback);
+
 // Submit SIP Feedback
 // POST /api/sic/sip/feedback
 router.post('/sip/feedback', sicController.submitSIPFeedback);

@@ -2,10 +2,27 @@ const prisma = require('../config/prisma');
 
 async function getSubjects(req, res) {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
     const subjects = await prisma.subject.findMany({
+      skip,
+      take: limit,
       orderBy: { subject_name: 'asc' }
     });
-    return res.json(subjects);
+
+    const total = await prisma.subject.count();
+
+    return res.json({
+      subjects,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Error fetching subjects:', error);
     return res.status(500).json({ error: 'Unable to load subjects' });
@@ -14,7 +31,7 @@ async function getSubjects(req, res) {
 
 async function createSubject(req, res) {
   try {
-    const { subject_name, subject_code } = req.body;
+    const { subject_name, subject_code, credit_hour, department, grade_levels } = req.body;
 
     if (!subject_name || typeof subject_name !== 'string' || subject_name.trim().length < 2) {
       return res.status(400).json({ error: 'Subject name is required and must be at least 2 characters.' });
@@ -24,10 +41,25 @@ async function createSubject(req, res) {
       return res.status(400).json({ error: 'Subject code is required and must be at least 2 characters.' });
     }
 
+    const creditHourValue = credit_hour ? parseInt(credit_hour) : 3;
+    if (isNaN(creditHourValue) || creditHourValue < 1 || creditHourValue > 10) {
+      return res.status(400).json({ error: 'Credit hour must be between 1 and 10.' });
+    }
+
+    let gradeLevelsValue = [];
+    if (grade_levels && Array.isArray(grade_levels)) {
+      gradeLevelsValue = grade_levels
+        .map(g => parseInt(g))
+        .filter(g => !isNaN(g) && g >= 1 && g <= 12);
+    }
+
     const newSubject = await prisma.subject.create({
       data: {
         subject_name: subject_name.trim(),
-        subject_code: subject_code.trim().toUpperCase()
+        subject_code: subject_code.trim().toUpperCase(),
+        credit_hour: creditHourValue,
+        department: department ? department.trim() : null,
+        grade_levels: gradeLevelsValue
       }
     });
 
@@ -44,7 +76,7 @@ async function createSubject(req, res) {
 async function updateSubject(req, res) {
   try {
     const subjectId = Number(req.params.id);
-    const { subject_name, subject_code } = req.body;
+    const { subject_name, subject_code, credit_hour, department, grade_levels } = req.body;
 
     if (!subjectId || Number.isNaN(subjectId)) {
       return res.status(400).json({ error: 'Invalid subject ID.' });
@@ -66,11 +98,26 @@ async function updateSubject(req, res) {
       return res.status(404).json({ error: 'Subject not found.' });
     }
 
+    const creditHourValue = credit_hour ? parseInt(credit_hour) : existingSubject.credit_hour;
+    if (isNaN(creditHourValue) || creditHourValue < 1 || creditHourValue > 10) {
+      return res.status(400).json({ error: 'Credit hour must be between 1 and 10.' });
+    }
+
+    let gradeLevelsValue = existingSubject.grade_levels || [];
+    if (grade_levels !== undefined && Array.isArray(grade_levels)) {
+      gradeLevelsValue = grade_levels
+        .map(g => parseInt(g))
+        .filter(g => !isNaN(g) && g >= 1 && g <= 12);
+    }
+
     const updatedSubject = await prisma.subject.update({
       where: { subject_id: subjectId },
       data: {
         subject_name: subject_name.trim(),
-        subject_code: subject_code.trim().toUpperCase()
+        subject_code: subject_code.trim().toUpperCase(),
+        credit_hour: creditHourValue,
+        department: department ? department.trim() : existingSubject.department,
+        grade_levels: gradeLevelsValue
       }
     });
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const principalController = require('../controllers/principalController');
+const { authenticate, authorizeRoles } = require('../middleware/authMiddleware');
 
 /**
  * PRINCIPAL ROUTES
@@ -31,6 +32,10 @@ router.get('/alerts', principalController.getRecentAlerts);
 // POST /api/principal/staff/register
 router.post('/staff/register', principalController.registerSeniorStaff);
 
+// Create Senior Staff (alternative endpoint for frontend compatibility)
+// POST /api/principal/staff/senior
+router.post('/staff/senior', principalController.registerSeniorStaff);
+
 // Get All Senior Staff
 // GET /api/principal/staff/senior
 router.get('/staff/senior', principalController.getSeniorStaff);
@@ -43,11 +48,47 @@ router.put('/staff/senior/:id', principalController.updateSeniorStaff);
 // DELETE /api/principal/staff/senior/:id
 router.delete('/staff/senior/:id', principalController.terminateSeniorStaff);
 
+// Get All Teachers
+// GET /api/principal/staff/teachers
+router.get('/staff/teachers', principalController.getTeachers);
+
+// Create Teacher
+// POST /api/principal/staff/teachers
+router.post('/staff/teachers', principalController.createTeacher);
+
+// Update Teacher Details
+// PUT /api/principal/staff/teachers/:id
+router.put('/staff/teachers/:id', principalController.updateTeacher);
+
+// Delete Teacher
+// DELETE /api/principal/staff/teachers/:id
+router.delete('/staff/teachers/:id', principalController.deleteTeacher);
+
 // View Staff Performance Summaries
 // GET /api/principal/staff/performance
 router.get('/staff/performance', principalController.getStaffPerformance);
 
+// Get All Departments
+// GET /api/principal/departments
+router.get('/departments', principalController.getDepartments);
+
+// Create Department
+// POST /api/principal/departments
+router.post('/departments', principalController.createDepartment);
+
+// Update Department
+// PUT /api/principal/departments/:id
+router.put('/departments/:id', principalController.updateDepartment);
+
+// Delete Department
+// DELETE /api/principal/departments/:id
+router.delete('/departments/:id', principalController.deleteDepartment);
+
 // ==================== SCHOOL SETTINGS ====================
+
+// Get School Settings (general endpoint for frontend)
+// GET /api/principal/settings
+router.get('/settings', principalController.getSchoolSettings);
 
 // Get School Profile
 // GET /api/principal/settings/profile
@@ -56,6 +97,18 @@ router.get('/settings/profile', principalController.getSchoolProfile);
 // Update School Profile
 // PUT /api/principal/settings/profile
 router.put('/settings/profile', principalController.updateSchoolProfile);
+
+// Update School Settings (general endpoint for frontend)
+// PUT /api/principal/settings
+router.put('/settings', principalController.updateSchoolSettings);
+
+// Get Academic Calendar
+// GET /api/principal/academic-calendar
+router.get('/academic-calendar', principalController.getAcademicCalendar);
+
+// Update Academic Calendar
+// PUT /api/principal/academic-calendar
+router.put('/academic-calendar', principalController.updateAcademicCalendar);
 
 // Create Academic Year
 // POST /api/principal/settings/academic-year
@@ -89,7 +142,27 @@ router.post('/settings/policies', principalController.createAcademicPolicy);
 // GET /api/principal/settings/policies
 router.get('/settings/policies', principalController.getAcademicPolicies);
 
+// Update Academic Policy
+// PUT /api/principal/settings/policies/:id
+router.put('/settings/policies/:id', principalController.updateAcademicPolicy);
+
+// Delete Academic Policy
+// DELETE /api/principal/settings/policies/:id
+router.delete('/settings/policies/:id', principalController.deleteAcademicPolicy);
+
 // ==================== FINANCIAL OVERSIGHT ====================
+
+// Get Financial Summary
+// GET /api/principal/financial/summary
+router.get('/financial/summary', principalController.getFinancialSummary);
+
+// Get Budget Allocations
+// GET /api/principal/financial/allocations
+router.get('/financial/allocations', principalController.getBudgetAllocations);
+
+// Get Expenses
+// GET /api/principal/financial/expenses
+router.get('/financial/expenses', principalController.getExpenses);
 
 // Get Budget Summary
 // GET /api/principal/financial/budget
@@ -108,6 +181,10 @@ router.get('/financial/assets', principalController.getAssetInventory);
 router.put('/financial/facilities/:id/approve', principalController.approveFacilityBooking);
 
 // ==================== GOVERNANCE & COMPLIANCE ====================
+
+// Get Governance Overview
+// GET /api/principal/governance
+router.get('/governance', principalController.getGovernanceOverview);
 
 // Get School Improvement Plans
 // GET /api/principal/governance/sip
@@ -134,6 +211,14 @@ router.put('/governance/ptsa/feedback/:id/respond', principalController.respondP
 // Get All Grievances
 // GET /api/principal/grievances
 router.get('/grievances', principalController.getGrievances);
+
+// Resolve Grievance
+// PUT /api/principal/grievances/:id/resolve
+router.put('/grievances/:id/resolve', principalController.resolveGrievance);
+
+// Get Discipline Records
+// GET /api/principal/discipline
+router.get('/discipline', principalController.getDisciplineRecords);
 
 // Escalate Grievance to Woreda
 // PUT /api/principal/grievances/:id/escalate
@@ -180,6 +265,18 @@ router.post('/communications/alerts', principalController.sendUrgentAlert);
 router.get('/communications/log', principalController.getCommunicationLog);
 
 // ==================== REPORTING ====================
+
+// Get Academic Reports
+// GET /api/principal/reports/academic
+router.get('/reports/academic', principalController.getAcademicReports);
+
+// Get Audit Logs
+// GET /api/principal/reports/audit-logs
+router.get('/reports/audit-logs', principalController.getAuditLogs);
+
+// Generate Report
+// POST /api/principal/reports/generate
+router.post('/reports/generate', principalController.generateReport);
 
 // Generate Annual School Report
 // POST /api/principal/reports/annual

@@ -106,7 +106,29 @@ async function authenticateDepartmentHead(req, res, next) {
   }
 }
 
+/**
+ * Role-based Authorization Middleware
+ * Checks if the authenticated user has one of the allowed roles
+ * @param {string[]} allowedRoles - Array of roles that are allowed to access the route
+ */
+function authorizeRoles(...allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        error: 'Access denied. Required roles: ' + allowedRoles.join(', ') 
+      });
+    }
+
+    next();
+  };
+}
+
 module.exports = {
   authenticate,
-  authenticateDepartmentHead
+  authenticateDepartmentHead,
+  authorizeRoles
 };

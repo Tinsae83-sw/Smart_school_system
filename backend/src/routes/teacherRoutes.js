@@ -42,6 +42,11 @@ const {
   updateLessonPlan,
   submitLessonPlan,
   
+  // Course Materials
+  getMaterials,
+  createMaterial,
+  deleteMaterial,
+  
   // Online Classes
   getOnlineClasses,
   createOnlineClass,
@@ -190,6 +195,19 @@ router.put('/lesson-plans/:lessonPlanId', updateLessonPlan);
 
 // POST /api/teacher/lesson-plans/:lessonPlanId/submit - Submit lesson plan for approval
 router.post('/lesson-plans/:lessonPlanId/submit', submitLessonPlan);
+
+// ============================================================
+// COURSE MATERIALS
+// ============================================================
+
+// GET /api/teacher/materials - Get teacher's course materials
+router.get('/materials', getMaterials);
+
+// POST /api/teacher/materials - Create course material
+router.post('/materials', createMaterial);
+
+// DELETE /api/teacher/materials/:materialId - Delete course material
+router.delete('/materials/:materialId', deleteMaterial);
 
 // ============================================================
 // ONLINE CLASSES

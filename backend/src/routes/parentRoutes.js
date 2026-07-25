@@ -31,6 +31,7 @@ router.get('/children/:childId/progress-chart', parentController.getProgressChar
 // ============================================
 // 3. VIEW CHILD'S ATTENDANCE (READ-ONLY)
 // ============================================
+router.get('/children/:childId/attendance', parentController.getDailyAttendance);
 router.get('/children/:childId/attendance/summary', parentController.getAttendanceSummary);
 router.get('/children/:childId/attendance/daily', parentController.getDailyAttendance);
 router.get('/children/:childId/attendance/monthly', parentController.getMonthlyAttendance);
@@ -117,8 +118,9 @@ router.get('/children/:childId/peer-evaluations/:evaluationId/comparison', paren
 // ============================================
 // 12. SCHOOL FEE & PAYMENT MANAGEMENT (MOCK / READ-ONLY)
 // ============================================
-router.get('/children/:childId/fees/structure', parentController.getFeeStructure);
-router.get('/children/:childId/payments/history', parentController.getPaymentHistory);
+router.get('/children/:childId/fees', parentController.getFeeStructure);
+router.get('/children/:childId/payments', parentController.getPaymentHistory);
+router.post('/children/:childId/payments', parentController.processPayment);
 router.get('/children/:childId/payments/balance', parentController.getOutstandingBalance);
 router.get('/children/:childId/payments/:paymentId/receipt', parentController.generateFeeReceipt);
 router.post('/messages/fee-inquiry', parentController.requestFeeClarification);
@@ -186,5 +188,6 @@ router.get('/support/contact', parentController.getSupportContact);
 // NOTIFICATIONS
 // ============================================
 router.get('/notifications', parentController.getNotifications);
+router.post('/notifications/read', parentController.markNotificationRead);
 
 module.exports = router;

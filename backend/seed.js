@@ -104,16 +104,120 @@ async function main() {
     });
   }
 
-  const subject = await prisma.subject.upsert({
-    where: { subject_code: 'MATH10' },
-    update: {
-      subject_name: 'Mathematics'
-    },
-    create: {
-      subject_name: 'Mathematics',
-      subject_code: 'MATH10'
+  // Create subjects with departments
+  const naturalSubjects = [
+    { name: 'Physics', code: 'PHY', department: 'Natural' },
+    { name: 'Chemistry', code: 'CHE', department: 'Natural' },
+    { name: 'Biology', code: 'BIO', department: 'Natural' },
+    { name: 'Mathematics', code: 'MAT', department: 'Natural' },
+    { name: 'Advanced Mathematics', code: 'ADM', department: 'Natural' }
+  ];
+
+  const socialSubjects = [
+    { name: 'History', code: 'HIS', department: 'Social' },
+    { name: 'Geography', code: 'GEO', department: 'Social' },
+    { name: 'Civics', code: 'CIV', department: 'Social' },
+    { name: 'Economics', code: 'ECO', department: 'Social' }
+  ];
+
+  const generalSubjects = [
+    { name: 'English', code: 'ENG', department: 'General' },
+    { name: 'Amharic', code: 'AMH', department: 'General' },
+    { name: 'Physical Education', code: 'PE', department: 'General' },
+    { name: 'Information Technology', code: 'IT', department: 'General' }
+  ];
+
+  const allSubjects = [...naturalSubjects, ...socialSubjects, ...generalSubjects];
+  const createdSubjects = {};
+
+  for (const subj of allSubjects) {
+    const subject = await prisma.subject.upsert({
+      where: { subject_code: subj.code },
+      update: {
+        subject_name: subj.name,
+        department: subj.department
+      },
+      create: {
+        subject_name: subj.name,
+        subject_code: subj.code,
+        department: subj.department
+      }
+    });
+    createdSubjects[subj.code] = subject;
+  }
+
+  // Create class subjects for each grade and subject
+  const grades = [9, 10, 11, 12];
+  const sections = ['A', 'B'];
+
+  for (const grade of grades) {
+    for (const section of sections) {
+      const className = `Grade ${grade}${section}`;
+      const schoolClass = await prisma.schoolClass.findFirst({
+        where: {
+          class_name: className,
+          academic_year: '2025/2026'
+        }
+      });
+
+      if (schoolClass) {
+        // Assign subjects based on grade level
+        let subjectsForGrade = [];
+        
+        if (grade >= 11) {
+          // Grades 11-12: Advanced subjects
+          subjectsForGrade = [
+            createdSubjects['ADM'], // Advanced Math
+            createdSubjects['PHY'], // Physics
+            createdSubjects['CHE'], // Chemistry
+            createdSubjects['BIO'], // Biology
+            createdSubjects['HIS'], // History
+            createdSubjects['GEO'], // Geography
+            createdSubjects['ECO'], // Economics
+            createdSubjects['ENG'], // English
+            createdSubjects['AMH'], // Amharic
+          ];
+        } else {
+          // Grades 9-10: General subjects
+          subjectsForGrade = [
+            createdSubjects['MAT'], // Mathematics
+            createdSubjects['PHY'], // Physics
+            createdSubjects['CHE'], // Chemistry
+            createdSubjects['BIO'], // Biology
+            createdSubjects['HIS'], // History
+            createdSubjects['GEO'], // Geography
+            createdSubjects['CIV'], // Civics
+            createdSubjects['ENG'], // English
+            createdSubjects['AMH'], // Amharic
+            createdSubjects['PE'], // PE
+            createdSubjects['IT'], // IT
+          ];
+        }
+
+        for (const subject of subjectsForGrade) {
+          const existingClassSubject = await prisma.classSubject.findFirst({
+            where: {
+              class_id: schoolClass.class_id,
+              subject_id: subject.subject_id
+            }
+          });
+
+          if (!existingClassSubject) {
+            await prisma.classSubject.create({
+              data: {
+                class_id: schoolClass.class_id,
+                subject_id: subject.subject_id,
+                teacher_id: teacher.teacher_id
+              }
+            });
+          }
+        }
+      }
     }
-  });
+  }
+
+  // Use Mathematics for the exam example
+  const subject = createdSubjects['MAT'];
 
   const classSubject = await prisma.classSubject.findFirst({
     where: {
@@ -1434,8 +1538,20 @@ async function main() {
   });
 
   // Seed Staff Attendance
-  await prisma.staffAttendance.create({
-    data: {
+  await prisma.staffAttendance.upsert({
+    where: {
+      staff_id_date: {
+        staff_id: nonAcademicStaff.staff_id,
+        date: new Date()
+      }
+    },
+    update: {
+      status: 'PRESENT',
+      check_in_time: new Date('2024-01-01T08:00:00'),
+      check_out_time: new Date('2024-01-01T17:00:00'),
+      recorded_by: vpAdminUser.user_id
+    },
+    create: {
       staff_id: nonAcademicStaff.staff_id,
       date: new Date(),
       status: 'PRESENT',
@@ -1473,8 +1589,22 @@ async function main() {
   });
 
   // Seed Purchase Request
-  await prisma.purchaseRequest.create({
-    data: {
+  await prisma.purchaseRequest.upsert({
+    where: { request_number: 'PR-2024-001' },
+    update: {
+      item_name: 'Microscope Slides',
+      item_description: 'Pack of 100 microscope slides for biology laboratory',
+      quantity: 50,
+      unit_cost: 500.00,
+      total_cost: 25000.00,
+      category: 'EQUIPMENT',
+      priority: 'MEDIUM',
+      requested_by: teacherUser.user_id,
+      supplier_id: supplier.supplier_id,
+      justification: 'Current stock depleted, needed for upcoming practical exams',
+      status: 'PENDING'
+    },
+    create: {
       request_number: 'PR-2024-001',
       item_name: 'Microscope Slides',
       item_description: 'Pack of 100 microscope slides for biology laboratory',
@@ -1491,8 +1621,21 @@ async function main() {
   });
 
   // Seed Inventory
-  const inventory = await prisma.inventory.create({
-    data: {
+  const inventory = await prisma.inventory.upsert({
+    where: { item_code: 'INV-001' },
+    update: {
+      item_name: 'Laboratory Gloves',
+      category: 'LAB_CHEMICALS',
+      description: 'Disposable latex gloves for laboratory use',
+      unit_of_measure: 'PAIRS',
+      current_stock: 200,
+      reorder_level: 50,
+      max_stock: 500,
+      unit_cost: 25.00,
+      location: 'Science Laboratory Storage',
+      supplier_id: supplier.supplier_id
+    },
+    create: {
       item_name: 'Laboratory Gloves',
       item_code: 'INV-001',
       category: 'LAB_CHEMICALS',

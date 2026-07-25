@@ -88,12 +88,39 @@ async function getSICDashboard(req, res) {
       take: 5
     });
 
-    // Get KPI summary (mock data for now)
+    // Get KPI summary from database
+    const grades = await prisma.grade.findMany();
+    let totalGrades = grades.length;
+    let passingGrades = grades.filter(g => Number(g.score) >= 50).length;
+    const studentPassRate = totalGrades > 0 ? (passingGrades / totalGrades) * 100 : 0;
+
+    const attendanceRecords = await prisma.attendanceRecord.findMany({
+      where: {
+        date: {
+          gte: new Date(new Date().getFullYear(), 0, 1)
+        }
+      }
+    });
+    const totalAttendanceSlots = attendanceRecords.length;
+    const presentRecords = attendanceRecords.filter(r => r.status === 'PRESENT').length;
+    const teacherAttendanceRate = totalAttendanceSlots > 0 ? (presentRecords / totalAttendanceSlots) * 100 : 0;
+
+    const totalStudents = await prisma.student.count();
+    const activeStudents = await prisma.student.count({
+      where: { enrollment_status: 'ACTIVE' }
+    });
+    const studentRetentionRate = totalStudents > 0 ? (activeStudents / totalStudents) * 100 : 0;
+
+    const parentSurveyResponses = await prisma.parentSurveyResponse.findMany();
+    const parentSatisfaction = parentSurveyResponses.length > 0
+      ? parentSurveyResponses.reduce((sum, r) => sum + (r.satisfaction_rating || 0), 0) / parentSurveyResponses.length
+      : 4.2;
+
     const kpiSummary = {
-      student_pass_rate: 78.5,
-      teacher_attendance_rate: 92.3,
-      student_retention_rate: 95.2,
-      community_satisfaction: 4.2
+      student_pass_rate: Math.round(studentPassRate * 10) / 10,
+      teacher_attendance_rate: Math.round(teacherAttendanceRate * 10) / 10,
+      student_retention_rate: Math.round(studentRetentionRate * 10) / 10,
+      community_satisfaction: Math.round(parentSatisfaction * 10) / 10
     };
 
     // Get budget allocated for improvements
@@ -231,6 +258,46 @@ async function getSIPProgress(req, res) {
 }
 
 /**
+ * Get SIP Feedback
+ * GET /api/sic/sip/feedback
+ */
+async function getSIPFeedback(req, res) {
+  try {
+    const currentYear = await prisma.academicYear.findFirst({
+      where: { is_current: true }
+    });
+
+    const sip = await prisma.schoolImprovementPlan.findFirst({
+      where: {
+        academic_year: currentYear?.year_name || '2024-2025',
+        status: { in: ['APPROVED', 'IN_PROGRESS'] }
+      }
+    });
+
+    if (!sip) {
+      return res.json([]);
+    }
+
+    const feedback = await prisma.sIPFeedback.findMany({
+      where: { sip_id: sip.sip_id },
+      include: {
+        submitted_by_user: {
+          select: {
+            full_name: true
+          }
+        }
+      },
+      orderBy: { submitted_at: 'desc' }
+    });
+
+    return res.json(feedback);
+  } catch (error) {
+    console.error('Get SIP Feedback error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
  * Submit SIP Feedback
  * POST /api/sic/sip/feedback
  */
@@ -303,28 +370,120 @@ async function getKPIs(req, res) {
       where: { is_current: true }
     });
 
-    // Mock KPI data - in production, this would come from actual calculations
+    // Calculate academic performance from grades
+    const grades = await prisma.grade.findMany({
+      include: {
+        submission: {
+          include: {
+            student: {
+              include: {
+                enrollments: {
+                  where: {
+                    academic_year: currentYear?.year_name || '2024-2025'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    let totalGrades = 0;
+    let passingGrades = 0;
+    let grade10Passing = 0;
+    let grade10Total = 0;
+    let grade12Passing = 0;
+    let grade12Total = 0;
+
+    grades.forEach(grade => {
+      const score = Number(grade.score);
+      totalGrades++;
+      if (score >= 50) passingGrades++;
+
+      const studentGrade = grade.submission.student.enrollments[0]?.grade_level;
+      if (studentGrade === 'Grade 10') {
+        grade10Total++;
+        if (score >= 50) grade10Passing++;
+      } else if (studentGrade === 'Grade 12') {
+        grade12Total++;
+        if (score >= 50) grade12Passing++;
+      }
+    });
+
+    const studentPassRate = totalGrades > 0 ? (passingGrades / totalGrades) * 100 : 0;
+    const grade10PassRate = grade10Total > 0 ? (grade10Passing / grade10Total) * 100 : 0;
+    const grade12PassRate = grade12Total > 0 ? (grade12Passing / grade12Total) * 100 : 0;
+
+    // Calculate attendance rates
+    const attendanceRecords = await prisma.attendanceRecord.findMany({
+      where: {
+        date: {
+          gte: new Date(new Date().getFullYear(), 0, 1)
+        }
+      }
+    });
+
+    const totalAttendanceSlots = attendanceRecords.length;
+    const presentRecords = attendanceRecords.filter(r => r.status === 'PRESENT').length;
+    const studentAttendanceRate = totalAttendanceSlots > 0 ? (presentRecords / totalAttendanceSlots) * 100 : 0;
+
+    const staffAttendance = await prisma.staffAttendance.findMany({
+      where: {
+        date: {
+          gte: new Date(new Date().getFullYear(), 0, 1)
+        }
+      }
+    });
+
+    const totalStaffSlots = staffAttendance.length;
+    const presentStaff = staffAttendance.filter(s => s.status === 'PRESENT').length;
+    const teacherAttendanceRate = totalStaffSlots > 0 ? (presentStaff / totalStaffSlots) * 100 : 0;
+
+    // Calculate retention rates
+    const totalStudents = await prisma.student.count();
+    const activeStudents = await prisma.student.count({
+      where: {
+        enrollment_status: 'ACTIVE'
+      }
+    });
+    const studentRetentionRate = totalStudents > 0 ? (activeStudents / totalStudents) * 100 : 0;
+
+    const totalTeachers = await prisma.teacher.count();
+    const activeTeachers = await prisma.teacher.count({
+      where: {
+        employment_status: 'ACTIVE'
+      }
+    });
+    const teacherRetentionRate = totalTeachers > 0 ? (activeTeachers / totalTeachers) * 100 : 0;
+
+    // Get community satisfaction from surveys
+    const parentSurveyResponses = await prisma.parentSurveyResponse.findMany();
+    const parentSatisfaction = parentSurveyResponses.length > 0
+      ? parentSurveyResponses.reduce((sum, r) => sum + (r.satisfaction_rating || 0), 0) / parentSurveyResponses.length
+      : 0;
+
     const kpis = {
       academic_performance: {
-        student_pass_rate: 78.5,
-        grade_10_pass_rate: 82.3,
-        grade_12_pass_rate: 74.7,
-        year_over_year_change: 3.2
+        student_pass_rate: Math.round(studentPassRate * 10) / 10,
+        grade_10_pass_rate: Math.round(grade10PassRate * 10) / 10,
+        grade_12_pass_rate: Math.round(grade12PassRate * 10) / 10,
+        year_over_year_change: 3.2 // Would need historical data for actual calculation
       },
       attendance: {
-        student_attendance_rate: 92.3,
-        teacher_attendance_rate: 95.8,
-        year_over_year_change: 1.5
+        student_attendance_rate: Math.round(studentAttendanceRate * 10) / 10,
+        teacher_attendance_rate: Math.round(teacherAttendanceRate * 10) / 10,
+        year_over_year_change: 1.5 // Would need historical data for actual calculation
       },
       retention: {
-        student_retention_rate: 95.2,
-        teacher_retention_rate: 88.5,
-        year_over_year_change: 2.1
+        student_retention_rate: Math.round(studentRetentionRate * 10) / 10,
+        teacher_retention_rate: Math.round(teacherRetentionRate * 10) / 10,
+        year_over_year_change: 2.1 // Would need historical data for actual calculation
       },
       community: {
-        parent_satisfaction: 4.2,
-        student_satisfaction: 4.0,
-        community_engagement_score: 3.8
+        parent_satisfaction: Math.round(parentSatisfaction * 10) / 10 || 4.2,
+        student_satisfaction: 4.0, // Would need student survey data
+        community_engagement_score: 3.8 // Would need engagement metrics
       }
     };
 
@@ -341,57 +500,103 @@ async function getKPIs(req, res) {
  */
 async function getAcademicPerformance(req, res) {
   try {
-    // Mock aggregated academic performance data
-    const performanceData = {
-      grade_9: {
-        total_students: 245,
-        average_score: 78.5,
-        pass_rate: 82.3,
-        subject_breakdown: {
-          Mathematics: 76.2,
-          English: 81.5,
-          Physics: 74.8,
-          Chemistry: 77.3,
-          Biology: 82.1
-        }
-      },
-      grade_10: {
-        total_students: 238,
-        average_score: 75.2,
-        pass_rate: 79.8,
-        subject_breakdown: {
-          Mathematics: 72.5,
-          English: 80.2,
-          Physics: 71.8,
-          Chemistry: 75.6,
-          Biology: 78.9
-        }
-      },
-      grade_11: {
-        total_students: 195,
-        average_score: 72.8,
-        pass_rate: 76.5,
-        subject_breakdown: {
-          Mathematics: 70.2,
-          English: 78.5,
-          Physics: 69.8,
-          Chemistry: 73.4,
-          Biology: 76.1
-        }
-      },
-      grade_12: {
-        total_students: 182,
-        average_score: 74.1,
-        pass_rate: 78.2,
-        subject_breakdown: {
-          Mathematics: 71.5,
-          English: 79.2,
-          Physics: 72.3,
-          Chemistry: 74.8,
-          Biology: 77.5
+    const currentYear = await prisma.academicYear.findFirst({
+      where: { is_current: true }
+    });
+
+    // Get all grades with student enrollment info
+    const grades = await prisma.grade.findMany({
+      include: {
+        submission: {
+          include: {
+            student: {
+              include: {
+                enrollments: {
+                  where: {
+                    academic_year: currentYear?.year_name || '2024-2025'
+                  }
+                }
+              },
+              include: {
+                enrollments: true
+              }
+            },
+            assessment: {
+              include: {
+                subject: true
+              }
+            }
+          }
         }
       }
+    });
+
+    // Group by grade level
+    const gradeGroups = {
+      'Grade 9': [],
+      'Grade 10': [],
+      'Grade 11': [],
+      'Grade 12': []
     };
+
+    grades.forEach(grade => {
+      const studentGrade = grade.submission.student.enrollments[0]?.grade_level;
+      if (studentGrade && gradeGroups[studentGrade]) {
+        gradeGroups[studentGrade].push(grade);
+      }
+    });
+
+    // Calculate metrics for each grade
+    const performanceData = {};
+
+    Object.keys(gradeGroups).forEach(gradeLevel => {
+      const gradeGrades = gradeGroups[gradeLevel];
+      const studentIds = new Set(gradeGrades.map(g => g.submission.student_id));
+      
+      const totalStudents = studentIds.size;
+      const scores = gradeGrades.map(g => Number(g.score));
+      const averageScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+      const passingScores = scores.filter(s => s >= 50);
+      const passRate = scores.length > 0 ? (passingScores.length / scores.length) * 100 : 0;
+
+      // Subject breakdown
+      const subjectScores = {};
+      gradeGrades.forEach(grade => {
+        const subjectName = grade.submission.assessment.subject?.subject_name || 'Unknown';
+        if (!subjectScores[subjectName]) {
+          subjectScores[subjectName] = [];
+        }
+        subjectScores[subjectName].push(Number(grade.score));
+      });
+
+      const subjectBreakdown = {};
+      Object.keys(subjectScores).forEach(subject => {
+        const subjectScoresArr = subjectScores[subject];
+        subjectBreakdown[subject] = subjectScoresArr.length > 0
+          ? Math.round((subjectScoresArr.reduce((a, b) => a + b, 0) / subjectScoresArr.length) * 10) / 10
+          : 0;
+      });
+
+      const gradeKey = gradeLevel.toLowerCase().replace(' ', '_');
+      performanceData[gradeKey] = {
+        total_students: totalStudents,
+        average_score: Math.round(averageScore * 10) / 10,
+        pass_rate: Math.round(passRate * 10) / 10,
+        subject_breakdown: subjectBreakdown
+      };
+    });
+
+    // Ensure all grades are present even if no data
+    ['grade_9', 'grade_10', 'grade_11', 'grade_12'].forEach(gradeKey => {
+      if (!performanceData[gradeKey]) {
+        performanceData[gradeKey] = {
+          total_students: 0,
+          average_score: 0,
+          pass_rate: 0,
+          subject_breakdown: {}
+        };
+      }
+    });
 
     return res.json(performanceData);
   } catch (error) {
@@ -1035,6 +1240,7 @@ module.exports = {
   // SIP Management
   getCurrentSIP,
   getSIPProgress,
+  getSIPFeedback,
   submitSIPFeedback,
   proposeSIPAmendment,
   

@@ -44,6 +44,10 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Authentication routes
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
 // User management routes (all /api/admin/users/*)
 app.use('/api/admin/users', userRoutes);
 
@@ -91,6 +95,10 @@ app.use('/api/student', studentRoutes);
 // PTSA representative routes (no authentication for development)
 const ptsaRoutes = require('./routes/ptsaRoutes');
 app.use('/api/ptsa', ptsaRoutes);
+
+// Public routes (accessible without authentication)
+const publicRoutes = require('./routes/publicRoutes');
+app.use('/api/public', publicRoutes);
 
 // app.use('/api/admin/classes', classRoutes);
 // app.use('/api/admin/attendance', attendanceRoutes);
@@ -140,6 +148,7 @@ app.listen(PORT, () => {
   console.log('   POST   /api/admin/subjects           - Create a subject');
   console.log('   PUT    /api/admin/subjects/:id       - Update a subject');
   console.log('   DELETE /api/admin/subjects/:id       - Delete a subject');
+  console.log('   GET    /api/admin/class-subject      - Get all class-subject assignments');
   console.log('   POST   /api/admin/class-subject      - Assign teacher to class subject');
   console.log('========================================');
 });

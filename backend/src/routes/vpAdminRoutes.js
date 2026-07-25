@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const vpAdminController = require('../controllers/vpAdminController');
+const { authenticateVPAdmin } = require('../middleware/vpAdminAuth');
 
-// Middleware for VP Admin authentication (to be implemented)
-// router.use(require('../middleware/vpAdminAuth'));
+// Apply VP Admin authentication middleware to all routes (disabled for development)
+// router.use(authenticateVPAdmin);
 
 // Dashboard
 router.get('/dashboard', vpAdminController.getDashboard);
@@ -62,12 +63,16 @@ router.post('/staff-leave-requests/:id/reject', vpAdminController.rejectLeaveReq
 // Incidents
 router.get('/incidents', vpAdminController.getIncidents);
 router.post('/incidents', vpAdminController.createIncident);
+router.put('/incidents/:id', vpAdminController.updateIncident);
+router.delete('/incidents/:id', vpAdminController.deleteIncident);
 router.post('/incidents/:id/resolve', vpAdminController.resolveIncident);
 router.post('/incidents/:id/close', vpAdminController.closeIncident);
 
 // Disciplinary Actions
 router.get('/disciplinary-actions', vpAdminController.getDisciplinaryActions);
 router.post('/disciplinary-actions', vpAdminController.createDisciplinaryAction);
+router.put('/disciplinary-actions/:id', vpAdminController.updateDisciplinaryAction);
+router.delete('/disciplinary-actions/:id', vpAdminController.deleteDisciplinaryAction);
 router.post('/disciplinary-actions/:id/approve', vpAdminController.approveDisciplinaryAction);
 router.post('/disciplinary-actions/:id/complete', vpAdminController.completeDisciplinaryAction);
 
@@ -79,10 +84,14 @@ router.put('/inventory/:id', vpAdminController.updateInventory);
 // Inventory Transactions
 router.get('/inventory-transactions', vpAdminController.getInventoryTransactions);
 router.post('/inventory-transactions', vpAdminController.createInventoryTransaction);
+router.put('/inventory-transactions/:id', vpAdminController.updateInventoryTransaction);
+router.delete('/inventory-transactions/:id', vpAdminController.deleteInventoryTransaction);
 
 // Suppliers
 router.get('/suppliers', vpAdminController.getSuppliers);
 router.post('/suppliers', vpAdminController.createSupplier);
+router.put('/suppliers/:id', vpAdminController.updateSupplier);
+router.delete('/suppliers/:id', vpAdminController.deleteSupplier);
 
 // Announcements
 router.get('/announcements', vpAdminController.getAnnouncements);

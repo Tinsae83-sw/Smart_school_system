@@ -29,6 +29,191 @@ async function getVPAcademicId(req) {
 // ==================== DASHBOARD & OVERVIEW ====================
 
 /**
+ * Get Analytics Overview
+ * GET /api/vp-academic/analytics
+ */
+async function getAnalyticsOverview(req, res) {
+  try {
+    const { academic_year, term } = req.query;
+
+    // Get current academic year if not provided
+    const currentYear = await prisma.academicYear.findFirst({
+      where: { is_current: true }
+    });
+
+    const yearToUse = academic_year || currentYear?.year_name || '2024-2025';
+
+    // Student enrollment by grade
+    const students = await prisma.student.findMany({
+      include: {
+        current_class: true
+      }
+    });
+
+    const enrollmentByGrade = {};
+    students.forEach(student => {
+      const className = student.current_class?.class_name || 'Unassigned';
+      const grade = className.match(/\d+/)?.[0] || 'Unknown';
+      if (!enrollmentByGrade[grade]) {
+        enrollmentByGrade[grade] = 0;
+      }
+      enrollmentByGrade[grade]++;
+    });
+
+    // Attendance statistics
+    const attendanceRecords = await prisma.attendanceRecord.findMany({
+      where: {
+        date: {
+          gte: new Date(new Date().getFullYear(), 0, 1)
+        }
+      }
+    });
+
+    const attendanceStats = {
+      total_records: attendanceRecords.length,
+      present: attendanceRecords.filter(r => r.status === 'PRESENT').length,
+      absent: attendanceRecords.filter(r => r.status === 'ABSENT').length,
+      late: attendanceRecords.filter(r => r.status === 'LATE').length,
+      attendance_rate: attendanceRecords.length > 0
+        ? ((attendanceRecords.filter(r => r.status === 'PRESENT').length / attendanceRecords.length) * 100).toFixed(1)
+        : 0
+    };
+
+    // Grade distribution
+    const grades = await prisma.grade.findMany({
+      include: {
+        submission: {
+          include: {
+            assignment: {
+              include: {
+                class_subject: {
+                  include: {
+                    subject: true,
+                    school_class: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const gradeDistribution = {
+      A: grades.filter(g => Number(g.score) >= 90).length,
+      B: grades.filter(g => Number(g.score) >= 80 && Number(g.score) < 90).length,
+      C: grades.filter(g => Number(g.score) >= 70 && Number(g.score) < 80).length,
+      D: grades.filter(g => Number(g.score) >= 60 && Number(g.score) < 70).length,
+      F: grades.filter(g => Number(g.score) < 60).length,
+      average_score: grades.length > 0
+        ? (grades.reduce((sum, g) => sum + Number(g.score), 0) / grades.length).toFixed(2)
+        : 0
+    };
+
+    // Subject performance
+    const subjectPerformance = {};
+    grades.forEach(grade => {
+      const subjectName = grade.submission.assignment.class_subject.subject.subject_name;
+      if (!subjectPerformance[subjectName]) {
+        subjectPerformance[subjectName] = { total: 0, count: 0 };
+      }
+      subjectPerformance[subjectName].total += Number(grade.score);
+      subjectPerformance[subjectName].count += 1;
+    });
+
+    const averageBySubject = {};
+    Object.keys(subjectPerformance).forEach(subject => {
+      averageBySubject[subject] = (
+        subjectPerformance[subject].total / subjectPerformance[subject].count
+      ).toFixed(2);
+    });
+
+    // Teacher workload
+    const teacherWorkloads = await prisma.classSubject.groupBy({
+      by: ['teacher_id'],
+      _count: {
+        teacher_id: true
+      },
+      orderBy: {
+        _count: {
+          teacher_id: 'desc'
+        }
+      }
+    });
+
+    // Exam statistics
+    const exams = await prisma.exam.findMany({
+      where: {
+        exam_type: { in: ['MIDTERM', 'FINAL', 'NATIONAL'] }
+      },
+      include: {
+        exam_results: true
+      }
+    });
+
+    const examStats = {
+      total_exams: exams.length,
+      completed_exams: exams.filter(e => e.status === 'COMPLETED').length,
+      average_exam_score: exams.reduce((sum, exam) => {
+        const examAvg = exam.exam_results.length > 0
+          ? exam.exam_results.reduce((s, r) => s + Number(r.score), 0) / exam.exam_results.length
+          : 0;
+        return sum + examAvg;
+      }, 0) / (exams.length || 1)
+    };
+
+    // At-risk students (low attendance or low grades)
+    const atRiskStudents = [];
+    students.forEach(student => {
+      const studentAttendance = attendanceRecords.filter(r => r.student_id === student.student_id);
+      const attendanceRate = studentAttendance.length > 0
+        ? (studentAttendance.filter(r => r.status === 'PRESENT').length / studentAttendance.length) * 100
+        : 100;
+
+      const studentGrades = grades.filter(g =>
+        g.submission.assignment.class_subject.school_class.class_id === student.current_class_id
+      );
+      const avgGrade = studentGrades.length > 0
+        ? studentGrades.reduce((sum, g) => sum + Number(g.score), 0) / studentGrades.length
+        : 100;
+
+      if (attendanceRate < 75 || avgGrade < 60) {
+        atRiskStudents.push({
+          student_id: student.student_id,
+          name: student.user?.full_name || 'Unknown',
+          class: student.current_class?.class_name || 'Unassigned',
+          attendance_rate: attendanceRate.toFixed(1),
+          average_grade: avgGrade.toFixed(2),
+          risk_factor: attendanceRate < 75 ? 'LOW_ATTENDANCE' : 'LOW_GRADES'
+        });
+      }
+    });
+
+    return res.json({
+      academic_year: yearToUse,
+      term: term || '1',
+      enrollment_by_grade: enrollmentByGrade,
+      attendance_statistics: attendanceStats,
+      grade_distribution: gradeDistribution,
+      subject_performance: averageBySubject,
+      teacher_workload: teacherWorkloads,
+      exam_statistics: examStats,
+      at_risk_students: atRiskStudents.slice(0, 20), // Limit to top 20
+      summary: {
+        total_students: students.length,
+        total_teachers: await prisma.teacher.count(),
+        total_subjects: await prisma.subject.count(),
+        overall_attendance_rate: parseFloat(attendanceStats.attendance_rate),
+        overall_average_grade: parseFloat(gradeDistribution.average_score)
+      }
+    });
+  } catch (error) {
+    console.error('Get analytics overview error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
  * Get Academic Dashboard Data
  * GET /api/vp-academic/dashboard
  */
@@ -497,19 +682,46 @@ async function createMasterTimetable(req, res) {
 }
 
 /**
- * Assign Teachers to Classes
+ * Assign Teachers to Classes / Create Class Schedule
  * PUT /api/vp-academic/timetable/assign-teacher
  */
 async function assignTeacherToClass(req, res) {
   try {
-    const { class_subject_id, teacher_id } = req.body;
+    const { class_id, subject_id, teacher_id, day_of_week, period, room_number, start_time, end_time } = req.body;
 
-    const classSubject = await prisma.classSubject.update({
-      where: { class_subject_id },
-      data: { teacher_id }
+    // If class_subject_id is provided, update existing class_subject
+    if (req.body.class_subject_id) {
+      const classSubject = await prisma.classSubject.update({
+        where: { class_subject_id: req.body.class_subject_id },
+        data: { teacher_id }
+      });
+      return res.json(classSubject);
+    }
+
+    // Otherwise, create a new class schedule entry
+    const schedule = await prisma.classSchedule.create({
+      data: {
+        class_id: parseInt(class_id),
+        subject_id: parseInt(subject_id),
+        teacher_id: parseInt(teacher_id),
+        day_of_week,
+        period: parseInt(period),
+        room_number,
+        start_time,
+        end_time
+      },
+      include: {
+        school_class: true,
+        subject: true,
+        teacher: {
+          include: {
+            user: true
+          }
+        }
+      }
     });
 
-    return res.json(classSubject);
+    return res.status(201).json(schedule);
   } catch (error) {
     console.error('Assign teacher to class error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -848,20 +1060,65 @@ async function registerTeachingAssistant(req, res) {
  */
 async function getAllTeachers(req, res) {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
     const teachers = await prisma.teacher.findMany({
+      skip,
+      take: limit,
       include: {
-        user: true,
-        homeroom_classes: true,
+        user: {
+          select: {
+            user_id: true,
+            full_name: true,
+            email: true,
+            phone_number: true,
+            is_active: true
+          }
+        },
+        homeroom_classes: {
+          select: {
+            class_id: true,
+            class_name: true,
+            academic_year: true
+          }
+        },
         class_subjects: {
-          include: {
-            subject: true,
-            school_class: true
+          select: {
+            class_subject_id: true,
+            class_id: true,
+            subject_id: true,
+            credit_hour: true,
+            subject: {
+              select: {
+                subject_id: true,
+                subject_name: true,
+                subject_code: true
+              }
+            },
+            school_class: {
+              select: {
+                class_id: true,
+                class_name: true
+              }
+            }
           }
         }
       }
     });
 
-    return res.json(teachers);
+    const total = await prisma.teacher.count();
+
+    return res.json({
+      teachers,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Get all teachers error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -1050,8 +1307,24 @@ async function getTeacherPerformance(req, res) {
   try {
     const { id } = req.params;
 
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ error: 'Invalid teacher ID' });
+    }
+
+    const teacherId = parseInt(id);
+
+    // Check if teacher exists
+    const teacher = await prisma.teacher.findUnique({
+      where: { teacher_id: teacherId },
+      include: { user: true }
+    });
+
+    if (!teacher) {
+      return res.status(404).json({ error: 'Teacher not found' });
+    }
+
     const classSubjects = await prisma.classSubject.findMany({
-      where: { teacher_id: parseInt(id) }
+      where: { teacher_id: teacherId }
     });
 
     const classSubjectIds = classSubjects.map(cs => cs.class_subject_id);
@@ -1071,11 +1344,11 @@ async function getTeacherPerformance(req, res) {
       : 0;
 
     const attendanceRecords = await prisma.attendanceRecord.findMany({
-      where: { recorded_by: parseInt(id) }
+      where: { recorded_by: teacherId }
     });
 
     const peerEvaluations = await prisma.peerEvaluation.findMany({
-      where: { evaluatee_id: parseInt(id) },
+      where: { evaluatee_id: teacherId },
       include: {
         evaluator: {
           include: {
@@ -1086,17 +1359,81 @@ async function getTeacherPerformance(req, res) {
     });
 
     return res.json({
-      average_grade: averageScore.toFixed(2),
+      teacher_id: teacherId,
+      teacher_name: teacher.user?.full_name || 'Unknown',
+      average_grade: parseFloat(averageScore.toFixed(2)),
       total_grades_recorded: grades.length,
       attendance_records_count: attendanceRecords.length,
       peer_evaluations: peerEvaluations,
       overall_peer_score: peerEvaluations.length > 0
-        ? (peerEvaluations.reduce((sum, e) => sum + Number(e.overall_score), 0) / peerEvaluations.length).toFixed(2)
+        ? parseFloat((peerEvaluations.reduce((sum, e) => sum + Number(e.overall_score), 0) / peerEvaluations.length).toFixed(2))
         : 0
     });
   } catch (error) {
     console.error('Get teacher performance error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+}
+
+/**
+ * Get All Teachers Performance
+ * GET /api/vp-academic/teachers/performance
+ */
+async function getAllTeachersPerformance(req, res) {
+  try {
+    const teachers = await prisma.teacher.findMany({
+      include: {
+        user: true,
+        class_subjects: true
+      }
+    });
+
+    const performanceData = await Promise.all(
+      teachers.map(async (teacher) => {
+        const classSubjectIds = teacher.class_subjects.map(cs => cs.class_subject_id);
+
+        const grades = await prisma.grade.findMany({
+          where: {
+            submission: {
+              assignment: {
+                class_subject_id: { in: classSubjectIds }
+              }
+            }
+          }
+        });
+
+        const averageScore = grades.length > 0
+          ? grades.reduce((sum, g) => sum + Number(g.score), 0) / grades.length
+          : 0;
+
+        const attendanceRecords = await prisma.attendanceRecord.findMany({
+          where: { recorded_by: teacher.teacher_id }
+        });
+
+        const peerEvaluations = await prisma.peerEvaluation.findMany({
+          where: { evaluatee_id: teacher.teacher_id }
+        });
+
+        return {
+          teacher_id: teacher.teacher_id,
+          teacher_name: teacher.user?.full_name || 'Unknown',
+          email: teacher.user?.email || '',
+          department: teacher.department || 'Unassigned',
+          average_grade: parseFloat(averageScore.toFixed(2)),
+          total_grades_recorded: grades.length,
+          attendance_records_count: attendanceRecords.length,
+          peer_evaluations_count: peerEvaluations.length,
+          overall_peer_score: peerEvaluations.length > 0
+            ? parseFloat((peerEvaluations.reduce((sum, e) => sum + Number(e.overall_score), 0) / peerEvaluations.length).toFixed(2))
+            : 0
+        };
+      })
+    );
+
+    return res.json(performanceData);
+  } catch (error) {
+    console.error('Get all teachers performance error:', error);
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 }
 
@@ -1109,55 +1446,239 @@ async function getTeacherPerformance(req, res) {
 async function registerStudent(req, res) {
   try {
     const {
-      full_name,
-      email,
-      phone_number,
-      password,
+      // Personal Information
+      first_name,
+      middle_name,
+      last_name,
       date_of_birth,
       gender,
-      parent_contact,
-      class_id,
-      student_number
+      nationality,
+      religion,
+      home_address,
+      
+      // Contact Information
+      email,
+      phone_number,
+      emergency_contact_name,
+      emergency_contact_phone,
+      
+      // Academic Information
+      grade_level,
+      section,
+      admission_date,
+      
+      // Guardian/Parent Information
+      guardian_name,
+      relationship,
+      guardian_phone,
+      guardian_email,
+      guardian_password,
+      
+      // System Settings
+      username,
+      password,
+      send_credentials,
+      terms_agreed,
+      
+      // Legacy fields for compatibility
+      full_name,
+      student_number,
+      current_class_id
     } = req.body;
 
+    // Validate terms agreement
+    if (!terms_agreed) {
+      return res.status(400).json({ error: 'Terms and conditions must be agreed to' });
+    }
+
+    // Validate age (minimum 12 years)
+    if (date_of_birth) {
+      const birthDate = new Date(date_of_birth);
+      const minAgeDate = new Date();
+      minAgeDate.setFullYear(minAgeDate.getFullYear() - 12);
+      if (birthDate > minAgeDate) {
+        return res.status(400).json({ error: 'Student must be at least 12 years old' });
+      }
+    }
+
+    // Generate username if not provided
+    const generatedUsername = username || `${first_name.toLowerCase()}.${last_name.toLowerCase()}`;
+    
+    // Generate password if not provided
+    const bcrypt = require('bcrypt');
+    const defaultPassword = password || 'Student123!';
+    const password_hash = await bcrypt.hash(defaultPassword, 10);
+
+    // Combine name parts for full_name
+    const fullName = [first_name, middle_name, last_name].filter(Boolean).join(' ');
+
+    // Create user
     const user = await prisma.user.create({
       data: {
-        full_name,
-        email,
+        full_name: fullName,
+        email: email.toLowerCase(),
         phone_number,
-        password_hash: password,
+        password_hash,
         role: 'STUDENT',
         is_active: true
       }
     });
 
+    // Create student record
     const student = await prisma.student.create({
       data: {
         user_id: user.user_id,
-        student_number,
-        enrollment_date: new Date(),
-        current_class_id: class_id ? parseInt(class_id) : null,
+        student_number: student_number || `STU${Date.now()}`,
+        enrollment_date: admission_date ? new Date(admission_date) : new Date(),
+        current_class_id: current_class_id ? parseInt(current_class_id) : null,
         date_of_birth: date_of_birth ? new Date(date_of_birth) : null,
         gender
       }
     });
 
-    if (parent_contact) {
-      await prisma.parent.create({
-        data: {
-          user_id: user.user_id,
-          relationship: 'GUARDIAN',
-          address: parent_contact.address
+    // Create parent/guardian record if provided
+    if (guardian_name && guardian_email) {
+      // Check if parent already exists by email
+      const existingParentUser = await prisma.user.findFirst({
+        where: {
+          email: guardian_email.toLowerCase(),
+          role: 'PARENT'
         }
       });
+
+      let parent;
+
+      if (existingParentUser) {
+        // Parent exists, get their parent record
+        parent = await prisma.parent.findFirst({
+          where: { user_id: existingParentUser.user_id }
+        });
+
+        // Update parent information if needed
+        if (parent) {
+          await prisma.parent.update({
+            where: { parent_id: parent.parent_id },
+            data: {
+              relationship,
+              address: home_address
+            }
+          });
+        }
+      } else {
+        // Create new parent user account
+        const parentUsername = `${guardian_name.toLowerCase().replace(/\s/g, '.')}@parent`;
+        const parentPassword = guardian_password || 'Parent123!';
+        const parentPasswordHash = await bcrypt.hash(parentPassword, 10);
+
+        const parentUser = await prisma.user.create({
+          data: {
+            full_name: guardian_name,
+            email: guardian_email.toLowerCase(),
+            phone_number: guardian_phone,
+            password_hash: parentPasswordHash,
+            role: 'PARENT',
+            is_active: true
+          }
+        });
+
+        // Create parent record
+        parent = await prisma.parent.create({
+          data: {
+            user_id: parentUser.user_id,
+            relationship,
+            address: home_address
+          }
+        });
+      }
+
+      // Link parent to student using StudentParent junction table
+      // Check if relationship already exists
+      const existingRelationship = await prisma.studentParent.findFirst({
+        where: {
+          student_id: student.student_id,
+          parent_id: parent.parent_id
+        }
+      });
+
+      if (!existingRelationship) {
+        await prisma.studentParent.create({
+          data: {
+            student_id: student.student_id,
+            parent_id: parent.parent_id,
+            relationship
+          }
+        });
+      }
     }
 
     return res.json({
       message: 'Student registered successfully',
-      student
+      student,
+      username: generatedUsername,
+      password: defaultPassword
     });
   } catch (error) {
     console.error('Register student error:', error);
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2002') {
+      // Unique constraint violation
+      if (error.meta?.modelName === 'User') {
+        return res.status(409).json({ 
+          error: 'Email already exists. Please use a different email address.' 
+        });
+      }
+    }
+    
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+}
+
+/**
+ * Get Parent-Student Relationships
+ * GET /api/vp-academic/parent-student-relationships
+ */
+async function getParentStudentRelationships(req, res) {
+  try {
+    // Get all parents with their students
+    const parents = await prisma.parent.findMany({
+      include: {
+        user: true,
+        student_parents: {
+          include: {
+            student: {
+              include: {
+                user: true,
+                current_class: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Transform the data to show parent with all their students
+    const relationships = parents.map(parent => ({
+      parent_id: parent.parent_id,
+      parent_name: parent.user.full_name,
+      parent_email: parent.user.email,
+      parent_phone: parent.user.phone_number,
+      relationship: parent.relationship,
+      address: parent.address,
+      students: parent.student_parents.map(sp => ({
+        student_id: sp.student.student_id,
+        student_name: sp.student.user.full_name,
+        student_email: sp.student.user.email,
+        student_number: sp.student.student_number,
+        grade: sp.student.current_class?.class_name || 'Not assigned',
+        relationship_to_parent: sp.relationship,
+        linked_at: sp.linked_at
+      }))
+    }));
+
+    return res.json(relationships);
+  } catch (error) {
+    console.error('Get parent-student relationships error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -1235,7 +1756,22 @@ async function assignStudentToClass(req, res) {
  */
 async function getAllStudents(req, res) {
   try {
+    const { grade_level } = req.query;
+
+    // Build where clause for grade level filtering
+    const whereClause = {};
+    if (grade_level) {
+      // Filter by grade level extracted from class_name (e.g., "Grade 9", "9A", "Grade 10")
+      whereClause.current_class = {
+        class_name: {
+          contains: grade_level.toString(),
+          mode: 'insensitive'
+        }
+      };
+    }
+
     const students = await prisma.student.findMany({
+      where: whereClause,
       include: {
         user: true,
         current_class: true,
@@ -1248,10 +1784,28 @@ async function getAllStudents(req, res) {
             }
           }
         }
+      },
+      orderBy: {
+        user: {
+          full_name: 'asc'
+        }
       }
     });
 
-    return res.json(students);
+    // Group students by class
+    const groupedStudents = students.reduce((acc, student) => {
+      const className = student.current_class?.class_name || 'Unassigned';
+      if (!acc[className]) {
+        acc[className] = [];
+      }
+      acc[className].push(student);
+      return acc;
+    }, {});
+
+    return res.json({
+      grouped: groupedStudents,
+      all: students
+    });
   } catch (error) {
     console.error('Get all students error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -1456,6 +2010,140 @@ async function getStudentHistory(req, res) {
 // ==================== EXAMINATION & ASSESSMENT MANAGEMENT ====================
 
 /**
+ * Get All Exams
+ * GET /api/vp-academic/exams
+ */
+async function getAllExams(req, res) {
+  try {
+    const exams = await prisma.exam.findMany({
+      include: {
+        class_subject: {
+          include: {
+            school_class: {
+              select: {
+                class_name: true,
+                class_id: true
+              }
+            },
+            subject: {
+              select: {
+                subject_name: true,
+                subject_code: true
+              }
+            }
+          }
+        },
+        creator: {
+          select: {
+            full_name: true
+          }
+        },
+        exam_results: true,
+        exam_invigilators: {
+          include: {
+            teacher: {
+              include: {
+                user: {
+                  select: {
+                    full_name: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { exam_date: 'desc' }
+    });
+
+    // Process exams with enhanced data
+    const processedExams = exams.map(exam => {
+      const className = exam.class_subject.school_class.class_name;
+      const gradeLevel = className.match(/\d+/)?.[0] || 'Unknown';
+
+      // Calculate exam statistics
+      const totalStudents = exam.exam_results.length;
+      const averageScore = totalStudents > 0
+        ? exam.exam_results.reduce((sum, r) => sum + Number(r.score), 0) / totalStudents
+        : 0;
+      const passRate = totalStudents > 0
+        ? (exam.exam_results.filter(r => Number(r.score) >= 50).length / totalStudents) * 100
+        : 0;
+
+      return {
+        exam_id: exam.exam_id,
+        title: exam.title,
+        subject: exam.class_subject.subject.subject_name,
+        subject_code: exam.class_subject.subject.subject_code,
+        subject_department: exam.class_subject.subject.department,
+        class: className,
+        class_id: exam.class_subject.school_class.class_id,
+        grade_level: gradeLevel,
+        exam_type: exam.exam_type,
+        exam_date: exam.exam_date,
+        exam_time: exam.exam_time,
+        duration_minutes: exam.duration_minutes,
+        total_marks: Number(exam.total_marks),
+        status: exam.status,
+        room: exam.room,
+        coordinator: exam.coordinator,
+        created_by: exam.creator?.full_name || 'Unknown',
+        created_at: exam.created_at,
+        approved_at: exam.approved_at,
+        invigilators: exam.exam_invigilators.map(inv => inv.teacher.user.full_name),
+        statistics: {
+          total_students: totalStudents,
+          average_score: parseFloat(averageScore.toFixed(2)),
+          pass_rate: parseFloat(passRate.toFixed(1))
+        }
+      };
+    });
+
+    // Organize exams by class level for table display
+    const examsByClassLevel = {};
+    processedExams.forEach(exam => {
+      if (!examsByClassLevel[exam.grade_level]) {
+        examsByClassLevel[exam.grade_level] = {
+          grade_level: exam.grade_level,
+          total_exams: 0,
+          completed_exams: 0,
+          pending_exams: 0,
+          exams: []
+        };
+      }
+
+      examsByClassLevel[exam.grade_level].exams.push(exam);
+      examsByClassLevel[exam.grade_level].total_exams++;
+      
+      if (exam.status === 'COMPLETED') {
+        examsByClassLevel[exam.grade_level].completed_exams++;
+      } else if (exam.status === 'PENDING' || exam.status === 'DRAFT' || exam.status === 'PENDING_APPROVAL') {
+        examsByClassLevel[exam.grade_level].pending_exams++;
+      }
+    });
+
+    // Convert to array and sort by grade level
+    const classLevelsArray = Object.values(examsByClassLevel).sort((a, b) => {
+      const gradeA = parseInt(a.grade_level) || 0;
+      const gradeB = parseInt(b.grade_level) || 0;
+      return gradeA - gradeB;
+    });
+
+    return res.json({
+      // Primary response - exams as array for backward compatibility
+      exams: processedExams,
+      
+      // Additional structure for table display by class level
+      class_levels: classLevelsArray,
+      total_exams: processedExams.length
+    });
+  } catch (error) {
+    console.error('Get all exams error:', error);
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+}
+
+/**
  * Create Examination Schedule
  * POST /api/vp-academic/exams
  */
@@ -1466,9 +2154,21 @@ async function createExamSchedule(req, res) {
       title,
       exam_type,
       exam_date,
+      exam_time,
       duration_minutes,
-      total_marks
+      total_marks,
+      room,
+      coordinator
     } = req.body;
+
+    // Parse exam_time if provided (format: HH:MM)
+    let examTimeDate = null;
+    if (exam_time) {
+      const [hours, minutes] = exam_time.split(':');
+      const date = new Date();
+      date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      examTimeDate = date;
+    }
 
     const exam = await prisma.exam.create({
       data: {
@@ -1476,8 +2176,11 @@ async function createExamSchedule(req, res) {
         title,
         exam_type,
         exam_date: new Date(exam_date),
+        exam_time: examTimeDate,
         duration_minutes,
         total_marks,
+        room: room || null,
+        coordinator: coordinator || null,
         created_by: await getVPAcademicId(req),
         status: 'DRAFT'
       }
@@ -1486,6 +2189,35 @@ async function createExamSchedule(req, res) {
     return res.json(exam);
   } catch (error) {
     console.error('Create exam schedule error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
+ * Delete Exam
+ * DELETE /api/vp-academic/exams/:exam_id
+ */
+async function deleteExam(req, res) {
+  try {
+    const { exam_id } = req.params;
+
+    // Check if exam exists
+    const exam = await prisma.exam.findUnique({
+      where: { exam_id: parseInt(exam_id) }
+    });
+
+    if (!exam) {
+      return res.status(404).json({ error: 'Exam not found' });
+    }
+
+    // Delete exam (cascade will handle related records)
+    await prisma.exam.delete({
+      where: { exam_id: parseInt(exam_id) }
+    });
+
+    return res.json({ message: 'Exam deleted successfully' });
+  } catch (error) {
+    console.error('Delete exam error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -1722,6 +2454,146 @@ async function exportExamResults(req, res) {
 }
 
 // ==================== ACADEMIC MONITORING & REPORTING ====================
+
+/**
+ * Get Reports Overview
+ * GET /api/vp-academic/reports
+ */
+async function getReportsOverview(req, res) {
+  try {
+    const { report_type, academic_year } = req.query;
+
+    // Get current academic year if not provided
+    const currentYear = await prisma.academicYear.findFirst({
+      where: { is_current: true }
+    });
+
+    const yearToUse = academic_year || currentYear?.year_name || '2024-2025';
+
+    // Get all reports from database
+    const reports = await prisma.report.findMany({
+      where: report_type ? {
+        data: {
+          path: ['report_type'],
+          equals: report_type
+        }
+      } : undefined,
+      orderBy: { generated_at: 'desc' },
+      take: 50
+    });
+
+    // Get compliance reports
+    const complianceReports = await prisma.complianceReport.findMany({
+      orderBy: { generated_at: 'desc' },
+      take: 20
+    });
+
+    // Get recent academic activity for report generation
+    const recentGrades = await prisma.grade.findMany({
+      include: {
+        submission: {
+          include: {
+            assignment: {
+              include: {
+                class_subject: {
+                  include: {
+                    subject: true,
+                    school_class: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { graded_at: 'desc' },
+      take: 100
+    });
+
+    // Get recent attendance records
+    const recentAttendance = await prisma.attendanceRecord.findMany({
+      include: {
+        student: {
+          include: {
+            user: true
+          }
+        },
+        school_class: true
+      },
+      orderBy: { date: 'desc' },
+      take: 100
+    });
+
+    // Get recent exam results
+    const recentExamResults = await prisma.examResult.findMany({
+      include: {
+        exam: {
+          include: {
+            class_subject: {
+              include: {
+                subject: true,
+                school_class: true
+              }
+            }
+          }
+        },
+        student: {
+          include: {
+            user: true
+          }
+        }
+      },
+      orderBy: { graded_at: 'desc' },
+      take: 50
+    });
+
+    // Calculate summary statistics
+    const gradeStats = {
+      total_grades: recentGrades.length,
+      average_score: recentGrades.length > 0
+        ? (recentGrades.reduce((sum, g) => sum + Number(g.score), 0) / recentGrades.length).toFixed(2)
+        : 0,
+      pass_rate: recentGrades.length > 0
+        ? ((recentGrades.filter(g => Number(g.score) >= 50).length / recentGrades.length) * 100).toFixed(1)
+        : 0
+    };
+
+    const attendanceStats = {
+      total_records: recentAttendance.length,
+      present_rate: recentAttendance.length > 0
+        ? ((recentAttendance.filter(r => r.status === 'PRESENT').length / recentAttendance.length) * 100).toFixed(1)
+        : 0
+    };
+
+    return res.json({
+      academic_year: yearToUse,
+      summary: {
+        total_reports: reports.length,
+        total_compliance_reports: complianceReports.length,
+        recent_grades_count: gradeStats.total_grades,
+        average_grade: parseFloat(gradeStats.average_score),
+        pass_rate: parseFloat(gradeStats.pass_rate),
+        attendance_rate: parseFloat(attendanceStats.present_rate)
+      },
+      reports: reports.map(r => ({
+        report_id: r.report_id,
+        title: r.title,
+        report_type: r.data?.report_type || 'GENERAL',
+        generated_at: r.generated_at,
+        generated_by: r.generated_by
+      })),
+      compliance_reports: complianceReports,
+      recent_data: {
+        grades: recentGrades.slice(0, 20),
+        attendance: recentAttendance.slice(0, 20),
+        exam_results: recentExamResults.slice(0, 20)
+      }
+    });
+  } catch (error) {
+    console.error('Get reports overview error:', error);
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+}
 
 /**
  * View School-Wide Grades
@@ -2506,6 +3378,7 @@ async function getAuditLog(req, res) {
 
 module.exports = {
   // Dashboard
+  getAnalyticsOverview,
   getAcademicDashboard,
   getQuickStats,
   getAcademicCalendar,
@@ -2541,6 +3414,7 @@ module.exports = {
   removeTeacher,
   getTeacherWorkload,
   getTeacherPerformance,
+  getAllTeachersPerformance,
   
   // Students
   registerStudent,
@@ -2552,9 +3426,12 @@ module.exports = {
   transferStudent,
   archiveStudent,
   getStudentHistory,
+  getParentStudentRelationships,
   
   // Exams
+  getAllExams,
   createExamSchedule,
+  deleteExam,
   assignInvigilators,
   approveExamPaper,
   getExamResults,
@@ -2564,6 +3441,7 @@ module.exports = {
   exportExamResults,
   
   // Academic Monitoring
+  getReportsOverview,
   getSchoolWideGrades,
   getGradeDistribution,
   getAttendanceSummary,

@@ -16,6 +16,7 @@ const departmentHeadRoutes = require("./routes/departmentHead");
 const ptsaRoutes = require("./routes/ptsa");
 const sicRoutes = require("./routes/sic");
 const chatRoutes = require("./routes/chat");
+const storageUtils = require("./utils/storage");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -28,12 +29,17 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: origins }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// Serve locally-stored study-material files (S3-backed files are served from their object URL).
+app.use("/uploads", express.static(storageUtils.LOCAL_UPLOADS_DIR));
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 600,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ error: "Too many requests. Please try again shortly." });
+  },
 });
 app.use("/api", apiLimiter);
 

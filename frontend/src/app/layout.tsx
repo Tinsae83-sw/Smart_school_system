@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import AssistantWidget from "@/components/AssistantWidget";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -21,6 +22,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth antialiased" data-scroll-behavior="smooth">
       <body className={`${outfit.variable} font-sans bg-slate-50 text-slate-800 selection:bg-indigo-200 selection:text-indigo-900 overflow-x-hidden`}>
         {children}
+        <AssistantWidget />
       </body>
     </html>
   );

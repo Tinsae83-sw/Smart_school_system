@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken, clearAuth } from "@/lib/auth";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
@@ -20,7 +22,8 @@ export default function ProfilePage() {
     phone_number: "",
     email: "",
     qualification: "",
-    profile_picture_url: ""
+    profile_picture_url: "",
+    national_id: ""
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -40,7 +43,7 @@ export default function ProfilePage() {
 
   async function loadProfile(token: string) {
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/profile`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -63,7 +66,8 @@ export default function ProfilePage() {
         phone_number: data?.phone_number || "",
         email: data?.email || "",
         qualification: data?.qualification || "",
-        profile_picture_url: data?.profile_picture_url || ""
+        profile_picture_url: data?.profile_picture_url || "",
+        national_id: data?.national_id || ""
       });
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -78,13 +82,19 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     setMessage("");
+    if (editForm.national_id && !/^\d{12}$/.test(editForm.national_id)) {
+      setMessage("National ID must be exactly 12 digits.");
+      setMessageType("error");
+      setSaving(false);
+      return;
+    }
     const token = getToken("TEACHER");
     if (!token) {
       router.push("/login");
       return;
     }
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/profile`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/profile`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -130,7 +140,7 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`http://localhost:5000/api/teacher/upload-profile-picture`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/upload-profile-picture`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -181,7 +191,7 @@ export default function ProfilePage() {
       return;
     }
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/change-password`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/change-password`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -341,6 +351,17 @@ export default function ProfilePage() {
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">National ID (Fayda)</label>
+                    <input
+                      type="text"
+                      value={editForm.national_id}
+                      onChange={(e) => setEditForm({ ...editForm, national_id: e.target.value })}
+                      maxLength={12}
+                      placeholder="12-digit Fayda ID"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                    />
+                  </div>
                 </div>
                 <div className="flex gap-4">
                   <button
@@ -378,6 +399,10 @@ export default function ProfilePage() {
                   <p className="text-lg font-semibold text-slate-900">
                     {profile?.joined_date ? new Date(profile.joined_date).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "N/A"}
                   </p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-5">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">National ID (Fayda)</label>
+                  <p className="text-lg font-semibold text-slate-900">{profile?.national_id || "Not registered"}</p>
                 </div>
               </div>
             )}

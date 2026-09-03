@@ -34,7 +34,7 @@ app.use("/uploads", express.static(storageUtils.LOCAL_UPLOADS_DIR));
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 600,
+  max: process.env.NODE_ENV === "production" ? 2000 : 600,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
@@ -42,6 +42,15 @@ const apiLimiter = rateLimit({
   },
 });
 app.use("/api", apiLimiter);
+
+app.get("/api/health", async (req, res) => {
+  try {
+    await pool.query(`SELECT 1`);
+    res.json({ status: "ok", database: "connected", timestamp: new Date().toISOString() });
+  } catch (error) {
+    res.status(503).json({ status: "error", database: "unreachable" });
+  }
+});
 
 // Route mounts. The teacher app consumes a short legacy prefix (`/n`).
 app.use("/api/auth", authRoutes);

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type Meeting = {
   meeting_id: number;
@@ -63,9 +65,9 @@ export default function MeetingsPage() {
     setLoading(true);
     try {
       const [meetingsRes, minutesRes, attendanceRes] = await Promise.all([
-        fetch(`${API_BASE}/meetings`),
-        fetch(`${API_BASE}/meetings/minutes`),
-        fetch(`${API_BASE}/meetings/attendance`),
+        api(`${API_BASE}/meetings`),
+        api(`${API_BASE}/meetings/minutes`),
+        api(`${API_BASE}/meetings/attendance`),
       ]);
 
       if (meetingsRes.ok) setMeetings(await meetingsRes.json());
@@ -85,7 +87,7 @@ export default function MeetingsPage() {
     }
     
     try {
-      await fetch(`${API_BASE}/meetings`, {
+      await api(`${API_BASE}/meetings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -110,7 +112,7 @@ export default function MeetingsPage() {
     }
     
     try {
-      await fetch(`${API_BASE}/meetings/minutes`, {
+      await api(`${API_BASE}/meetings/minutes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -132,7 +134,7 @@ export default function MeetingsPage() {
 
   async function sendInvitations(meetingId: number) {
     try {
-      await fetch(`${API_BASE}/meetings/${meetingId}/invite`, {
+      await api(`${API_BASE}/meetings/${meetingId}/invite`, {
         method: "POST",
       });
       alert("Invitations sent successfully!");

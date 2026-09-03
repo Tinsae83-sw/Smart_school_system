@@ -11,6 +11,7 @@ export default function StudentConduct() {
   const [peerEvaluations, setPeerEvaluations] = useState<any[]>([]);
   const [selectedEvalId, setSelectedEvalId] = useState<number | null>(null);
   const [peerResults, setPeerResults] = useState<any>(null);
+  const [classmates, setClassmates] = useState<any[]>([]);
   const [reviewScore, setReviewScore] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [selectedRevieweeId, setSelectedRevieweeId] = useState<number | null>(null);
@@ -21,7 +22,17 @@ export default function StudentConduct() {
     loadConduct();
     loadConductHistory();
     loadPeerEvaluations();
+    loadClassmates();
   }, []);
+
+  async function loadClassmates() {
+    try {
+      const data = await authFetch("/api/student/classmates");
+      setClassmates(data || []);
+    } catch {
+      setClassmates([]);
+    }
+  }
 
   async function loadConduct() {
     try {
@@ -266,6 +277,9 @@ export default function StudentConduct() {
                         {classmates.map((c: any) => (
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
+                        {classmates.length === 0 && (
+                          <option value="" disabled>No classmates available</option>
+                        )}
                       </select>
                     </div>
 

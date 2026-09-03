@@ -2,9 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { apiFetch } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
-const ADMIN_API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
+
+function authToken() {
+  return getToken("VP_ACADEMIC");
+}
 
 type ClassCategory = "GENERAL" | "NATURAL_SCIENCE" | "SOCIAL_SCIENCE";
 
@@ -58,9 +63,7 @@ export default function ClassesPage() {
   async function fetchClasses() {
     setLoading(true);
     try {
-      const res = await fetch(`${ADMIN_API}/admin/classes`);
-      if (!res.ok) throw new Error("Failed to fetch classes");
-      const data = await res.json();
+      const data = await apiFetch(`${API_BASE}/classes`, { token: authToken() });
       
       // Handle different response structures
       const classesData = data.classes || data;
@@ -107,9 +110,7 @@ export default function ClassesPage() {
   async function fetchTeachers() {
     setLoadingTeachers(true);
     try {
-      const res = await fetch(`${API_BASE}/teachers`);
-      if (!res.ok) throw new Error("Failed to fetch teachers");
-      const data = await res.json();
+      const data = await apiFetch(`${API_BASE}/teachers`, { token: authToken() });
       setTeachers(data.teachers || data);
     } catch (error) {
       console.error(error);
@@ -158,12 +159,11 @@ export default function ClassesPage() {
 
       if (!editingClass) return;
 
-      const res = await fetch(`${API_BASE}/classes/${editingClass.class_id}`, {
+      const res = await apiFetch(`${API_BASE}/classes/${editingClass.class_id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        token: authToken(),
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Failed to update class");
 
       setShowModal(false);
       setEditingClass(null);
@@ -186,10 +186,10 @@ export default function ClassesPage() {
   async function handleDelete(classId: number) {
     if (!confirm("Are you sure you want to delete this class?")) return;
     try {
-      const res = await fetch(`${API_BASE}/classes/${classId}`, {
+      await apiFetch(`${API_BASE}/classes/${classId}`, {
         method: "DELETE",
+        token: authToken(),
       });
-      if (!res.ok) throw new Error("Failed to delete class");
       fetchClasses();
     } catch (error) {
       console.error(error);

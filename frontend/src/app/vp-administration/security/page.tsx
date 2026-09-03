@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
+const api = authFetchFor("VP_ADMINISTRATION");
 
 type SecurityPersonnel = {
   security_id: number;
@@ -95,10 +97,10 @@ export default function SecurityPage() {
     setLoading(true);
     try {
       const [persRes, visRes, eqRes, cctvRes] = await Promise.all([
-        fetch(`${API_BASE}/security-personnel`),
-        fetch(`${API_BASE}/visitor-logs`),
-        fetch(`${API_BASE}/safety-equipment`),
-        fetch(`${API_BASE}/cctv-cameras`),
+        api(`${API_BASE}/security-personnel`),
+        api(`${API_BASE}/visitor-logs`),
+        api(`${API_BASE}/safety-equipment`),
+        api(`${API_BASE}/cctv-cameras`),
       ]);
 
       if (persRes.ok) setPersonnel(await persRes.json());
@@ -184,7 +186,7 @@ export default function SecurityPage() {
         };
       }
 
-      const res = await fetch(url, {
+      const res = await api(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -201,7 +203,7 @@ export default function SecurityPage() {
 
   async function handleVisitorCheckout(visitorId: number) {
     try {
-      const res = await fetch(`${API_BASE}/visitor-logs/${visitorId}/checkout`, { method: "POST" });
+      const res = await api(`${API_BASE}/visitor-logs/${visitorId}/checkout`, { method: "POST" });
       if (res.ok) {
         fetchData();
       }

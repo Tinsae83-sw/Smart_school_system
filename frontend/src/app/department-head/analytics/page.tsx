@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+const api = authFetchFor("DEPARTMENT_HEAD");
 
 type GradeDistribution = {
   distribution: { A: number; B: number; C: number; D: number; F: number };
@@ -32,13 +34,13 @@ export default function AnalyticsPage() {
     try {
       const token = localStorage.getItem("dept_head_token");
       const [gradeRes, subjectRes, attendanceRes] = await Promise.all([
-        fetch(`${API_BASE}/academics/grade-distribution`, {
+        api(`${API_BASE}/academics/grade-distribution`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch(`${API_BASE}/academics/subject-performance`, {
+        api(`${API_BASE}/academics/subject-performance`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch(`${API_BASE}/academics/attendance-trends`, {
+        api(`${API_BASE}/academics/attendance-trends`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);

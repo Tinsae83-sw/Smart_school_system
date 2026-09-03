@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken, clearAuth } from "@/lib/auth";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
 export default function AssignmentsPage() {
   const router = useRouter();
   const [assignments, setAssignments] = useState<any[]>([]);
@@ -20,7 +22,7 @@ export default function AssignmentsPage() {
 
   async function loadAssignments(token: string) {
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/assignments`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/assignments`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

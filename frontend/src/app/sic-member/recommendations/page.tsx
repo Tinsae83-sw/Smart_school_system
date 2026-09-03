@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
+const api = authFetchFor("SIC_MEMBER");
 
 type RecommendationItem = {
   recommendation_id: number;
@@ -30,7 +32,7 @@ export default function RecommendationsPage() {
   async function fetchRecommendations() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/recommendations`);
+      const res = await api(`${API_BASE}/recommendations`);
       if (res.ok) {
         const data = await res.json();
         setRecommendations(data);
@@ -50,7 +52,7 @@ export default function RecommendationsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/recommendations`, {
+      const res = await api(`${API_BASE}/recommendations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newRecommendation)

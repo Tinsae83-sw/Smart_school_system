@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { isAuthenticated, getUser, clearAuth, getToken } from "@/lib/auth";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6", href: "/teacher/dashboard" },
   { id: "classes", label: "Classes", icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4", href: "/teacher/classes" },
@@ -52,7 +54,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
   async function loadProfile(token: string) {
     try {
-      const response = await fetch("http://localhost:5000/api/teacher/profile", {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {
@@ -66,7 +68,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   async function handleLogout() {
     try {
       // Call backend logout endpoint to log the logout action
-      await fetch("http://localhost:5000/api/auth/logout", {
+      await fetch(`${BACKEND_URL}/api/auth/logout`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });

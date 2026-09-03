@@ -5,6 +5,7 @@ const { verifyPassword, hashPassword } = require("../utils/password");
 const { signToken, verifyToken } = require("../utils/token");
 const { issueOtp, verifyOtp } = require("../utils/otp");
 const { audit } = require("../utils/audit");
+const { validateFaydaId } = require("../utils/nationalId");
 
 const router = express.Router();
 
@@ -15,6 +16,7 @@ function publicUser(user, ext = {}) {
     full_name: user.full_name,
     email: user.email,
     phone_number: user.phone_number,
+    national_id: user.national_id || "",
     role: user.role,
     profile_picture_url: user.profile_picture_url,
     preferred_language: user.preferred_language || "",
@@ -122,7 +124,7 @@ router.get("/classes", async (_req, res) => {
 router.post("/register", async (req, res) => {
   const {
     role, full_name, email, phone_number, password, confirm_password,
-    class_id, relationship,
+    class_id, relationship, national_id,
   } = req.body || {};
 
   const userRole = String(role || "").toUpperCase();
@@ -145,22 +147,39 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ error: "Please select the class you are enrolling into." });
   }
 
+  let normalizedNationalId = null;
+  if (national_id) {
+    const check = validateFaydaId(national_id);
+    if (!check.valid) {
+      return res.status(400).json({ error: check.error });
+    }
+    normalizedNationalId = check.normalized;
+  }
+
   try {
     const exists = await pool.query(`SELECT user_id FROM users WHERE email = $1`, [email.trim().toLowerCase()]);
     if (exists.rowCount) {
       return res.status(409).json({ error: "An account with this email already exists. Please sign in or recover your password." });
     }
 
+    if (normalizedNationalId) {
+      const idExists = await pool.query(`SELECT user_id FROM users WHERE national_id = $1`, [normalizedNationalId]);
+      if (idExists.rowCount) {
+        return res.status(409).json({ error: "An account with this National ID already exists." });
+      }
+    }
+
     await pool.query(
       `INSERT INTO users (full_name, email, phone_number, password_hash, role, status,
-                          requested_class_id, requested_relationship)
-       VALUES ($1, $2, $3, $4, $5, 'PENDING', $6, $7)`,
+                          national_id, requested_class_id, requested_relationship)
+       VALUES ($1, $2, $3, $4, $5, 'PENDING', $6, $7, $8)`,
       [
         full_name.trim(),
         email.trim().toLowerCase(),
         phone_number || null,
         hashPassword(password),
         userRole,
+        normalizedNationalId,
         userRole === "STUDENT" ? Number(class_id) || null : null,
         userRole === "PARENT" ? (relationship || "Guardian") : null,
       ]

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/admin";
+const api = authFetchFor("SUPER_ADMIN");
 
 const GRADE_LEVELS = [
   "Grade 1",
@@ -131,7 +133,7 @@ function AssignSubjectForm({ subjects, teachers, classId, className, onAssigned,
   async function handleAssign(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_BASE}/class-subject`, {
+      const response = await api(`${API_BASE}/class-subject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ class_id: classId, subject_id: parseInt(assignForm.subject_id), teacher_id: parseInt(assignForm.teacher_id) })
@@ -204,7 +206,7 @@ export default function ClassesPage() {
       if (!gradeNum) throw new Error('Invalid grade');
 
       const studentNumbers = payload.student_numbers_text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-      const res = await fetch(`${API_BASE}/classes/auto-generate`, {
+      const res = await api(`${API_BASE}/classes/auto-generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ grade: gradeNum, academic_year: payload.academic_year, max_per_class: payload.max_per_class, student_numbers: studentNumbers })
@@ -221,14 +223,14 @@ export default function ClassesPage() {
   const fetchClasses = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/classes`);
+      const res = await api(`${API_BASE}/classes`);
       if (res.ok) setClasses(await res.json());
     } catch { /* ignore */ } finally { setLoading(false); }
   }, []);
 
   const fetchTeachers = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/users?role=TEACHER&status=active`);
+      const res = await api(`${API_BASE}/users?role=TEACHER&status=active`);
       if (res.ok) {
         const data = await res.json();
         setTeachers(data.filter((u: any) => u.teacher_id).map((u: any) => ({
@@ -245,7 +247,7 @@ export default function ClassesPage() {
 
   const fetchSubjects = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/subjects`);
+      const res = await api(`${API_BASE}/subjects`);
       if (res.ok) setSubjects(await res.json());
     } catch { /* ignore */ }
   }, []);
@@ -262,7 +264,7 @@ export default function ClassesPage() {
 
   async function fetchRoster(classId: number) {
     try {
-      const res = await fetch(`${API_BASE}/classes/${classId}/roster`);
+      const res = await api(`${API_BASE}/classes/${classId}/roster`);
       if (res.ok) setRoster(await res.json());
       setShowRoster(classId);
     } catch { /* ignore */ }
@@ -284,7 +286,7 @@ export default function ClassesPage() {
 
       const url = editClass ? `${API_BASE}/classes/${editClass.class_id}` : `${API_BASE}/classes`;
       const method = editClass ? "PUT" : "POST";
-      const res = await fetch(url, {
+      const res = await api(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ class_name: computedClassName, grade_level: form.grade_level, section: form.section, academic_year: form.academic_year, homeroom_teacher_id: parseInt(form.homeroom_teacher_id) })
@@ -304,7 +306,7 @@ export default function ClassesPage() {
   async function handleDelete(classId: number) {
     if (!confirm("Delete this class? This cannot be undone.")) return;
     try {
-      const res = await fetch(`${API_BASE}/classes/${classId}`, { method: "DELETE" });
+      const res = await api(`${API_BASE}/classes/${classId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       showToastMsg("Class deleted.");
       fetchClasses();

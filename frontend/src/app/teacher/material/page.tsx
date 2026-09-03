@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/auth";
 import { authFetch } from "../shared";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
 import { 
   Upload, 
   FileText, 
@@ -152,7 +155,7 @@ export default function MaterialPage() {
       formDataToSend.append("file_type", formData.file_type);
       formDataToSend.append("class_id", selectedClasses[0]?.toString() || "");
 
-      const response = await fetch("http://localhost:5000/api/teacher/materials", {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/materials`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`

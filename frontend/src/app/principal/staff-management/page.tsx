@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+
+const api = authFetchFor("PRINCIPAL");
 
 type StaffMember = {
   user_id: number;
@@ -62,13 +65,13 @@ export default function StaffManagementPage() {
     setLoading(true);
     try {
       const [seniorRes, teachersRes, deptsRes] = await Promise.all([
-        fetch(`${API_BASE}/staff/senior`, {
+        api(`${API_BASE}/staff/senior`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/staff/teachers`, {
+        api(`${API_BASE}/staff/teachers`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/departments`, {
+        api(`${API_BASE}/departments`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);
@@ -118,7 +121,7 @@ export default function StaffManagementPage() {
 
     const endpoint = activeTab === "senior" ? `/staff/senior/${staff.user_id}` : `/staff/teachers/${staff.user_id}`;
 
-    fetch(`${API_BASE}${endpoint}`, {
+    api(`${API_BASE}${endpoint}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
@@ -140,7 +143,7 @@ export default function StaffManagementPage() {
     const method = editingStaff ? "PUT" : "POST";
     const url = editingStaff ? `${API_BASE}${endpoint}/${editingStaff.user_id}` : `${API_BASE}${endpoint}`;
 
-    fetch(url, {
+    api(url, {
       method,
       headers: {
         "Content-Type": "application/json",

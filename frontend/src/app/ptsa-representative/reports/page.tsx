@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type Report = {
   report_id: number;
@@ -37,8 +39,8 @@ export default function ReportsPage() {
     setLoading(true);
     try {
       const [reportsRes, activitiesRes] = await Promise.all([
-        fetch(`${API_BASE}/reports`),
-        fetch(`${API_BASE}/reports/ptsa-activities`),
+        api(`${API_BASE}/reports`),
+        api(`${API_BASE}/reports/ptsa-activities`),
       ]);
 
       if (reportsRes.ok) setReports(await reportsRes.json());
@@ -53,7 +55,7 @@ export default function ReportsPage() {
   async function generateSchoolReport() {
     setGeneratingReport(true);
     try {
-      const res = await fetch(`${API_BASE}/reports/school-performance`, {
+      const res = await api(`${API_BASE}/reports/school-performance`, {
         method: "POST",
       });
       if (res.ok) {
@@ -71,7 +73,7 @@ export default function ReportsPage() {
   async function generatePTSAReport() {
     setGeneratingReport(true);
     try {
-      const res = await fetch(`${API_BASE}/reports/ptsa-activity`, {
+      const res = await api(`${API_BASE}/reports/ptsa-activity`, {
         method: "POST",
       });
       if (res.ok) {
@@ -88,7 +90,7 @@ export default function ReportsPage() {
 
   async function downloadReport(reportId: number) {
     try {
-      const res = await fetch(`${API_BASE}/reports/${reportId}/download`);
+      const res = await api(`${API_BASE}/reports/${reportId}/download`);
       if (res.ok) {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);

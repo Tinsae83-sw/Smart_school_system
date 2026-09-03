@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+
+const api = authFetchFor("PRINCIPAL");
 
 type DashboardMetrics = {
   total_enrollment: number;
@@ -53,9 +56,9 @@ export default function PrincipalDashboardPage() {
     setLoading(true);
     try {
       const [dashboardRes, staffRes, alertsRes] = await Promise.all([
-        fetch(`${API_BASE}/dashboard`),
-        fetch(`${API_BASE}/staff/senior`),
-        fetch(`${API_BASE}/alerts`),
+        api(`${API_BASE}/dashboard`),
+        api(`${API_BASE}/staff/senior`),
+        api(`${API_BASE}/alerts`),
       ]);
 
       if (!dashboardRes.ok || !staffRes.ok || !alertsRes.ok) {

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type UserProfile = {
   user_id: number;
@@ -56,9 +58,9 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       const [userRes, ptsaRes, prefsRes] = await Promise.all([
-        fetch(`${API_BASE}/settings/profile`),
-        fetch(`${API_BASE}/settings/ptsa-profile`),
-        fetch(`${API_BASE}/settings/notifications`),
+        api(`${API_BASE}/settings/profile`),
+        api(`${API_BASE}/settings/ptsa-profile`),
+        api(`${API_BASE}/settings/notifications`),
       ]);
 
       if (userRes.ok) setUserProfile(await userRes.json());
@@ -75,7 +77,7 @@ export default function SettingsPage() {
     if (!userProfile) return;
     setSaving(true);
     try {
-      await fetch(`${API_BASE}/settings/profile`, {
+      await api(`${API_BASE}/settings/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userProfile),
@@ -93,7 +95,7 @@ export default function SettingsPage() {
     if (!ptsaProfile) return;
     setSaving(true);
     try {
-      await fetch(`${API_BASE}/settings/ptsa-profile`, {
+      await api(`${API_BASE}/settings/ptsa-profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(ptsaProfile),
@@ -110,7 +112,7 @@ export default function SettingsPage() {
   async function saveNotificationPreferences() {
     setSaving(true);
     try {
-      await fetch(`${API_BASE}/settings/notifications`, {
+      await api(`${API_BASE}/settings/notifications`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(notificationPrefs),

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type Discussion = {
   discussion_id: number;
@@ -53,7 +55,7 @@ export default function DiscussionsPage() {
   async function loadDiscussions() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/discussions`);
+      const res = await api(`${API_BASE}/discussions`);
       if (res.ok) setDiscussions(await res.json());
     } catch (error) {
       console.error("Error loading discussions:", error);
@@ -64,7 +66,7 @@ export default function DiscussionsPage() {
 
   async function loadMessages(discussionId: number) {
     try {
-      const res = await fetch(`${API_BASE}/discussions/${discussionId}/messages`);
+      const res = await api(`${API_BASE}/discussions/${discussionId}/messages`);
       if (res.ok) setMessages(await res.json());
     } catch (error) {
       console.error("Error loading messages:", error);
@@ -78,7 +80,7 @@ export default function DiscussionsPage() {
     }
     
     try {
-      await fetch(`${API_BASE}/discussions`, {
+      await api(`${API_BASE}/discussions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newDiscussion),
@@ -97,7 +99,7 @@ export default function DiscussionsPage() {
     if (!newMessage.trim() || !selectedDiscussion) return;
     
     try {
-      await fetch(`${API_BASE}/discussions/${selectedDiscussion.discussion_id}/messages`, {
+      await api(`${API_BASE}/discussions/${selectedDiscussion.discussion_id}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: newMessage }),

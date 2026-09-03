@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+const api = authFetchFor("DEPARTMENT_HEAD");
 
 type DepartmentSettings = {
   settings_id: number;
@@ -25,7 +27,7 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("dept_head_token");
-      const res = await fetch(`${API_BASE}/settings`, {
+      const res = await api(`${API_BASE}/settings`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -43,7 +45,7 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       const token = localStorage.getItem("dept_head_token");
-      const res = await fetch(`${API_BASE}/settings`, {
+      const res = await api(`${API_BASE}/settings`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
+const api = authFetchFor("VP_ADMINISTRATION");
 
 type Vehicle = {
   vehicle_id: number;
@@ -65,6 +67,7 @@ export default function TransportPage() {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"vehicle" | "maintenance" | "assignment" | "schedule">("vehicle");
   const [formData, setFormData] = useState({
+    vehicle_id: "",
     vehicle_name: "",
     vehicle_type: "BUS",
     license_plate: "",
@@ -100,10 +103,10 @@ export default function TransportPage() {
     setLoading(true);
     try {
       const [vehRes, maintRes, assignRes, schedRes] = await Promise.all([
-        fetch(`${API_BASE}/vehicles`),
-        fetch(`${API_BASE}/vehicle-maintenance`),
-        fetch(`${API_BASE}/driver-assignments`),
-        fetch(`${API_BASE}/transport-schedules`),
+        api(`${API_BASE}/vehicles`),
+        api(`${API_BASE}/vehicle-maintenance`),
+        api(`${API_BASE}/driver-assignments`),
+        api(`${API_BASE}/transport-schedules`),
       ]);
 
       if (vehRes.ok) setVehicles(await vehRes.json());
@@ -129,6 +132,7 @@ export default function TransportPage() {
   function openModal(type: "vehicle" | "maintenance" | "assignment" | "schedule") {
     setModalType(type);
     setFormData({
+      vehicle_id: "",
       vehicle_name: "",
       vehicle_type: "BUS",
       license_plate: "",
@@ -203,7 +207,7 @@ export default function TransportPage() {
         };
       }
 
-      const res = await fetch(url, {
+      const res = await api(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

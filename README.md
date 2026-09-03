@@ -58,3 +58,34 @@ npm run dev                       # frontend on :3000
 
 Demo logins (all password `Password123!`):
 `superadmin@example.com`, `principal@example.com`, `depthead@example.com`, `teacher@example.com`, etc.
+
+## Ethiopian National ID (Fayda)
+
+The system integrates Ethiopia's 12-digit Fayda National ID:
+
+- `users.national_id` column (unique, optional) added via migration `20260903000000_add_national_id`.
+- Validation utility `backend/src/utils/nationalId.js` — `validateFaydaId()`, `formatFaydaId()`, `normalize()`.
+- Accepted/validated in: self-service registration, admin user creation/update, teacher profile.
+- Frontend forms: `/register`, `/admin/users`, `/teacher/profile`.
+
+## Deployment
+
+### Recommended free stack
+| Component | Provider | Free tier |
+|-----------|----------|-----------|
+| Frontend  | Vercel   | Unlimited static + serverless |
+| Backend   | Render   | 750 hrs/mo (spins down after 15 min idle) |
+| Database  | Supabase / Neon | 0.5 GB Postgres |
+
+### Backend (Render)
+- `backend/Dockerfile` + `render.yaml` at repo root.
+- Env vars to set in Render: `DATABASE_URL`, `DATABASE_SSL=true`, `JWT_SECRET`, `CORS_ORIGINS` (the deployed Vercel URL), plus SMTP vars for OTP emails.
+- Migrations run automatically on container boot.
+
+### Frontend (Vercel)
+- Root deploys the `frontend/` folder; `vercel.json` sets the build/install commands.
+- Env var: `NEXT_PUBLIC_API_BASE` = your deployed backend URL (e.g. `https://your-backend.onrender.com`).
+- `frontend/.env.example` documents the required variable; the API base reads it and falls back to `http://localhost:5000` in dev.
+
+### Local endpoints
+- Health: `GET /api/health` returns DB connectivity status.

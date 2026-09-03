@@ -1,8 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+
+function authToken() {
+  return getToken("VP_ACADEMIC");
+}
 
 type Teacher = {
   teacher_id: number;
@@ -67,19 +73,12 @@ export default function TeachersPage() {
   async function fetchTeachers() {
     setLoading(true);
     try {
-      const [teachersRes, deptsRes] = await Promise.all([
-        fetch(`${API_BASE}/teachers`),
-        fetch("http://localhost:5000/api/principal/departments"),
+      const [teachersData, deptsData] = await Promise.all([
+        apiFetch(`${API_BASE}/teachers`, { token: authToken() }),
+        apiFetch(`${API_BASE}/departments`, { token: authToken() }),
       ]);
-
-      if (!teachersRes.ok) throw new Error("Failed to fetch teachers");
-      const teachersData = await teachersRes.json();
       setTeachers(teachersData.teachers || teachersData);
-
-      if (deptsRes.ok) {
-        const deptsData = await deptsRes.json();
-        setDepartments(deptsData.map((d: any) => d.name));
-      }
+      setDepartments(deptsData.map((d: any) => d.name));
     } catch (error) {
       console.error(error);
     } finally {
@@ -121,12 +120,11 @@ export default function TeachersPage() {
         experience_years: formData.experience_years ? parseInt(formData.experience_years) : null,
       };
 
-      const res = await fetch(`${API_BASE}/teachers/${editingTeacher.teacher_id}`, {
+      await apiFetch(`${API_BASE}/teachers/${editingTeacher.teacher_id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        token: authToken(),
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Failed to update teacher");
 
       setShowModal(false);
       setEditingTeacher(null);
@@ -154,10 +152,10 @@ export default function TeachersPage() {
   async function handleDelete(teacherId: number) {
     if (!confirm("Are you sure you want to remove this teacher?")) return;
     try {
-      const res = await fetch(`${API_BASE}/teachers/${teacherId}`, {
+      await apiFetch(`${API_BASE}/teachers/${teacherId}`, {
         method: "DELETE",
+        token: authToken(),
       });
-      if (!res.ok) throw new Error("Failed to delete teacher");
       fetchTeachers();
     } catch (error) {
       console.error(error);

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type WoredaReport = {
   report_id: number;
@@ -54,9 +56,9 @@ export default function CompliancePage() {
     setLoading(true);
     try {
       const [reportsRes, metricsRes, proposalsRes] = await Promise.all([
-        fetch(`${API_BASE}/compliance/woreda-reports`),
-        fetch(`${API_BASE}/compliance/public-metrics`),
-        fetch(`${API_BASE}/compliance/policy-proposals`),
+        api(`${API_BASE}/compliance/woreda-reports`),
+        api(`${API_BASE}/compliance/public-metrics`),
+        api(`${API_BASE}/compliance/policy-proposals`),
       ]);
 
       if (reportsRes.ok) setWoredaReports(await reportsRes.json());
@@ -76,7 +78,7 @@ export default function CompliancePage() {
     }
     
     try {
-      await fetch(`${API_BASE}/compliance/policy-proposals`, {
+      await api(`${API_BASE}/compliance/policy-proposals`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newProposal),

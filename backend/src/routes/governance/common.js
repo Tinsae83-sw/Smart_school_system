@@ -6,7 +6,7 @@ const express = require("express");
 const pool = require("../../config/db");
 const { authenticate, authorize } = require("../../middleware/auth");
 
-function makeGovernanceRouter({ role, extension }) {
+function makeGovernanceRouter({ role, extension, dashboard }) {
   const router = express.Router();
   router.use(authenticate, authorize(role, "SUPER_ADMIN"));
 
@@ -117,25 +117,29 @@ function makeGovernanceRouter({ role, extension }) {
     }
   });
 
-  router.get("/dashboard", async (req, res) => {
-    try {
-      const [students, teachers, parents, classes] = await Promise.all([
-        pool.query(`SELECT COUNT(*)::int AS count FROM students`),
-        pool.query(`SELECT COUNT(*)::int AS count FROM teachers`),
-        pool.query(`SELECT COUNT(*)::int AS count FROM parents`),
-        pool.query(`SELECT COUNT(*)::int AS count FROM school_classes`),
-      ]);
-      res.json({
-        total_students: students.rows[0].count,
-        total_teachers: teachers.rows[0].count,
-        total_parents: parents.rows[0].count,
-        total_classes: classes.rows[0].count,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Unable to load dashboard." });
-    }
-  });
+  if (dashboard) {
+    router.get("/dashboard", dashboard);
+  } else {
+    router.get("/dashboard", async (req, res) => {
+      try {
+        const [students, teachers, parents, classes] = await Promise.all([
+          pool.query(`SELECT COUNT(*)::int AS count FROM students`),
+          pool.query(`SELECT COUNT(*)::int AS count FROM teachers`),
+          pool.query(`SELECT COUNT(*)::int AS count FROM parents`),
+          pool.query(`SELECT COUNT(*)::int AS count FROM school_classes`),
+        ]);
+        res.json({
+          total_students: students.rows[0].count,
+          total_teachers: teachers.rows[0].count,
+          total_parents: parents.rows[0].count,
+          total_classes: classes.rows[0].count,
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Unable to load dashboard." });
+      }
+    });
+  }
 
   return router;
 }

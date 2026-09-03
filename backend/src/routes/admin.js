@@ -3,6 +3,7 @@ const pool = require("../config/db");
 const { authenticate, authorize } = require("../middleware/auth");
 const { hashPassword, randomPassword } = require("../utils/password");
 const { audit } = require("../utils/audit");
+const { validateFaydaId } = require("../utils/nationalId");
 
 const router = express.Router();
 
@@ -73,7 +74,7 @@ router.get("/users", async (req, res) => {
     const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
     const { rows } = await pool.query(
-      `SELECT u.user_id, u.full_name, u.email, u.phone_number, u.role, u.is_active, u.status, u.created_at,
+      `SELECT u.user_id, u.full_name, u.email, u.phone_number, u.role, u.national_id, u.is_active, u.status, u.created_at,
               a.employee_id AS admin_employee_id, a.access_level,
               t.department AS teacher_department, t.employee_id AS teacher_employee_id,
               s.student_number, s.enrollment_date, s.current_class_id,
@@ -106,7 +107,7 @@ router.get("/users", async (req, res) => {
 router.post("/users", async (req, res) => {
   const {
     full_name, email, phone_number, role, department, employee_id,
-    student_number, current_class_id, relationship, position,
+    student_number, current_class_id, relationship, position, national_id,
   } = req.body || {};
 
   if (!full_name || !email || !role) {
@@ -118,6 +119,15 @@ router.post("/users", async (req, res) => {
     return res.status(400).json({ error: `Unsupported role: ${role}` });
   }
 
+  let normalizedNationalId = null;
+  if (national_id) {
+    const check = validateFaydaId(national_id);
+    if (!check.valid) {
+      return res.status(400).json({ error: check.error });
+    }
+    normalizedNationalId = check.normalized;
+  }
+
   const password = randomPassword(12);
   const password_hash = hashPassword(password);
   const client = await pool.connect();
@@ -126,9 +136,9 @@ router.post("/users", async (req, res) => {
     await client.query("BEGIN");
 
     const userResult = await client.query(
-      `INSERT INTO users (full_name, email, phone_number, password_hash, role, must_reset_password)
-       VALUES ($1, $2, $3, $4, $5, TRUE) RETURNING user_id`,
-      [full_name, email.trim().toLowerCase(), phone_number || null, password_hash, userRole]
+      `INSERT INTO users (full_name, email, phone_number, password_hash, role, national_id, must_reset_password)
+       VALUES ($1, $2, $3, $4, $5, $6, TRUE) RETURNING user_id`,
+      [full_name, email.trim().toLowerCase(), phone_number || null, password_hash, userRole, normalizedNationalId]
     );
     const userId = userResult.rows[0].user_id;
 
@@ -171,15 +181,29 @@ router.post("/users", async (req, res) => {
 
 router.put("/users/:id", async (req, res) => {
   const userId = parseInt(req.params.id, 10);
-  const { full_name, email, phone_number, department, current_class_id, relationship } = req.body || {};
+  const { full_name, email, phone_number, department, current_class_id, relationship, national_id } = req.body || {};
 
   if (!userId) return res.status(400).json({ error: "Invalid user id." });
 
+  let normalizedNationalId = undefined;
+  if (national_id !== undefined) {
+    if (national_id === null || national_id === "") {
+      normalizedNationalId = null;
+    } else {
+      const check = validateFaydaId(national_id);
+      if (!check.valid) {
+        return res.status(400).json({ error: check.error });
+      }
+      normalizedNationalId = check.normalized;
+    }
+  }
+
   try {
     await pool.query(
-      `UPDATE users SET full_name = COALESCE($1, full_name), email = COALESCE($2, email), phone_number = COALESCE($3, phone_number)
-        WHERE user_id = $4`,
-      [full_name || null, email || null, phone_number || null, userId]
+      `UPDATE users SET full_name = COALESCE($1, full_name), email = COALESCE($2, email),
+              phone_number = COALESCE($3, phone_number), national_id = $4
+        WHERE user_id = $5`,
+      [full_name || null, email || null, phone_number || null, normalizedNationalId, userId]
     );
 
     if (department) {

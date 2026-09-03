@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from "react";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
 
 type ParentContextType = {
   token: string;

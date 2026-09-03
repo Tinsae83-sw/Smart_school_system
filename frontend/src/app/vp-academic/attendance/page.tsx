@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const api = authFetchFor("VP_ACADEMIC");
 
 type AttendanceRecord = {
   record_id: number;
@@ -67,12 +69,10 @@ export default function AttendancePage() {
   async function fetchData() {
     setLoading(true);
     try {
-      const ADMIN_API = process.env.NEXT_PUBLIC_ADMIN_API || "http://localhost:5000/api";
-      
       if (activeTab === "students") {
         const [attendanceRes, classesRes] = await Promise.all([
-          fetch(`${API_BASE}/academic/attendance?class_id=${selectedClass}&date=${selectedDate}`),
-          fetch(`${ADMIN_API}/admin/classes`),
+          api(`${API_BASE}/academic/attendance?class_id=${selectedClass}&date=${selectedDate}`),
+          api(`${API_BASE}/classes`),
         ]);
 
         if (attendanceRes.ok) {
@@ -85,8 +85,8 @@ export default function AttendancePage() {
         }
       } else if (activeTab === "classes") {
         const [classesRes, summaryRes] = await Promise.all([
-          fetch(`${ADMIN_API}/admin/classes`),
-          fetch(`${API_BASE}/academic/attendance/summary?date=${selectedDate}`),
+          api(`${API_BASE}/classes`),
+          api(`${API_BASE}/academic/attendance/summary?date=${selectedDate}`),
         ]);
 
         if (classesRes.ok) {
@@ -98,7 +98,7 @@ export default function AttendancePage() {
           setClassAttendanceSummary(Array.isArray(summaryData) ? summaryData : []);
         } else {
           // Fallback: calculate summary from attendance data
-          const attendanceRes = await fetch(`${API_BASE}/academic/attendance?date=${selectedDate}`);
+          const attendanceRes = await api(`${API_BASE}/academic/attendance?date=${selectedDate}`);
           if (attendanceRes.ok) {
             const attendanceData = await attendanceRes.json();
             const records = Array.isArray(attendanceData) ? attendanceData : [];
@@ -131,8 +131,8 @@ export default function AttendancePage() {
         }
       } else if (activeTab === "teachers") {
         const [teachersRes, attendanceRes] = await Promise.all([
-          fetch(`${ADMIN_API}/admin/teachers`),
-          fetch(`${API_BASE}/teachers/attendance?date=${selectedDate}`),
+          api(`${API_BASE}/teachers`),
+          api(`${API_BASE}/teachers/attendance?date=${selectedDate}`),
         ]);
 
         if (teachersRes.ok) {
@@ -166,7 +166,7 @@ export default function AttendancePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/../attendance`, {
+      const res = await api(`${API_BASE}/academic/attendance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

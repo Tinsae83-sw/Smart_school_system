@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+
+const api = authFetchFor("PRINCIPAL");
 
 type SchoolSettings = {
   school_id: number;
@@ -59,13 +62,13 @@ export default function SchoolSettingsPage() {
     setLoading(true);
     try {
       const [settingsRes, calendarRes, policiesRes] = await Promise.all([
-        fetch(`${API_BASE}/settings`, {
+        api(`${API_BASE}/settings`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/academic-calendar`, {
+        api(`${API_BASE}/academic-calendar`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/settings/policies`, {
+        api(`${API_BASE}/settings/policies`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);
@@ -122,7 +125,7 @@ export default function SchoolSettingsPage() {
 
   function handleDeletePolicy(policyId: number) {
     if (confirm("Are you sure you want to delete this policy?")) {
-      fetch(`${API_BASE}/settings/policies/${policyId}`, {
+      api(`${API_BASE}/settings/policies/${policyId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
@@ -141,7 +144,7 @@ export default function SchoolSettingsPage() {
   function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
 
-    fetch(`${API_BASE}/settings`, {
+    api(`${API_BASE}/settings`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -164,7 +167,7 @@ export default function SchoolSettingsPage() {
   function handleSaveCalendar(e: React.FormEvent) {
     e.preventDefault();
 
-    fetch(`${API_BASE}/academic-calendar`, {
+    api(`${API_BASE}/academic-calendar`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -193,7 +196,7 @@ export default function SchoolSettingsPage() {
 
     const method = policyFormData.policy_id ? "PUT" : "POST";
 
-    fetch(url, {
+    api(url, {
       method,
       headers: {
         "Content-Type": "application/json",

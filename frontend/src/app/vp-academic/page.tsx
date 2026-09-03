@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+
+function authToken() {
+  return getToken("VP_ACADEMIC");
+}
 
 type DashboardMetrics = {
   total_students: number;
@@ -46,19 +52,11 @@ export default function VPAcademicDashboardPage() {
 
   async function fetchAll() {
     setLoading(true);
+    const token = authToken();
     try {
-      const [dashboardRes, teachersRes] = await Promise.all([
-        fetch(`${API_BASE}/dashboard`),
-        fetch(`${API_BASE}/teachers`),
-      ]);
-
-      if (!dashboardRes.ok || !teachersRes.ok) {
-        throw new Error("Unable to fetch VP Academic data.");
-      }
-
       const [dashboardData, teachersData] = await Promise.all([
-        dashboardRes.json(),
-        teachersRes.json(),
+        apiFetch(`${API_BASE}/dashboard`, { token }),
+        apiFetch(`${API_BASE}/teachers`, { token }),
       ]);
 
       setMetrics(dashboardData);

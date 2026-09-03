@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+
+const api = authFetchFor("PRINCIPAL");
 
 type FinancialSummary = {
   total_budget: number;
@@ -43,13 +46,13 @@ export default function FinancialOversightPage() {
     setLoading(true);
     try {
       const [summaryRes, allocationsRes, expensesRes] = await Promise.all([
-        fetch(`${API_BASE}/financial/summary`, {
+        api(`${API_BASE}/financial/summary`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/financial/allocations`, {
+        api(`${API_BASE}/financial/allocations`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/financial/expenses`, {
+        api(`${API_BASE}/financial/expenses`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);

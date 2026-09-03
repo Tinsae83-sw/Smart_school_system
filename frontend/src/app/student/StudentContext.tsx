@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from "react";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
 
 type StudentContextType = {
   token: string;
@@ -17,6 +17,8 @@ const defaultContext: StudentContextType = {
   profile: null,
   authFetch: async (path: string, options?: RequestInit) => {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const stored = typeof window !== "undefined" ? localStorage.getItem("student_token") : null;
+    if (stored) headers.Authorization = `Bearer ${stored}`;
     const response = await fetch(`${BACKEND_URL}${path}`, {
       ...options,
       headers,

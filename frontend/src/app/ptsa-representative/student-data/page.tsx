@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type Child = {
   student_id: number;
@@ -55,7 +57,7 @@ export default function StudentDataPage() {
   async function loadChildren() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/my-children`);
+      const res = await api(`${API_BASE}/my-children`);
       if (res.ok) {
         const data = await res.json();
         setChildren(data);
@@ -71,9 +73,9 @@ export default function StudentDataPage() {
   async function loadChildData(studentId: number) {
     try {
       const [gradesRes, attendanceRes, conductRes] = await Promise.all([
-        fetch(`${API_BASE}/my-children/${studentId}/grades`),
-        fetch(`${API_BASE}/my-children/${studentId}/attendance`),
-        fetch(`${API_BASE}/my-children/${studentId}/conduct`),
+        api(`${API_BASE}/my-children/${studentId}/grades`),
+        api(`${API_BASE}/my-children/${studentId}/attendance`),
+        api(`${API_BASE}/my-children/${studentId}/conduct`),
       ]);
 
       if (gradesRes.ok) setGrades(await gradesRes.json());

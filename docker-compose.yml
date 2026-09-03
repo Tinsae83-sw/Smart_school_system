@@ -1,0 +1,22 @@
+# Useful for running the whole stack locally. Usage: docker compose up -d db
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: smart_school_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: school
+      POSTGRES_PASSWORD: school
+      POSTGRES_DB: smart_school
+    ports:
+      - "5433:5432"
+    volumes:
+      - smart_school_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U school -d smart_school"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  smart_school_data:

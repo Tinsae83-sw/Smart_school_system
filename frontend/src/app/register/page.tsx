@@ -13,6 +13,7 @@ export default function RegisterPage() {
     full_name: '',
     email: '',
     phone_number: '',
+    national_id: '',
     password: '',
     confirm_password: '',
     class_id: '',
@@ -56,6 +57,11 @@ export default function RegisterPage() {
       setLoading(false);
       return;
     }
+    if (form.national_id && !/^\d{12}$/.test(form.national_id)) {
+      setError('National ID must be exactly 12 digits.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/api/auth/register`, {
@@ -66,6 +72,7 @@ export default function RegisterPage() {
           full_name: form.full_name,
           email: form.email,
           phone_number: form.phone_number,
+          national_id: form.national_id || undefined,
           password: form.password,
           confirm_password: form.confirm_password,
           class_id: form.role === 'STUDENT' ? (Number(form.class_id) || null) : undefined,
@@ -151,6 +158,22 @@ export default function RegisterPage() {
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Phone</label>
                 <input value={form.phone_number} onChange={update('phone_number')} placeholder="+251 9xx xxx xxx" className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Ethiopian National ID (Fayda)</label>
+              <input
+                type="text"
+                pattern="\d{12}"
+                maxLength={12}
+                value={form.national_id}
+                onChange={update('national_id')}
+                placeholder="12-digit Fayda ID (optional)"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              />
+              {form.national_id && !/^\d{12}$/.test(form.national_id) && (
+                <p className="text-xs text-red-600 mt-1">Must be exactly 12 digits.</p>
+              )}
             </div>
 
             {form.role === 'STUDENT' && (

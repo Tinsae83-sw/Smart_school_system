@@ -154,7 +154,7 @@ export default function InventoryPage() {
     setEditingTransaction(null);
     setEditingSupplier(null);
     
-    if (item && type === "inventory") {
+    if (item && type === "inventory" && "current_stock" in item) {
       setEditingItem(item as InventoryItem);
       setFormData({
         item_name: item.item_name,
@@ -198,7 +198,7 @@ export default function InventoryPage() {
         business_license: "",
         bank_account: "",
       });
-    } else if (item && type === "transaction") {
+    } else if (item && type === "transaction" && "transaction_id" in item) {
       setEditingTransaction(item as InventoryTransaction);
       setFormData({
         item_name: "",
@@ -242,7 +242,7 @@ export default function InventoryPage() {
         business_license: "",
         bank_account: "",
       });
-    } else if (item && type === "supplier") {
+    } else if (item && type === "supplier" && "supplier_name" in item) {
       setEditingSupplier(item as Supplier);
       setFormData({
         item_name: "",

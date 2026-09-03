@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const api = authFetchFor("VP_ACADEMIC");
 
 type ClassSchedule = {
   schedule_id?: number;
@@ -74,10 +76,10 @@ export default function TimetablesPage() {
     setLoading(true);
     try {
       const [schedulesRes, classesRes, teachersRes, subjectsRes] = await Promise.all([
-        fetch(`${API_BASE}/timetable/individual/class/${selectedClass || "all"}`),
-        fetch(`${API_BASE}/../admin/classes`),
-        fetch(`${API_BASE}/teachers`),
-        fetch(`${API_BASE}/../admin/subjects`),
+        api(`${API_BASE}/timetable/individual/class/${selectedClass || "all"}`),
+        api(`${API_BASE}/classes`),
+        api(`${API_BASE}/teachers`),
+        api(`${API_BASE}/subjects`),
       ]);
 
       if (schedulesRes.ok) setSchedules(await schedulesRes.json());
@@ -101,7 +103,7 @@ export default function TimetablesPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/timetable/assign-teacher`, {
+      const res = await api(`${API_BASE}/timetable/assign-teacher`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -140,7 +142,7 @@ export default function TimetablesPage() {
     setIsGenerating(true);
     setGenerationResult(null);
     try {
-      const res = await fetch(`${API_BASE}/timetable/auto-generate`, {
+      const res = await api(`${API_BASE}/timetable/auto-generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });

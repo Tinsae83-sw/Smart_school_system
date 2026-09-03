@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useStudent } from "../StudentContext";
 import { FileText, Video, Image as ImageIcon, File, Download, Calendar, FolderOpen } from "lucide-react";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
 export default function StudentNotes() {
   const { authFetch } = useStudent();
   const [notes, setNotes] = useState<any[]>([]);
@@ -197,7 +199,7 @@ export default function StudentNotes() {
                   </div>
                   {material.file_url && (
                     <a
-                      href={`http://localhost:5000${material.file_url}`}
+                      href={`${BACKEND_URL}${material.file_url}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition"

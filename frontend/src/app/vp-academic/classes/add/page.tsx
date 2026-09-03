@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const api = authFetchFor("VP_ACADEMIC");
 const VP_ACADEMIC_API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
 
 type ClassCategory = "GENERAL" | "NATURAL_SCIENCE" | "SOCIAL_SCIENCE";
@@ -43,7 +45,7 @@ export default function AddClassPage() {
   async function fetchTeachers() {
     setLoadingTeachers(true);
     try {
-      const res = await fetch(`${VP_ACADEMIC_API}/teachers`);
+      const res = await api(`${VP_ACADEMIC_API}/teachers`);
       if (!res.ok) throw new Error("Failed to fetch teachers");
       const data = await res.json();
       setTeachers(data.teachers || data);
@@ -76,7 +78,7 @@ export default function AddClassPage() {
 
     try {
       // Check for duplicate grade/section combination
-      const existingClassesRes = await fetch(`${API_BASE}/admin/classes`);
+      const existingClassesRes = await api(`${API_BASE}/classes`);
       if (existingClassesRes.ok) {
         const existingData = await existingClassesRes.json();
         const existingClasses = existingData.classes || existingData;
@@ -105,7 +107,7 @@ export default function AddClassPage() {
         homeroom_teacher_id: formData.homeroom_teacher_id ? parseInt(formData.homeroom_teacher_id) : null,
       };
 
-      const res = await fetch(`${API_BASE}/admin/classes`, {
+      const res = await api(`${API_BASE}/classes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

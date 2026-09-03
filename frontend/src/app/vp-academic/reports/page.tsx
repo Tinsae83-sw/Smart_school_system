@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const api = authFetchFor("VP_ACADEMIC");
 
 type GradeData = {
   student_id: number;
@@ -48,7 +50,7 @@ export default function ReportsPage() {
   async function fetchGrades() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/academic/grades`);
+      const res = await api(`${API_BASE}/academic/grades`);
       if (!res.ok) throw new Error("Failed to fetch grades");
       const data = await res.json();
       setGrades(Array.isArray(data) ? data : []);
@@ -63,7 +65,7 @@ export default function ReportsPage() {
   async function fetchAttendance() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/academic/attendance`);
+      const res = await api(`${API_BASE}/academic/attendance`);
       if (!res.ok) throw new Error("Failed to fetch attendance");
       const data = await res.json();
       setAttendance(Array.isArray(data) ? data : []);
@@ -78,7 +80,7 @@ export default function ReportsPage() {
   async function fetchAtRiskStudents() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/academic/at-risk`);
+      const res = await api(`${API_BASE}/academic/at-risk`);
       if (!res.ok) throw new Error("Failed to fetch at-risk students");
       const data = await res.json();
       setAtRiskStudents(Array.isArray(data) ? data : []);
@@ -98,7 +100,7 @@ export default function ReportsPage() {
 
   async function handleGenerateReport() {
     try {
-      const res = await fetch(`${API_BASE}/academic/reports`, {
+      const res = await api(`${API_BASE}/academic/reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -118,7 +120,7 @@ export default function ReportsPage() {
 
   async function handleGenerateTranscript(studentId: number) {
     try {
-      const res = await fetch(`${API_BASE}/academic/transcripts`, {
+      const res = await api(`${API_BASE}/academic/transcripts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ student_id: studentId }),

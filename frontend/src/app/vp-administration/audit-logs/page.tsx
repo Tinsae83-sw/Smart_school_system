@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
+const api = authFetchFor("VP_ADMINISTRATION");
 
 type AuditLog = {
   log_id: number;
@@ -32,7 +34,7 @@ export default function AuditLogsPage() {
       if (filters.dateFrom) params.append("date_from", filters.dateFrom);
       if (filters.dateTo) params.append("date_to", filters.dateTo);
 
-      const res = await fetch(`${API_BASE}/audit-logs?${params.toString()}`);
+      const res = await api(`${API_BASE}/audit-logs?${params.toString()}`);
       if (res.ok) {
         setLogs(await res.json());
       }
@@ -69,7 +71,7 @@ export default function AuditLogsPage() {
       if (filters.dateFrom) params.append("date_from", filters.dateFrom);
       if (filters.dateTo) params.append("date_to", filters.dateTo);
 
-      const res = await fetch(`${API_BASE}/audit-logs/export?${params.toString()}`);
+      const res = await api(`${API_BASE}/audit-logs/export?${params.toString()}`);
       if (res.ok) {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);

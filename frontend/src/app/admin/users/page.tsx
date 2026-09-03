@@ -25,6 +25,7 @@ type UserRow = {
   email: string;
   role: string;
   status: string;
+  national_id: string | null;
 };
 
 type ClassItem = {
@@ -268,6 +269,7 @@ export default function AdminUsersPage() {
                   <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Role</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">National ID</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -281,10 +283,11 @@ export default function AdminUsersPage() {
                         {u.status}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-slate-600">{u.national_id || "-"}</td>
                   </tr>
                 ))}
                 {users.length === 0 && (
-                  <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">No accounts found.</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">No accounts found.</td></tr>
                 )}
               </tbody>
             </table>
@@ -457,10 +460,16 @@ function CreateAccountTab({ classes, createdPassword, onCreated, onNotice, onDon
     current_class_id: "",
     relationship: "Guardian",
     department: "",
+    national_id: "",
   });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const nid = form.national_id.trim();
+    if (nid && !/^\d{12}$/.test(nid)) {
+      onNotice("error", "National ID must be exactly 12 digits.");
+      return;
+    }
     const role = form.role;
     const body: any = {
       full_name: form.full_name.trim(),
@@ -468,6 +477,7 @@ function CreateAccountTab({ classes, createdPassword, onCreated, onNotice, onDon
       phone_number: form.phone_number.trim() || null,
       role,
     };
+    if (nid) body.national_id = nid;
     if (role === "STUDENT" && form.current_class_id) body.current_class_id = Number(form.current_class_id);
     if (role === "PARENT") body.relationship = form.relationship || "Guardian";
     if (role === "TEACHER" || role === "DEPARTMENT_HEAD") body.department = form.department || null;
@@ -482,7 +492,7 @@ function CreateAccountTab({ classes, createdPassword, onCreated, onNotice, onDon
       if (res.ok) {
         onCreated(data.password);
         onNotice("success", `${data.message || "Account created."}`);
-        setForm((f) => ({ ...f, full_name: "", email: "", phone_number: "", current_class_id: "", department: "" }));
+        setForm((f) => ({ ...f, full_name: "", email: "", phone_number: "", current_class_id: "", department: "", national_id: "" }));
         onDone();
       } else {
         onNotice("error", data.error || "Could not create account.");
@@ -520,6 +530,11 @@ function CreateAccountTab({ classes, createdPassword, onCreated, onNotice, onDon
               ))}
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">National ID (Fayda)</label>
+          <input value={form.national_id} onChange={(e) => setForm({ ...form, national_id: e.target.value })} maxLength={12} pattern="\d{12}" className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="12-digit Fayda ID" />
         </div>
 
         {form.role === "STUDENT" && (

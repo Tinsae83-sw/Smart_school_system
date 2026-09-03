@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const api = authFetchFor("VP_ACADEMIC");
 
 // Subject to department mapping for subjects without department data
 const SUBJECT_DEPARTMENT_MAP: Record<string, string> = {
@@ -181,10 +183,10 @@ export default function CoursesPage() {
     setLoading(true);
     try {
       const [classSubjectsRes, subjectsRes, classesRes, teachersRes] = await Promise.all([
-        fetch(`${API_BASE}/../admin/class-subject`),
-        fetch(`${API_BASE}/../admin/subjects`),
-        fetch(`${API_BASE}/../admin/classes`),
-        fetch(`${API_BASE}/teachers`),
+        api(`${API_BASE}/class-subject`),
+        api(`${API_BASE}/subjects`),
+        api(`${API_BASE}/classes`),
+        api(`${API_BASE}/teachers`),
       ]);
 
       if (classSubjectsRes.ok) {
@@ -217,7 +219,7 @@ export default function CoursesPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/../admin/class-subject`, {
+      const res = await api(`${API_BASE}/class-subject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -240,7 +242,7 @@ export default function CoursesPage() {
   async function handleDelete(classSubjectId: number) {
     if (!confirm("Are you sure you want to remove this course assignment?")) return;
     try {
-      const res = await fetch(`${API_BASE}/../admin/class-subject/${classSubjectId}`, {
+      const res = await api(`${API_BASE}/class-subject/${classSubjectId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete course");
@@ -254,7 +256,7 @@ export default function CoursesPage() {
   async function handleSubjectSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/../admin/subjects`, {
+      const res = await api(`${API_BASE}/subjects`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -278,7 +280,7 @@ export default function CoursesPage() {
   async function handleDeleteSubject(subjectId: number) {
     if (!confirm("Are you sure you want to delete this subject? This will affect all course assignments.")) return;
     try {
-      const res = await fetch(`${API_BASE}/../admin/subjects/${subjectId}`, {
+      const res = await api(`${API_BASE}/subjects/${subjectId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete subject");
@@ -293,7 +295,7 @@ export default function CoursesPage() {
     e.preventDefault();
     if (!selectedSubject) return;
     try {
-      const res = await fetch(`${API_BASE}/../admin/subjects/${selectedSubject.subject_id}`, {
+      const res = await api(`${API_BASE}/subjects/${selectedSubject.subject_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

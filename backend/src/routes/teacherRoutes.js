@@ -82,6 +82,7 @@ router.get("/profile", (req, res) => {
     full_name: req.user.full_name,
     email: req.user.email,
     phone_number: req.user.phone_number,
+    national_id: req.user.national_id || "",
     department: req.ext.department || req.user.department || "",
     profile_picture_url: req.user.profile_picture_url || "",
     employee_id: req.ext.employee_id || "",
@@ -90,14 +91,30 @@ router.get("/profile", (req, res) => {
 });
 
 router.put("/profile", async (req, res) => {
-  const { full_name, phone_number, department, profile_picture_url } = req.body || {};
+  const { full_name, phone_number, department, profile_picture_url, national_id } = req.body || {};
+
+  let normalizedNationalId = undefined;
+  if (national_id !== undefined) {
+    if (national_id === null || national_id === "") {
+      normalizedNationalId = null;
+    } else {
+      const { validateFaydaId } = require("../utils/nationalId");
+      const check = validateFaydaId(national_id);
+      if (!check.valid) {
+        return res.status(400).json({ error: check.error });
+      }
+      normalizedNationalId = check.normalized;
+    }
+  }
+
   try {
     await pool.query(
       `UPDATE users SET full_name = COALESCE($1, full_name),
               phone_number = COALESCE($2, phone_number),
-              profile_picture_url = COALESCE($3, profile_picture_url)
-        WHERE user_id = $4`,
-      [full_name || null, phone_number || null, profile_picture_url || null, req.user.user_id]
+              profile_picture_url = COALESCE($3, profile_picture_url),
+              national_id = $4
+        WHERE user_id = $5`,
+      [full_name || null, phone_number || null, profile_picture_url || null, normalizedNationalId, req.user.user_id]
     );
     if (department) {
       await pool.query(`UPDATE teachers SET department = $1 WHERE teacher_id = $2`, [department, req.ext.teacher_id]);

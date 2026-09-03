@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken, clearAuth } from "@/lib/auth";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
 export default function AssignmentPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
@@ -37,7 +39,7 @@ export default function AssignmentPage() {
 
   async function loadClasses(token: string) {
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/classes`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/classes`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -77,7 +79,7 @@ export default function AssignmentPage() {
       return;
     }
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/assignments`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/assignments`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -126,7 +128,7 @@ export default function AssignmentPage() {
 
       // Create assignment for each selected class sequentially to avoid database overload
       for (const classSubjectId of selectedClassSubjects) {
-        const response = await fetch(`http://localhost:5000/api/teacher/assignments`, {
+        const response = await fetch(`${BACKEND_URL}/api/teacher/assignments`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -171,7 +173,7 @@ export default function AssignmentPage() {
       return;
     }
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/assignments/${assignmentId}`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/assignments/${assignmentId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

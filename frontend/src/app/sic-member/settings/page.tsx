@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
+const api = authFetchFor("SIC_MEMBER");
 
 type Profile = {
   sic_member_id: number;
@@ -59,9 +61,9 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       const [profileRes, needsRes, partnershipsRes] = await Promise.all([
-        fetch(`${API_BASE}/profile`),
-        fetch(`${API_BASE}/needs-assessments`),
-        fetch(`${API_BASE}/partnerships`)
+        api(`${API_BASE}/profile`),
+        api(`${API_BASE}/needs-assessments`),
+        api(`${API_BASE}/partnerships`)
       ]);
 
       if (profileRes.ok) {
@@ -97,7 +99,7 @@ export default function SettingsPage() {
   async function updateProfile(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/profile`, {
+      const res = await api(`${API_BASE}/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editProfile)

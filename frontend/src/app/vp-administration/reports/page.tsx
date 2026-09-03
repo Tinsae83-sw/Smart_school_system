@@ -15,6 +15,8 @@ export default function ReportsPage() {
   const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [loading, setLoading] = useState(false);
+  const [reportData, setReportData] = useState<any>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   const reportTypes = [
     { id: "asset" as ReportType, name: "Asset Report", description: "Complete inventory of all school assets", icon: "📦", color: "bg-blue-500" },
@@ -27,25 +29,18 @@ export default function ReportsPage() {
 
   async function generateReport(reportType: ReportType) {
     setLoading(true);
+    setReportData(null);
+    setReportError(null);
     try {
       const params = new URLSearchParams();
       if (dateRange.start) params.append("start_date", dateRange.start);
       if (dateRange.end) params.append("end_date", dateRange.end);
       
-      const res = await vpAdminApi.get(`/reports/${reportType}?${params.toString()}`);
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${reportType}-report-${new Date().toISOString().split("T")[0]}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
-    } catch (error) {
+      const data = await vpAdminApi.get(`/reports/${reportType}?${params.toString()}`);
+      setReportData(data.data ?? data);
+    } catch (error: any) {
       console.error("Failed to generate report:", error);
+      setReportError(error?.message || "Failed to generate report.");
     } finally {
       setLoading(false);
     }
@@ -273,16 +268,26 @@ export default function ReportsPage() {
                 disabled={loading}
                 className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:from-purple-700 hover:to-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Generating..." : "Download PDF"}
-              </button>
-              <button
-                onClick={() => generateReport(selectedReport)}
-                disabled={loading}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Generating..." : "Download Excel"}
+                {loading ? "Generating..." : "Generate Report"}
               </button>
             </div>
+
+            {reportError && (
+              <div className="mt-4 rounded-xl bg-rose-50 border border-rose-200 p-4 text-sm text-rose-700">
+                {reportError}
+              </div>
+            )}
+
+            {reportData !== null && (
+              <div className="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-4">
+                <h4 className="text-sm font-semibold text-slate-700 mb-2">
+                  Report Data ({Array.isArray(reportData) ? reportData.length : Object.keys(reportData).length} records)
+                </h4>
+                <pre className="max-h-96 overflow-auto rounded-lg bg-white border border-slate-200 p-3 text-xs text-slate-600 whitespace-pre-wrap">
+                  {JSON.stringify(reportData, null, 2)}
+                </pre>
+              </div>
+            )}
           </div>
         )}
       </div>

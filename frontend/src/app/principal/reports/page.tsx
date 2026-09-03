@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+
+const api = authFetchFor("PRINCIPAL");
 
 type AcademicReport = {
   report_id: number;
@@ -44,13 +47,13 @@ export default function ReportsPage() {
     setLoading(true);
     try {
       const [academicRes, complianceRes, auditRes] = await Promise.all([
-        fetch(`${API_BASE}/reports/academic`, {
+        api(`${API_BASE}/reports/academic`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/reports/compliance`, {
+        api(`${API_BASE}/reports/compliance`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/reports/audit-logs`, {
+        api(`${API_BASE}/reports/audit-logs`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);
@@ -82,7 +85,7 @@ export default function ReportsPage() {
   }, []);
 
   function handleGenerateReport(reportType: string) {
-    fetch(`${API_BASE}/reports/generate`, {
+    api(`${API_BASE}/reports/generate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

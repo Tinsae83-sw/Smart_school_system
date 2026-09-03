@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 // ==================== CONSTANTS ====================
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const api = authFetchFor("VP_ACADEMIC");
 const STORAGE_TOKEN_KEY = "vp_academic_token";
 
 const EXAM_TYPES = ["MIDTERM", "FINAL", "QUIZ", "UNIT_TEST", "PRACTICAL"] as const;
@@ -184,7 +186,7 @@ export default function ExamsPage() {
         throw new Error("Authentication token not found");
       }
 
-      const res = await fetch(`${API_BASE}/exams`, {
+      const res = await api(`${API_BASE}/exams`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -231,7 +233,7 @@ export default function ExamsPage() {
         throw new Error("Authentication token not found");
       }
 
-      const res = await fetch("http://localhost:5000/api/admin/class-subject", {
+      const res = await api(`${API_BASE}/class-subject`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -298,7 +300,7 @@ export default function ExamsPage() {
 
       // Create an exam for each selected class subject
       const examPromises = formData.selected_class_subjects.map(class_subject_id =>
-        fetch(`${API_BASE}/exams`, {
+        api(`${API_BASE}/exams`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -344,7 +346,7 @@ export default function ExamsPage() {
         throw new Error("Authentication token not found");
       }
 
-      const res = await fetch(`${API_BASE}/exams/${examId}/approve`, {
+      const res = await api(`${API_BASE}/exams/${examId}/approve`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -371,7 +373,7 @@ export default function ExamsPage() {
 
       await Promise.all(
         examIds.map(id =>
-          fetch(`${API_BASE}/exams/${id}`, {
+          api(`${API_BASE}/exams/${id}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` }
           })
@@ -411,7 +413,7 @@ export default function ExamsPage() {
         throw new Error("Authentication token not found");
       }
 
-      const res = await fetch(`${API_BASE}/exams/${selectedExam.exam_id}`, {
+      const res = await api(`${API_BASE}/exams/${selectedExam.exam_id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

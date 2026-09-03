@@ -5,6 +5,120 @@ const { hashPassword, verifyPassword } = require("../utils/password");
 
 const router = express.Router();
 
+// ─── Public evaluation endpoints (token-based auth, no login required) ──────
+
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS evaluation_links (
+        link_id SERIAL PRIMARY KEY,
+        token VARCHAR(64) UNIQUE NOT NULL,
+        teacher_id INTEGER NOT NULL REFERENCES teachers(teacher_id),
+        student_id INTEGER NOT NULL REFERENCES students(student_id),
+        form_id INTEGER NOT NULL REFERENCES peer_evaluation_forms(form_id),
+        form_type VARCHAR(20) DEFAULT 'comprehensive',
+        expires_at TIMESTAMP NOT NULL,
+        used BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS student_evaluations (
+        evaluation_id SERIAL PRIMARY KEY,
+        link_id INTEGER NOT NULL UNIQUE REFERENCES evaluation_links(link_id),
+        scores JSONB NOT NULL DEFAULT '{}',
+        comments TEXT,
+        additional_data JSONB DEFAULT '{}',
+        submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  } catch (err) {
+    console.error("Failed to ensure evaluation tables exist:", err.message);
+  }
+})();
+
+router.get("/evaluation/:token", async (req, res) => {
+  const { token } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `SELECT el.link_id, el.token, el.form_type, el.expires_at, el.used,
+              t.teacher_id, ut.full_name AS teacher_name,
+              s.student_id, us.full_name AS student_name,
+              pf.form_id, pf.title, pf.description, pf.criteria
+         FROM evaluation_links el
+         JOIN teachers t ON el.teacher_id = t.teacher_id
+         JOIN users ut ON t.user_id = ut.user_id
+         JOIN students s ON el.student_id = s.student_id
+         JOIN users us ON s.user_id = us.user_id
+         JOIN peer_evaluation_forms pf ON el.form_id = pf.form_id
+        WHERE el.token = $1`,
+      [token]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ error: "Invalid or expired evaluation link." });
+    }
+    const r = rows[0];
+    if (new Date(r.expires_at) < new Date()) {
+      return res.status(410).json({ error: "This evaluation link has expired." });
+    }
+    res.json({
+      evaluation: {
+        link_id: r.link_id,
+        token: r.token,
+        teacher: { teacher_id: r.teacher_id, user: { full_name: r.teacher_name } },
+        student: { student_id: r.student_id, user: { full_name: r.student_name } },
+        form: {
+          form_id: r.form_id,
+          title: r.title,
+          description: r.description,
+          criteria: r.criteria,
+        },
+        form_type: r.form_type,
+        expires_at: r.expires_at,
+        used: r.used,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Unable to load evaluation." });
+  }
+});
+
+router.post("/evaluation/:token", async (req, res) => {
+  const { token } = req.params;
+  const { scores, comments, additional_data } = req.body || {};
+  try {
+    const { rows } = await pool.query(
+      `SELECT link_id, used, expires_at FROM evaluation_links WHERE token = $1`,
+      [token]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ error: "Invalid evaluation link." });
+    }
+    const link = rows[0];
+    if (link.used) {
+      return res.status(400).json({ error: "This evaluation has already been submitted." });
+    }
+    if (new Date(link.expires_at) < new Date()) {
+      return res.status(410).json({ error: "This evaluation link has expired." });
+    }
+
+    await pool.query(
+      `INSERT INTO student_evaluations (link_id, scores, comments, additional_data)
+       VALUES ($1, $2, $3, $4)`,
+      [link.link_id, JSON.stringify(scores || {}), comments || null, JSON.stringify(additional_data || {})]
+    );
+    await pool.query(`UPDATE evaluation_links SET used = true WHERE link_id = $1`, [link.link_id]);
+
+    res.json({ success: true, message: "Evaluation submitted successfully." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Unable to submit evaluation." });
+  }
+});
+
+// ─── Authenticated routes below ────────────────────────────────────────────
+
 router.use(authenticate, authorize("STUDENT", "SUPER_ADMIN"));
 
 const CURRENT_TERM = "First Term";

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type CalendarEvent = {
   event_id: number;
@@ -31,7 +33,7 @@ export default function CalendarPage() {
     try {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
-      const res = await fetch(`${API_BASE}/calendar?year=${year}&month=${month}`);
+      const res = await api(`${API_BASE}/calendar?year=${year}&month=${month}`);
       if (res.ok) setEvents(await res.json());
     } catch (error) {
       console.error("Error loading calendar events:", error);

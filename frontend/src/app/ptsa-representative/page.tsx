@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type DashboardMetrics = {
   total_students: number;
@@ -46,9 +48,9 @@ export default function PTSARepresentativeDashboardPage() {
     setLoading(true);
     try {
       const [dashboardRes, meetingsRes, feedbackRes] = await Promise.all([
-        fetch(`${API_BASE}/dashboard`),
-        fetch(`${API_BASE}/meetings`),
-        fetch(`${API_BASE}/feedback`),
+        api(`${API_BASE}/dashboard`),
+        api(`${API_BASE}/meetings`),
+        api(`${API_BASE}/feedback`),
       ]);
 
       if (!dashboardRes.ok || !meetingsRes.ok || !feedbackRes.ok) {

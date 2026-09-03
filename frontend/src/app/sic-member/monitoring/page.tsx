@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
+const api = authFetchFor("SIC_MEMBER");
 
 type KPIData = {
   academic_performance: {
@@ -67,9 +69,9 @@ export default function MonitoringPage() {
     setLoading(true);
     try {
       const [kpiRes, academicRes, financialRes] = await Promise.all([
-        fetch(`${API_BASE}/monitoring/kpis`),
-        fetch(`${API_BASE}/monitoring/academic-performance`),
-        fetch(`${API_BASE}/monitoring/financial-progress`)
+        api(`${API_BASE}/monitoring/kpis`),
+        api(`${API_BASE}/monitoring/academic-performance`),
+        api(`${API_BASE}/monitoring/financial-progress`)
       ]);
 
       if (kpiRes.ok) {

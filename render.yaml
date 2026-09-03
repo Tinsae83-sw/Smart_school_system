@@ -1,0 +1,45 @@
+# Render blueprint — Smart School Connect backend
+services:
+  - type: web
+    name: smart-school-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smart-school-db
+          property: connectionString
+      - key: DATABASE_SSL
+        value: "true"
+      - key: PORT
+        value: "10000"
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGINS
+        sync: false
+      - key: OTP_DELIVERY
+        value: email
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: OTP_EMAIL_FROM
+        sync: false
+
+databases:
+  - name: smart-school-db
+    plan: free

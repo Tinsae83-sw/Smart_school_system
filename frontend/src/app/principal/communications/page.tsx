@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+
+const api = authFetchFor("PRINCIPAL");
 
 type Announcement = {
   announcement_id: number;
@@ -35,7 +38,7 @@ export default function CommunicationsPage() {
   async function fetchAnnouncements() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/communications/announcements`, {
+      const res = await api(`${API_BASE}/communications/announcements`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
@@ -58,7 +61,7 @@ export default function CommunicationsPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    fetch(`${API_BASE}/communications/announcements`, {
+    api(`${API_BASE}/communications/announcements`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -82,7 +85,7 @@ export default function CommunicationsPage() {
   function handleDelete(announcementId: number) {
     if (!confirm("Are you sure you want to delete this announcement?")) return;
 
-    fetch(`${API_BASE}/communications/announcements/${announcementId}`, {
+    api(`${API_BASE}/communications/announcements/${announcementId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })

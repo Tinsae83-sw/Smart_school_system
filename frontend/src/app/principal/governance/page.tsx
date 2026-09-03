@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+
+const api = authFetchFor("PRINCIPAL");
 
 type PTSABoardMember = {
   member_id: number;
@@ -55,16 +58,16 @@ export default function GovernancePage() {
     setLoading(true);
     try {
       const [ptsaRes, sicRes, activitiesRes, meetingsRes] = await Promise.all([
-        fetch(`${API_BASE}/governance/ptsa-members`, {
+        api(`${API_BASE}/governance/ptsa-members`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/governance/sic-members`, {
+        api(`${API_BASE}/governance/sic-members`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/governance/ptsa-activities`, {
+        api(`${API_BASE}/governance/ptsa-activities`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/governance/meetings`, {
+        api(`${API_BASE}/governance/meetings`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);

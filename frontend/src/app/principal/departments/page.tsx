@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+
+const api = authFetchFor("PRINCIPAL");
 
 type Department = {
   department_id: number;
@@ -40,7 +43,7 @@ export default function DepartmentsPage() {
   async function fetchDepartments() {
     setLoading(true);
     try {
-      const deptsRes = await fetch(`${API_BASE}/departments`, {
+      const deptsRes = await api(`${API_BASE}/departments`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
@@ -74,7 +77,7 @@ export default function DepartmentsPage() {
     if (!confirm("Are you sure you want to delete this department?")) return;
 
     try {
-      const res = await fetch(`${API_BASE}/departments/${departmentId}`, {
+      const res = await api(`${API_BASE}/departments/${departmentId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -101,7 +104,7 @@ export default function DepartmentsPage() {
       : `${API_BASE}/departments`;
 
     try {
-      const res = await fetch(url, {
+      const res = await api(url, {
         method,
         headers: {
           "Content-Type": "application/json",

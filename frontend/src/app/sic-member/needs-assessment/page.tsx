@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
+const api = authFetchFor("SIC_MEMBER");
 
 type NeedsAssessment = {
   assessment_id: number;
@@ -60,8 +62,8 @@ export default function NeedsAssessmentPage() {
     setLoading(true);
     try {
       const [assessmentsRes, selfRes] = await Promise.all([
-        fetch(`${API_BASE}/needs-assessments`),
-        fetch(`${API_BASE}/self-assessment`)
+        api(`${API_BASE}/needs-assessments`),
+        api(`${API_BASE}/self-assessment`)
       ]);
 
       if (assessmentsRes.ok) {
@@ -90,7 +92,7 @@ export default function NeedsAssessmentPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/needs-assessments`, {
+      const res = await api(`${API_BASE}/needs-assessments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newAssessment)

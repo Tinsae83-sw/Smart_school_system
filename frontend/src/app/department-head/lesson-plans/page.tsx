@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+const api = authFetchFor("DEPARTMENT_HEAD");
 
 type LessonPlan = {
   plan_id: number;
@@ -27,15 +29,16 @@ type LessonPlan = {
 export default function LessonPlansPage() {
   const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>("PENDING");
+  const [filter, setFilter] = useState<string>("SUBMITTED");
   const [selectedPlan, setSelectedPlan] = useState<LessonPlan | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [notice, setNotice] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
   async function fetchLessonPlans() {
     setLoading(true);
     try {
       const token = localStorage.getItem("dept_head_token");
-      const res = await fetch(`${API_BASE}/lesson-plans?status=${filter}`, {
+      const res = await api(`${API_BASE}/lesson-plans?status=${filter}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -54,9 +57,10 @@ export default function LessonPlansPage() {
   }, [filter]);
 
   async function handleReview(planId: number, status: string, comments: string) {
+    setNotice(null);
     try {
       const token = localStorage.getItem("dept_head_token");
-      const res = await fetch(`${API_BASE}/lesson-plans/${planId}`, {
+      const res = await api(`${API_BASE}/lesson-plans/${planId}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -64,13 +68,27 @@ export default function LessonPlansPage() {
         },
         body: JSON.stringify({ status, review_comments: comments })
       });
-      if (res.ok) {
-        fetchLessonPlans();
-        setShowReviewModal(false);
-        setSelectedPlan(null);
+
+      let errText = "";
+      try {
+        const data = await res.json();
+        if (data?.error) errText = data.error;
+      } catch {
+        /* no body */
       }
+
+      if (!res.ok) {
+        setNotice({ type: "error", text: errText || `Review failed (${res.status}).` });
+        return;
+      }
+
+      setNotice({ type: "success", text: `Lesson plan ${status.toLowerCase()}.` });
+      setShowReviewModal(false);
+      setSelectedPlan(null);
+      fetchLessonPlans();
     } catch (error) {
       console.error("Error reviewing lesson plan:", error);
+      setNotice({ type: "error", text: "Could not reach the server to review this plan." });
     }
   }
 
@@ -81,8 +99,18 @@ export default function LessonPlansPage() {
         <p className="mt-1 text-sm text-slate-500">Review and approve lesson plans from teachers</p>
       </div>
 
+      {notice && (
+        <div className={`mb-4 rounded-xl border px-4 py-3 text-sm font-medium ${
+          notice.type === "success"
+            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            : "border-rose-200 bg-rose-50 text-rose-700"
+        }`}>
+          {notice.text}
+        </div>
+      )}
+
       <div className="mb-6 flex gap-2">
-        {["PENDING", "APPROVED", "REJECTED"].map((status) => (
+        {["SUBMITTED", "APPROVED", "REJECTED"].map((status) => (
           <button
             key={status}
             onClick={() => setFilter(status)}
@@ -114,7 +142,7 @@ export default function LessonPlansPage() {
                   <div className="flex items-center gap-3">
                     <h3 className="font-semibold text-slate-900">{plan.title}</h3>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      plan.status === "PENDING" ? "bg-amber-50 text-amber-700" :
+                      plan.status === "SUBMITTED" ? "bg-amber-50 text-amber-700" :
                       plan.status === "APPROVED" ? "bg-emerald-50 text-emerald-700" :
                       "bg-rose-50 text-rose-700"
                     }`}>
@@ -135,10 +163,10 @@ export default function LessonPlansPage() {
                   <div className="mt-3">
                     <p className="text-xs font-medium text-slate-700">Objectives:</p>
                     <ul className="mt-1 list-inside list-disc text-sm text-slate-600">
-                      {plan.objectives.slice(0, 2).map((obj, i) => (
+                      {(plan.objectives || []).slice(0, 2).map((obj, i) => (
                         <li key={i}>{obj}</li>
                       ))}
-                      {plan.objectives.length > 2 && <li className="text-slate-400">+{plan.objectives.length - 2} more</li>}
+                      {(plan.objectives || []).length > 2 && <li className="text-slate-400">+{(plan.objectives || []).length - 2} more</li>}
                     </ul>
                   </div>
                   {plan.review_comments && (
@@ -152,7 +180,7 @@ export default function LessonPlansPage() {
                   <button
                     onClick={() => { setSelectedPlan(plan); setShowReviewModal(true); }}
                     className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 transition"
-                    disabled={plan.status !== "PENDING"}
+                    disabled={plan.status !== "SUBMITTED"}
                   >
                     Review
                   </button>
@@ -187,19 +215,19 @@ export default function LessonPlansPage() {
               <div>
                 <p className="text-sm font-medium text-slate-700">Objectives</p>
                 <ul className="mt-1 list-inside list-disc text-sm text-slate-600">
-                  {selectedPlan.objectives.map((obj, i) => <li key={i}>{obj}</li>)}
+                  {(selectedPlan.objectives || []).map((obj, i) => <li key={i}>{obj}</li>)}
                 </ul>
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-700">Materials</p>
                 <ul className="mt-1 list-inside list-disc text-sm text-slate-600">
-                  {selectedPlan.materials.map((mat, i) => <li key={i}>{mat}</li>)}
+                  {(selectedPlan.materials || []).map((mat, i) => <li key={i}>{mat}</li>)}
                 </ul>
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-700">Activities</p>
                 <ul className="mt-1 list-inside list-disc text-sm text-slate-600">
-                  {selectedPlan.activities.map((act, i) => <li key={i}>{act}</li>)}
+                  {(selectedPlan.activities || []).map((act, i) => <li key={i}>{act}</li>)}
                 </ul>
               </div>
               {selectedPlan.assessment && (

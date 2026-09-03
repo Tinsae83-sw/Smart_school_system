@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type FeedbackItem = {
   feedback_id: number;
@@ -55,8 +57,8 @@ export default function FeedbackPage() {
     setLoading(true);
     try {
       const [feedbackRes, announcementsRes] = await Promise.all([
-        fetch(`${API_BASE}/feedback`),
-        fetch(`${API_BASE}/announcements`),
+        api(`${API_BASE}/feedback`),
+        api(`${API_BASE}/announcements`),
       ]);
 
       if (feedbackRes.ok) setFeedback(await feedbackRes.json());
@@ -75,7 +77,7 @@ export default function FeedbackPage() {
     }
     
     try {
-      await fetch(`${API_BASE}/feedback`, {
+      await api(`${API_BASE}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newFeedback),
@@ -97,7 +99,7 @@ export default function FeedbackPage() {
     }
     
     try {
-      await fetch(`${API_BASE}/announcements`, {
+      await api(`${API_BASE}/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newAnnouncement),

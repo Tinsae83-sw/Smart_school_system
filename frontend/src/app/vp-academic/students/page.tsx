@@ -1,8 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+
+function authToken() {
+  return getToken("VP_ACADEMIC");
+}
 
 type Student = {
   student_id: number;
@@ -98,9 +104,7 @@ export default function StudentsPage() {
       const url = gradeFilter 
         ? `${API_BASE}/students?grade_level=${gradeFilter}`
         : `${API_BASE}/students`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch students");
-      const data = await res.json();
+      const data = await apiFetch(url, { token: authToken() });
       setStudents(data.all || data);
       setGroupedStudents(data.grouped || {});
     } catch (error) {
@@ -112,9 +116,7 @@ export default function StudentsPage() {
 
   async function fetchClasses() {
     try {
-      const res = await fetch(`${API_BASE}/../admin/classes`);
-      if (!res.ok) return;
-      const data = await res.json();
+      const data = await apiFetch(`${API_BASE}/classes`, { token: authToken() });
       setClasses(data);
     } catch (error) {
       console.error(error);
@@ -123,9 +125,7 @@ export default function StudentsPage() {
 
   async function fetchAcademicOptions() {
     try {
-      const res = await fetch(`${API_BASE}/students/academic-options`);
-      if (!res.ok) throw new Error('Failed to fetch academic options');
-      const data = await res.json();
+      const data = await apiFetch(`${API_BASE}/students/academic-options`, { token: authToken() });
       setAcademicOptions(data);
     } catch (error) {
       console.error(error);
@@ -135,9 +135,7 @@ export default function StudentsPage() {
   async function fetchParentRelationships() {
     setLoadingParents(true);
     try {
-      const res = await fetch(`${API_BASE}/parent-student-relationships`);
-      if (!res.ok) throw new Error('Failed to fetch parent relationships');
-      const data = await res.json();
+      const data = await apiFetch(`${API_BASE}/parent-student-relationships`, { token: authToken() });
       setParentRelationships(data);
     } catch (error) {
       console.error(error);
@@ -211,10 +209,10 @@ export default function StudentsPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/students/${studentId}`, {
+      await apiFetch(`${API_BASE}/students/${studentId}`, {
         method: "DELETE",
+        token: authToken(),
       });
-      if (!res.ok) throw new Error("Failed to delete student");
       fetchStudents();
     } catch (error) {
       console.error("Delete student error:", error);
@@ -231,25 +229,23 @@ export default function StudentsPage() {
       };
 
       if (editingStudent) {
-        const res = await fetch(`${API_BASE}/students/${editingStudent.student_id}`, {
+        await apiFetch(`${API_BASE}/students/${editingStudent.student_id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          token: authToken(),
           body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error("Failed to update student");
       } else {
-        const res = await fetch(`${API_BASE}/students/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        
-        if (!res.ok) {
-          const errorData = await res.json();
-          if (errorData.error && errorData.error.includes('email')) {
+        try {
+          await apiFetch(`${API_BASE}/students/register`, {
+            method: "POST",
+            token: authToken(),
+            body: JSON.stringify(payload),
+          });
+        } catch (error) {
+          if ((error as Error).message.toLowerCase().includes("email")) {
             throw new Error("Email already exists. Please use a different email address.");
           }
-          throw new Error(errorData.error || "Failed to register student");
+          throw error;
         }
       }
 
@@ -304,12 +300,11 @@ export default function StudentsPage() {
 
   async function handleAssignClass(studentId: number, classId: string) {
     try {
-      const res = await fetch(`${API_BASE}/students/${studentId}/class`, {
+      await apiFetch(`${API_BASE}/students/${studentId}/class`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        token: authToken(),
         body: JSON.stringify({ class_id: parseInt(classId) }),
       });
-      if (!res.ok) throw new Error("Failed to assign class");
       fetchStudents();
     } catch (error) {
       console.error(error);
@@ -320,10 +315,10 @@ export default function StudentsPage() {
   async function handleArchive(studentId: number) {
     if (!confirm("Are you sure you want to archive this student?")) return;
     try {
-      const res = await fetch(`${API_BASE}/students/${studentId}/archive`, {
+      await apiFetch(`${API_BASE}/students/${studentId}/archive`, {
         method: "PUT",
+        token: authToken(),
       });
-      if (!res.ok) throw new Error("Failed to archive student");
       fetchStudents();
     } catch (error) {
       console.error(error);

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+const api = authFetchFor("DEPARTMENT_HEAD");
 
 type AtRiskStudent = {
   student_id: number;
@@ -54,9 +56,9 @@ export default function StudentsPage() {
       const token = localStorage.getItem("dept_head_token");
       const url = classFilter ? `${API_BASE}/students?class_id=${classFilter}` : `${API_BASE}/students`;
       const [studentsRes, riskRes, intRes] = await Promise.all([
-        fetch(url, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_BASE}/students/at-risk`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_BASE}/interventions`, { headers: { Authorization: `Bearer ${token}` } })
+        api(url, { headers: { Authorization: `Bearer ${token}` } }),
+        api(`${API_BASE}/students/at-risk`, { headers: { Authorization: `Bearer ${token}` } }),
+        api(`${API_BASE}/interventions`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       if (studentsRes.ok) setStudentsByClass(await studentsRes.json());
       if (riskRes.ok) setAtRiskStudents(await riskRes.json());

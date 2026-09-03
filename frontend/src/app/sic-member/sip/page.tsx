@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 import Link from "next/link";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
+const api = authFetchFor("SIC_MEMBER");
 
 type SIPItem = {
   sip_id: number;
@@ -57,9 +59,9 @@ export default function SIPManagementPage() {
     setLoading(true);
     try {
       const [sipRes, progressRes, feedbackRes] = await Promise.all([
-        fetch(`${API_BASE}/sip/current`),
-        fetch(`${API_BASE}/sip/progress`),
-        fetch(`${API_BASE}/sip/feedback`)
+        api(`${API_BASE}/sip/current`),
+        api(`${API_BASE}/sip/progress`),
+        api(`${API_BASE}/sip/feedback`)
       ]);
 
       if (sipRes.ok) {
@@ -94,7 +96,7 @@ export default function SIPManagementPage() {
   async function submitFeedback(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/sip/feedback`, {
+      const res = await api(`${API_BASE}/sip/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newFeedback)
@@ -112,7 +114,7 @@ export default function SIPManagementPage() {
   async function proposeAmendment(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/sip/amendments`, {
+      const res = await api(`${API_BASE}/sip/amendments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newAmendment)

@@ -3,6 +3,7 @@
  */
 
 export type UserRole = 
+  | 'SUPER_ADMIN'
   | 'STUDENT'
   | 'TEACHER'
   | 'PARENT'
@@ -12,7 +13,8 @@ export type UserRole =
   | 'DEPARTMENT_HEAD'
   | 'PTSA_REPRESENTATIVE'
   | 'SIC_MEMBER'
-  | 'ADMIN';
+  | 'ADMIN'
+  | 'NON_ACADEMIC_STAFF';
 
 export interface AuthConfig {
   tokenKey: string;
@@ -22,6 +24,12 @@ export interface AuthConfig {
 }
 
 export const AUTH_CONFIGS: Record<UserRole, AuthConfig> = {
+  SUPER_ADMIN: {
+    tokenKey: 'super_admin_token',
+    userKey: 'super_admin_user',
+    loginPath: '/login',
+    dashboardPath: '/admin/classes',
+  },
   STUDENT: {
     tokenKey: 'student_token',
     userKey: 'student_name',
@@ -80,7 +88,13 @@ export const AUTH_CONFIGS: Record<UserRole, AuthConfig> = {
     tokenKey: 'admin_token',
     userKey: 'admin_user',
     loginPath: '/admin/login',
-    dashboardPath: '/admin',
+    dashboardPath: '/admin/classes',
+  },
+  NON_ACADEMIC_STAFF: {
+    tokenKey: 'staff_token',
+    userKey: 'staff_user',
+    loginPath: '/login',
+    dashboardPath: '/admin/classes',
   },
 };
 

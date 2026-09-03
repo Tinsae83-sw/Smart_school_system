@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken, clearAuth } from "@/lib/auth";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
 export default function AttendancePage() {
   const router = useRouter();
   const [classes, setClasses] = useState<any[]>([]);
@@ -25,7 +27,7 @@ export default function AttendancePage() {
 
   async function loadClasses(token: string) {
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/classes`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/classes`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -58,7 +60,7 @@ export default function AttendancePage() {
       return;
     }
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/attendance?classId=${selectedClassSubject}&date=${selectedDate}`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/attendance?classId=${selectedClassSubject}&date=${selectedDate}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -94,7 +96,7 @@ export default function AttendancePage() {
       return;
     }
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/attendance`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/attendance`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

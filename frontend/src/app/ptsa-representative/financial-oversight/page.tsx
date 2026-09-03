@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type BudgetSummary = {
   fiscal_year: string;
@@ -54,10 +56,10 @@ export default function FinancialOversightPage() {
     setLoading(true);
     try {
       const [budgetRes, expenditureRes, fundsRes, procurementRes] = await Promise.all([
-        fetch(`${API_BASE}/financial/budget-summary`),
-        fetch(`${API_BASE}/financial/expenditure-breakdown`),
-        fetch(`${API_BASE}/financial/ptsa-funds`),
-        fetch(`${API_BASE}/financial/procurement-reports`),
+        api(`${API_BASE}/financial/budget-summary`),
+        api(`${API_BASE}/financial/expenditure-breakdown`),
+        api(`${API_BASE}/financial/ptsa-funds`),
+        api(`${API_BASE}/financial/procurement-reports`),
       ]);
 
       if (budgetRes.ok) setBudgetSummary(await budgetRes.json());
@@ -75,7 +77,7 @@ export default function FinancialOversightPage() {
     if (!advisoryText.trim()) return;
     
     try {
-      await fetch(`${API_BASE}/financial/budget-advisory`, {
+      await api(`${API_BASE}/financial/budget-advisory`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ advisory: advisoryText }),

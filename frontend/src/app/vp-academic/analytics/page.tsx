@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const api = authFetchFor("VP_ACADEMIC");
 
 type SubjectPerformance = {
   subject_name: string;
@@ -54,7 +56,7 @@ export default function AnalyticsPage() {
   async function fetchSubjectPerformance() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/academic/grade-distribution`);
+      const res = await api(`${API_BASE}/academic/grade-distribution`);
       if (!res.ok) throw new Error("Failed to fetch subject performance");
       const data = await res.json();
       setSubjectPerformance(Array.isArray(data) ? data : []);
@@ -69,7 +71,7 @@ export default function AnalyticsPage() {
   async function fetchTeacherPerformance() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/teachers/performance`);
+      const res = await api(`${API_BASE}/teachers/performance`);
       if (!res.ok) throw new Error("Failed to fetch teacher performance");
       const data = await res.json();
       setTeacherPerformance(Array.isArray(data) ? data : []);
@@ -84,7 +86,7 @@ export default function AnalyticsPage() {
   async function fetchClassPerformance() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/academic/grades`);
+      const res = await api(`${API_BASE}/academic/grades`);
       if (!res.ok) throw new Error("Failed to fetch class performance");
       const data = await res.json();
       setClassPerformance(Array.isArray(data) ? data : []);
@@ -99,7 +101,7 @@ export default function AnalyticsPage() {
   async function fetchTrendData() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/exams/comparison`);
+      const res = await api(`${API_BASE}/exams/comparison`);
       if (!res.ok) throw new Error("Failed to fetch trend data");
       const data = await res.json();
       setTrendData(Array.isArray(data) ? data : []);

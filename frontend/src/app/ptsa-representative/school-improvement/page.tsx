@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type SchoolImprovementPlan = {
   plan_id: number;
@@ -60,10 +62,10 @@ export default function SchoolImprovementPage() {
     setLoading(true);
     try {
       const [sipRes, progressRes, minutesRes, reportsRes] = await Promise.all([
-        fetch(`${API_BASE}/sic/improvement-plan`),
-        fetch(`${API_BASE}/sic/progress`),
-        fetch(`${API_BASE}/sic/meeting-minutes`),
-        fetch(`${API_BASE}/sic/annual-reports`),
+        api(`${API_BASE}/sic/improvement-plan`),
+        api(`${API_BASE}/sic/progress`),
+        api(`${API_BASE}/sic/meeting-minutes`),
+        api(`${API_BASE}/sic/annual-reports`),
       ]);
 
       if (sipRes.ok) setSip(await sipRes.json());
@@ -81,7 +83,7 @@ export default function SchoolImprovementPage() {
     if (!feedbackText.trim()) return;
     
     try {
-      await fetch(`${API_BASE}/sic/feedback`, {
+      await api(`${API_BASE}/sic/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ feedback: feedbackText }),

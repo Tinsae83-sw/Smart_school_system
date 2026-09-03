@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+const api = authFetchFor("DEPARTMENT_HEAD");
 
 type Teacher = {
   teacher_id: number;
@@ -49,7 +51,7 @@ export default function TeachersPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("dept_head_token");
-      const res = await fetch(`${API_BASE}/teachers`, {
+      const res = await api(`${API_BASE}/teachers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -66,7 +68,7 @@ export default function TeachersPage() {
 
   async function fetchClasses() {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/classes");
+      const res = await api(`${API_BASE}/classes`);
       if (res.ok) {
         const data = await res.json();
         setClasses(data.classes || data);
@@ -78,7 +80,7 @@ export default function TeachersPage() {
 
   async function fetchSubjects() {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/subjects");
+      const res = await api(`${API_BASE}/subjects`);
       if (res.ok) {
         const data = await res.json();
         setSubjects(data.subjects || []);
@@ -106,7 +108,7 @@ export default function TeachersPage() {
       const token = localStorage.getItem("dept_head_token");
       
       for (const classId of selectedClasses) {
-        const res = await fetch(`${API_BASE}/teachers/assign`, {
+        const res = await api(`${API_BASE}/teachers/assign`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

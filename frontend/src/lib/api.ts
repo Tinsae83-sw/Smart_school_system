@@ -1,73 +1,83 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
+import { getToken } from "./auth";
 
-/**
- * Get authentication token from localStorage
- */
-function getAuthToken(): string | null {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('vp_admin_token');
-  }
-  return null;
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
+export interface ApiFetchOptions extends RequestInit {
+  token?: string | null;
 }
 
-/**
- * Create API headers with authentication
- */
-function createHeaders(): HeadersInit {
-  const token = getAuthToken();
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
+  const { token, ...rest } = options;
+  const headers = new Headers(rest.headers || {});
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (rest.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
   }
-  
-  return headers;
+
+  const res = await fetch(`${API_BASE}${path}`, { ...rest, headers });
+
+  if (!res.ok) {
+    let message = `Request failed (${res.status})`;
+    try {
+      const data = await res.json();
+      if (data?.error) message = data.error;
+    } catch {
+      /* ignore body parse errors */
+    }
+    throw new Error(message);
+  }
+
+  return res.json();
 }
 
-/**
- * Generic API fetch wrapper with authentication
- */
-async function apiFetch(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<Response> {
-  const url = `${API_BASE}${endpoint}`;
-  const headers = createHeaders();
-  
-  const config: RequestInit = {
-    ...options,
-    headers: {
-      ...headers,
-      ...options.headers,
+export function tokenFor(role: Parameters<typeof getToken>[0]) {
+  return getToken(role);
+}
+
+export function createRoleApi(role: Parameters<typeof getToken>[0], basePath: string) {
+  return {
+    get: (path: string, options: ApiFetchOptions = {}) =>
+      apiFetch(`${basePath}${path}`, { ...options, token: getToken(role) }),
+    post: (path: string, body?: unknown, options: ApiFetchOptions = {}) =>
+      apiFetch(`${basePath}${path}`, {
+        ...options,
+        token: getToken(role),
+        method: "POST",
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      }),
+    put: (path: string, body?: unknown, options: ApiFetchOptions = {}) =>
+      apiFetch(`${basePath}${path}`, {
+        ...options,
+        token: getToken(role),
+        method: "PUT",
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      }),
+    patch: (path: string, body?: unknown, options: ApiFetchOptions = {}) =>
+      apiFetch(`${basePath}${path}`, {
+        ...options,
+        token: getToken(role),
+        method: "PATCH",
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      }),
+    delete: (path: string, options: ApiFetchOptions = {}) =>
+      apiFetch(`${basePath}${path}`, { ...options, token: getToken(role), method: "DELETE" }),
+    request: (method: string, path: string, body?: unknown) => {
+      const m = String(method).toUpperCase();
+      const opts: ApiFetchOptions = { token: getToken(role), method: m };
+      if (body !== undefined) opts.body = JSON.stringify(body);
+      return apiFetch(`${basePath}${path}`, opts);
     },
   };
-  
-  return fetch(url, config);
 }
 
-/**
- * VP Administration API helper
- */
-export const vpAdminApi = {
-  get: (endpoint: string) => apiFetch(`/vp-administration${endpoint}`, { method: 'GET' }),
-  post: (endpoint: string, data: any) => apiFetch(`/vp-administration${endpoint}`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  put: (endpoint: string, data: any) => apiFetch(`/vp-administration${endpoint}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  delete: (endpoint: string) => apiFetch(`/vp-administration${endpoint}`, { method: 'DELETE' }),
-  request: (method: string, endpoint: string, data?: any) => {
-    const config: RequestInit = { method: method.toUpperCase() };
-    if (data) {
-      config.body = JSON.stringify(data);
-    }
-    return apiFetch(`/vp-administration${endpoint}`, config);
-  },
-};
+export const vpAdminApi = createRoleApi("VP_ADMINISTRATION", "/api/vp-administration");
 
-export default apiFetch;
+export function authFetchFor(role: Parameters<typeof getToken>[0]) {
+  return (path: string, init?: RequestInit) => {
+    const headers = new Headers(init?.headers);
+    const token = getToken(role);
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const fullUrl = path.startsWith("http") ? path : `${API_BASE}${path}`;
+    return fetch(fullUrl, { ...init, headers });
+  };
+}

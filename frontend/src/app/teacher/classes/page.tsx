@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken, clearAuth } from "@/lib/auth";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
 type SchoolClass = {
   class_id: number;
   class_name: string;
@@ -40,7 +42,7 @@ export default function ClassesPage() {
 
   async function loadClasses(token: string) {
     try {
-      const response = await fetch(`http://localhost:5000/api/teacher/classes`, {
+      const response = await fetch(`${BACKEND_URL}/api/teacher/classes`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

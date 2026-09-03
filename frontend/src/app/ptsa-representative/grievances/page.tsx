@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type Grievance = {
   grievance_id: number;
@@ -30,7 +32,7 @@ export default function GrievancesPage() {
   async function loadGrievances() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/grievances`);
+      const res = await api(`${API_BASE}/grievances`);
       if (res.ok) setGrievances(await res.json());
     } catch (error) {
       console.error("Error loading grievances:", error);
@@ -44,7 +46,7 @@ export default function GrievancesPage() {
     if (!escalateTo) return;
     
     try {
-      await fetch(`${API_BASE}/grievances/${grievanceId}/escalate`, {
+      await api(`${API_BASE}/grievances/${grievanceId}/escalate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ escalated_to: escalateTo }),

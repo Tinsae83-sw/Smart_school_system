@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
+const api = authFetchFor("SIC_MEMBER");
 
 type DashboardData = {
   sip: {
@@ -63,8 +65,8 @@ export default function SICMemberDashboardPage() {
     setLoading(true);
     try {
       const [dashboardRes, recommendationsRes] = await Promise.all([
-        fetch(`${API_BASE}/dashboard`),
-        fetch(`${API_BASE}/recommendations`),
+        api(`${API_BASE}/dashboard`),
+        api(`${API_BASE}/recommendations`),
       ]);
 
       if (!dashboardRes.ok) {

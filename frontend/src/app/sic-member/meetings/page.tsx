@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
+const api = authFetchFor("SIC_MEMBER");
 
 type Meeting = {
   meeting_id: number;
@@ -63,7 +65,7 @@ export default function MeetingsPage() {
   async function fetchMeetings() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/meetings`);
+      const res = await api(`${API_BASE}/meetings`);
       if (res.ok) {
         const data = await res.json();
         setMeetings(data);
@@ -78,8 +80,8 @@ export default function MeetingsPage() {
   async function fetchMeetingDetails(meetingId: number) {
     try {
       const [agendaRes, minutesRes] = await Promise.all([
-        fetch(`${API_BASE}/meetings/${meetingId}/agenda`),
-        fetch(`${API_BASE}/meetings/${meetingId}/minutes`)
+        api(`${API_BASE}/meetings/${meetingId}/agenda`),
+        api(`${API_BASE}/meetings/${meetingId}/minutes`)
       ]);
 
       if (agendaRes.ok) {
@@ -111,7 +113,7 @@ export default function MeetingsPage() {
   async function submitAgendaItem(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/meetings/agenda-items`, {
+      const res = await api(`${API_BASE}/meetings/agenda-items`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newAgendaItem)
@@ -135,7 +137,7 @@ export default function MeetingsPage() {
 
   async function voteOnResolution(resolutionId: number, vote: 'for' | 'against' | 'abstain') {
     try {
-      const res = await fetch(`${API_BASE}/meetings/resolutions/${resolutionId}/vote`, {
+      const res = await api(`${API_BASE}/meetings/resolutions/${resolutionId}/vote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vote })

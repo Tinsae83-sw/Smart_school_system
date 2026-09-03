@@ -1,27 +1,52 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Smart School Connect backend API",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "db:setup": "node scripts/applyMigrations.js",
+    "db:seed": "node scripts/seed.js",
+    "db:reset": "node scripts/db.js --reset",
+    "lint": "eslint src scripts --ext .js",
+    "test": "node --test tests/"
   },
-  "keywords": [],
+  "keywords": [
+    "school",
+    "management",
+    "api"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
-    "@prisma/client": "^7.8.0",
+    "@aws-sdk/client-s3": "^3.1124.0",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.3.0",
+    "nodemailer": "^9.1.1",
     "pg": "^8.21.0",
-    "sequelize": "^6.37.8"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "prisma": "^7.8.0"
+    "nodemon": "^3.1.14"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "src",
+      "scripts"
+    ],
+    "ignore": [
+      "node_modules"
+    ]
   }
 }

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type Announcement = {
   announcement_id: number;
@@ -29,7 +31,7 @@ export default function AnnouncementsPage() {
   async function loadAnnouncements() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/announcements`);
+      const res = await api(`${API_BASE}/announcements`);
       if (res.ok) setAnnouncements(await res.json());
     } catch (error) {
       console.error("Error loading announcements:", error);

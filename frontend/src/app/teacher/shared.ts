@@ -1,7 +1,9 @@
 import { clearAuth } from "@/lib/auth";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
 export async function authFetch(url: string, options: RequestInit = {}, token: string) {
-  const response = await fetch(`http://localhost:5000${url}`, {
+  const response = await fetch(`${BACKEND_URL}${url}`, {
     ...options,
     headers: {
       ...options.headers,

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type GradeSummary = {
   grade_level: number;
@@ -66,12 +68,12 @@ export default function AcademicPerformancePage() {
     setLoading(true);
     try {
       const [gradesRes, distributionsRes, attendanceRes, conductRes, examsRes, trendsRes] = await Promise.all([
-        fetch(`${API_BASE}/academic/grade-summaries`),
-        fetch(`${API_BASE}/academic/grade-distributions`),
-        fetch(`${API_BASE}/academic/attendance-summaries`),
-        fetch(`${API_BASE}/academic/conduct-summaries`),
-        fetch(`${API_BASE}/academic/national-exam-results`),
-        fetch(`${API_BASE}/academic/performance-trends`),
+        api(`${API_BASE}/academic/grade-summaries`),
+        api(`${API_BASE}/academic/grade-distributions`),
+        api(`${API_BASE}/academic/attendance-summaries`),
+        api(`${API_BASE}/academic/conduct-summaries`),
+        api(`${API_BASE}/academic/national-exam-results`),
+        api(`${API_BASE}/academic/performance-trends`),
       ]);
 
       if (gradesRes.ok) setGradeSummaries(await gradesRes.json());

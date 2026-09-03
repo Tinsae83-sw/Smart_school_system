@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+
+const api = authFetchFor("PRINCIPAL");
 
 type Grievance = {
   grievance_id: number;
@@ -48,10 +51,10 @@ export default function GrievancesPage() {
     setLoading(true);
     try {
       const [grievancesRes, disciplineRes] = await Promise.all([
-        fetch(`${API_BASE}/grievances`, {
+        api(`${API_BASE}/grievances`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/discipline`, {
+        api(`${API_BASE}/discipline`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);
@@ -88,7 +91,7 @@ export default function GrievancesPage() {
 
     if (!selectedGrievance) return;
 
-    fetch(`${API_BASE}/grievances/${selectedGrievance.grievance_id}/resolve`, {
+    api(`${API_BASE}/grievances/${selectedGrievance.grievance_id}/resolve`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type Survey = {
   survey_id: number;
@@ -58,8 +60,8 @@ export default function SurveysPage() {
     setLoading(true);
     try {
       const [surveysRes, resultsRes] = await Promise.all([
-        fetch(`${API_BASE}/surveys`),
-        fetch(`${API_BASE}/surveys/results`),
+        api(`${API_BASE}/surveys`),
+        api(`${API_BASE}/surveys/results`),
       ]);
 
       if (surveysRes.ok) setSurveys(await surveysRes.json());
@@ -105,7 +107,7 @@ export default function SurveysPage() {
     }
     
     try {
-      await fetch(`${API_BASE}/surveys`, {
+      await api(`${API_BASE}/surveys`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newSurvey),
@@ -122,7 +124,7 @@ export default function SurveysPage() {
 
   async function sendSurvey(surveyId: number) {
     try {
-      await fetch(`${API_BASE}/surveys/${surveyId}/send`, {
+      await api(`${API_BASE}/surveys/${surveyId}/send`, {
         method: "POST",
       });
       alert("Survey sent successfully!");

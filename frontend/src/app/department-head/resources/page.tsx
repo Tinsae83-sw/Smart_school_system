@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+const api = authFetchFor("DEPARTMENT_HEAD");
 
 type Resource = {
   resource_id: number;
@@ -29,7 +31,7 @@ export default function ResourcesPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("dept_head_token");
-      const res = await fetch(`${API_BASE}/resources`, {
+      const res = await api(`${API_BASE}/resources`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -52,7 +54,7 @@ export default function ResourcesPage() {
     
     try {
       const token = localStorage.getItem("dept_head_token");
-      const res = await fetch(`${API_BASE}/resources/${resourceId}`, {
+      const res = await api(`${API_BASE}/resources/${resourceId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });

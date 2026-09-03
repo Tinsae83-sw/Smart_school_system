@@ -1,9 +1,28 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+const api = authFetchFor("DEPARTMENT_HEAD");
 const STORAGE_TOKEN_KEY = "dept_head_token";
+
+async function parseErrorResponse(res: Response): Promise<{ message: string; status: number }> {
+  const clone = res.clone();
+  let message = `Request failed (${res.status}).`;
+  try {
+    const json = await clone.json();
+    message = (json && (json.error || json.message)) || message;
+  } catch {
+    try {
+      const text = await res.text();
+      if (text) message = text;
+    } catch {
+      /* ignore */
+    }
+  }
+  return { message, status: res.status };
+}
 
 const EXAM_TYPES = ["MIDTERM", "FINAL", "QUIZ", "UNIT_TEST", "PRACTICAL"] as const;
 const EXAM_STATUSES = ["APPROVED", "PENDING_APPROVAL", "COMPLETED", "DRAFT"] as const;
@@ -124,6 +143,7 @@ export default function ExamsPage() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
   const [showInvigilatorModal, setShowInvigilatorModal] = useState(false);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
@@ -146,13 +166,13 @@ export default function ExamsPage() {
         throw new Error("Authentication token not found");
       }
 
-      const res = await fetch(`${API_BASE}/exams`, {
+      const res = await api(`${API_BASE}/exams`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || errorData.message || "Failed to fetch exams");
+        const err = await parseErrorResponse(res);
+        throw new Error(err.message);
       }
 
       const data = await res.json();
@@ -213,7 +233,7 @@ export default function ExamsPage() {
         throw new Error("Authentication token not found");
       }
 
-      const res = await fetch(`${API_BASE}/../department-head/teachers`, {
+      const res = await api(`${API_BASE}/../department-head/teachers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -232,9 +252,10 @@ export default function ExamsPage() {
   }, [fetchExams, fetchTeachers]);
 
   async function handleApprove(examId: number) {
+    setNotice(null);
     try {
       const token = localStorage.getItem("dept_head_token");
-      const res = await fetch(`${API_BASE}/exams/${examId}/approve`, {
+      const res = await api(`${API_BASE}/exams/${examId}/approve`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -242,10 +263,15 @@ export default function ExamsPage() {
         }
       });
       if (res.ok) {
+        setNotice({ type: "success", text: "Exam approved." });
         fetchExams();
+      } else {
+        const err = await parseErrorResponse(res);
+        setNotice({ type: "error", text: err.message });
       }
     } catch (error) {
       console.error("Error approving exam:", error);
+      setNotice({ type: "error", text: "Could not reach the server to approve this exam." });
     }
   }
 
@@ -274,7 +300,7 @@ export default function ExamsPage() {
         throw new Error("Authentication token not found");
       }
 
-      const res = await fetch(`${API_BASE}/exams/${selectedExam.exam_id}/invigilators`, {
+      const res = await api(`${API_BASE}/exams/${selectedExam.exam_id}/invigilators`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -291,8 +317,8 @@ export default function ExamsPage() {
         setInvigilatorFormData({ selectedInvigilators: [] });
         await fetchExams();
       } else {
-        const errorData = await res.json();
-        throw new Error(errorData.error || errorData.message || "Failed to update invigilators");
+        const err = await parseErrorResponse(res);
+        throw new Error(err.message);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to update invigilators";
@@ -343,6 +369,16 @@ export default function ExamsPage() {
           <p className="mt-1 text-sm text-slate-500">Manage department exams and assessments</p>
         </div>
       </div>
+
+      {notice && (
+        <div className={`mb-4 rounded-xl border px-4 py-3 text-sm font-medium ${
+          notice.type === "success"
+            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            : "border-rose-200 bg-rose-50 text-rose-700"
+        }`}>
+          {notice.text}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -416,6 +452,14 @@ export default function ExamsPage() {
                                   </td>
                                   <td className="px-4 py-3">
                                     <div className="flex gap-2">
+                                      {(exam.status === "PENDING_APPROVAL" || exam.status === "DRAFT") && (
+                                        <button
+                                          onClick={() => handleApprove(exam.exam_id)}
+                                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition"
+                                        >
+                                          Approve
+                                        </button>
+                                      )}
                                       <button
                                         onClick={() => handleAssignInvigilators(exam)}
                                         className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { vpAdminApi, authFetchFor } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
+const api = authFetchFor("VP_ADMINISTRATION");
 
 type MealPlan = {
   plan_id: number;
@@ -61,7 +63,6 @@ export default function CateringPage() {
     supplier: "",
     expiry_date: "",
     transaction_type: "RESTOCK",
-    quantity: "",
     reference: "",
     notes: "",
   });
@@ -74,15 +75,14 @@ export default function CateringPage() {
   async function fetchData() {
     setLoading(true);
     try {
-      const [planRes, invRes, transRes] = await Promise.all([
-        fetch(`${API_BASE}/meal-plans`),
-        fetch(`${API_BASE}/food-inventory`),
-        fetch(`${API_BASE}/food-transactions`),
+      const [mealPlans, foodInventory, foodTransactions] = await Promise.all([
+        vpAdminApi.get('/meal-plans'),
+        vpAdminApi.get('/food-inventory'),
+        vpAdminApi.get('/food-transactions'),
       ]);
-
-      if (planRes.ok) setMealPlans(await planRes.json());
-      if (invRes.ok) setInventory(await invRes.json());
-      if (transRes.ok) setTransactions(await transRes.json());
+      setMealPlans(mealPlans || []);
+      setInventory(foodInventory || []);
+      setTransactions(foodTransactions || []);
     } catch (error) {
       console.error("Failed to fetch catering data:", error);
     } finally {
@@ -115,7 +115,6 @@ export default function CateringPage() {
       supplier: "",
       expiry_date: "",
       transaction_type: "RESTOCK",
-      quantity: "",
       reference: "",
       notes: "",
     });
@@ -160,7 +159,7 @@ export default function CateringPage() {
         };
       }
 
-      const res = await fetch(url, {
+      const res = await api(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

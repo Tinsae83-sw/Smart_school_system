@@ -35,6 +35,7 @@ export default function MessagesPage() {
       if (chatThreadId === null && MOCK_MESSAGES.length > 0) {
         setChatThreadId(MOCK_MESSAGES[0].thread_id);
       }
+    }
   }
 
   function scrollToBottom() {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { authFetchFor } from '@/lib/api';
 
 interface Student {
   student_id: number;
@@ -27,7 +28,8 @@ export default function ParentStudentRelationshipsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const API_BASE = 'http://localhost:5000/api/vp-academic';
+  const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000') + '/api/vp-academic';
+  const api = authFetchFor("VP_ACADEMIC");
 
   useEffect(() => {
     fetchRelationships();
@@ -36,7 +38,7 @@ export default function ParentStudentRelationshipsPage() {
   async function fetchRelationships() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/parent-student-relationships`);
+      const res = await api(`${API_BASE}/parent-student-relationships`);
       if (!res.ok) throw new Error('Failed to fetch relationships');
       const data = await res.json();
       setRelationships(data);

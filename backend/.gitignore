@@ -3,3 +3,5 @@ node_modules
 .env
 
 /src/generated/prisma
+# Runtime uploaded files (local disk storage)
+uploads/

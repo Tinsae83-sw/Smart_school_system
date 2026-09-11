@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/principal";
 
 const api = authFetchFor("PRINCIPAL");
 
@@ -246,6 +246,7 @@ export default function StaffManagementPage() {
               role: activeTab === "senior" ? "VP_ACADEMIC" : "TEACHER",
               employee_id: "",
               email: "",
+              password: "",
               phone_number: "",
               department: "",
               qualification: "",
@@ -334,7 +335,7 @@ export default function StaffManagementPage() {
                 }}
                 className="text-slate-400 hover:text-slate-600"
               >
-                ✕
+                âœ•
               </button>
             </div>
 

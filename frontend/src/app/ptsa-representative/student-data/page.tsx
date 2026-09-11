@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/ptsa";
 const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type Child = {
@@ -134,7 +134,7 @@ export default function StudentDataPage() {
               <div>
                 <h2 className="text-lg font-bold text-slate-900">{selectedChild.full_name}</h2>
                 <p className="text-sm text-slate-500 mt-1">
-                  {selectedChild.student_number} • Grade {selectedChild.grade_level} • {selectedChild.class_name}
+                  {selectedChild.student_number} â€¢ Grade {selectedChild.grade_level} â€¢ {selectedChild.class_name}
                 </p>
               </div>
             </div>
@@ -147,7 +147,7 @@ export default function StudentDataPage() {
               <p className="text-3xl font-bold text-emerald-600 mt-2">
                 {grades.length > 0 
                   ? (grades.reduce((sum, g) => sum + (g.score / g.max_score * 100), 0) / grades.length).toFixed(1)
-                  : "—"}%
+                  : "â€”"}%
               </p>
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
@@ -155,13 +155,13 @@ export default function StudentDataPage() {
               <p className="text-3xl font-bold text-blue-600 mt-2">
                 {attendance.length > 0 
                   ? ((attendance.filter(a => a.status === "PRESENT").length / attendance.length) * 100).toFixed(1)
-                  : "—"}%
+                  : "â€”"}%
               </p>
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
               <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Latest Conduct</p>
               <p className="text-3xl font-bold text-amber-600 mt-2">
-                {conduct.length > 0 ? conduct[conduct.length - 1].conduct_grade : "—"}
+                {conduct.length > 0 ? conduct[conduct.length - 1].conduct_grade : "â€”"}
               </p>
             </div>
           </div>

@@ -278,7 +278,7 @@ router.get("/dashboard", async (req, res) => {
 router.get("/announcements", async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT announcement_id, title, message AS body, created_at
+      `SELECT announcement_id, title, message AS body, published_at AS created_at
          FROM announcements
         WHERE is_active = TRUE AND (target_roles = 'ALL' OR target_roles LIKE '%STUDENT%' OR target_class_id = $1)
         ORDER BY published_at DESC`,

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/ptsa";
 const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type BudgetSummary = {
@@ -227,7 +227,7 @@ export default function FinancialOversightPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium text-slate-900 text-sm">{report.item_name}</p>
-                      <p className="mt-1 text-xs text-slate-500">{report.category} • {report.vendor}</p>
+                      <p className="mt-1 text-xs text-slate-500">{report.category} â€¢ {report.vendor}</p>
                     </div>
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                       report.status === "Completed" ? "bg-emerald-50 text-emerald-700" : 

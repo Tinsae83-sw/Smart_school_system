@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/principal";
 
 const api = authFetchFor("PRINCIPAL");
 
@@ -253,7 +253,7 @@ export default function DepartmentsPage() {
                 }}
                 className="text-slate-400 hover:text-slate-600"
               >
-                ✕
+                âœ•
               </button>
             </div>
 

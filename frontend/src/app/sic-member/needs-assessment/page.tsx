@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/sic";
 const api = authFetchFor("SIC_MEMBER");
 
 type NeedsAssessment = {
@@ -336,7 +336,7 @@ export default function NeedsAssessmentPage() {
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <div>
                       <h3 className="text-lg font-semibold text-slate-900">{assessment.assessment_name}</h3>
-                      <p className="text-sm text-slate-500 mt-1">{assessment.assessment_type} • {assessment.target_audience}</p>
+                      <p className="text-sm text-slate-500 mt-1">{assessment.assessment_type} â€¢ {assessment.target_audience}</p>
                       <p className="text-xs text-slate-400 mt-1">Academic Year: {assessment.academic_year}</p>
                     </div>
                     <span className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium ${

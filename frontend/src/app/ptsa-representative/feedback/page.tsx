@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/ptsa";
 const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type FeedbackItem = {
@@ -275,7 +275,7 @@ export default function FeedbackPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <p className="font-medium text-slate-900 text-sm">{item.subject}</p>
-                      <p className="text-xs text-slate-500 mt-1">To: {item.recipient_role} • {item.category}</p>
+                      <p className="text-xs text-slate-500 mt-1">To: {item.recipient_role} â€¢ {item.category}</p>
                       <p className="text-sm text-slate-600 mt-2">{item.message}</p>
                       {item.response && (
                         <div className="mt-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
@@ -310,7 +310,7 @@ export default function FeedbackPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <p className="font-medium text-slate-900 text-sm">{announcement.title}</p>
-                      <p className="text-xs text-slate-500 mt-1">By: {announcement.created_by} • {announcement.target_audience}</p>
+                      <p className="text-xs text-slate-500 mt-1">By: {announcement.created_by} â€¢ {announcement.target_audience}</p>
                       <p className="text-sm text-slate-600 mt-2">{announcement.message}</p>
                     </div>
                   </div>

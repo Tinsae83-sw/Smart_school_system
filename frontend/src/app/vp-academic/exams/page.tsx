@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { authFetchFor } from "@/lib/api";
 
 // ==================== CONSTANTS ====================
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const API_BASE = "/api/vp-academic";
 const api = authFetchFor("VP_ACADEMIC");
 const STORAGE_TOKEN_KEY = "vp_academic_token";
 

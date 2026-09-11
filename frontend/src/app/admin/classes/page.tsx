@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/admin";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/admin";
 const api = authFetchFor("SUPER_ADMIN");
 
 const GRADE_LEVELS = [

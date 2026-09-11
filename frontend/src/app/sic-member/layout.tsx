@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { isAuthenticated, getUser, clearAuth } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/sic";
 
 type NavItem = {
   label: string;
@@ -101,7 +101,7 @@ export default function SICMemberLayout({ children }: { children: React.ReactNod
     
     // Check authentication
     if (!isAuthenticated('SIC_MEMBER')) {
-      router.push("/sic-member/login");
+      router.push("/login");
       return;
     }
 
@@ -115,7 +115,7 @@ export default function SICMemberLayout({ children }: { children: React.ReactNod
 
   function handleLogout() {
     clearAuth('SIC_MEMBER');
-    router.push("/sic-member/login");
+    router.push("/login");
   }
 
   if (loading) {

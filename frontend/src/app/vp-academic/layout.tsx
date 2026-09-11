@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { isAuthenticated, getUser, clearAuth } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const API_BASE = "/api/vp-academic";
 
 type NavItem = {
   label: string;
@@ -119,7 +119,7 @@ export default function VPAcademicLayout({ children }: { children: React.ReactNo
     
     // Check authentication
     if (!isAuthenticated('VP_ACADEMIC')) {
-      router.push("/vp-academic/login");
+      router.push("/login");
       return;
     }
 
@@ -133,7 +133,7 @@ export default function VPAcademicLayout({ children }: { children: React.ReactNo
 
   function handleLogout() {
     clearAuth('VP_ACADEMIC');
-    router.push("/vp-academic/login");
+    router.push("/login");
   }
 
   if (loading) {

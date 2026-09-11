@@ -4,9 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const API_BASE = "/api/vp-academic";
 const api = authFetchFor("VP_ACADEMIC");
-const VP_ACADEMIC_API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const VP_ACADEMIC_API = "/api/vp-academic";
 
 type ClassCategory = "GENERAL" | "NATURAL_SCIENCE" | "SOCIAL_SCIENCE";
 

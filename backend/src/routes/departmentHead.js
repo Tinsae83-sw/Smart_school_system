@@ -125,8 +125,22 @@ router.post("/teachers/assign", async (req, res) => {
 router.get("/resources", async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT resource_id, name, type, description, quantity, department, status, created_at
-         FROM resources ORDER BY created_at DESC LIMIT 200`
+      `SELECT r.resource_id, r.name, r.type, r.description, r.quantity, r.department, r.status, r.created_at,
+              COALESCE((SELECT SUM(ra.quantity) FROM resource_allocations ra
+                         WHERE ra.resource_id = r.resource_id AND ra.returned_at IS NULL), 0) AS allocated,
+              COALESCE((SELECT json_agg(json_build_object(
+                         'teacher', u.full_name,
+                         'quantity', ra.quantity,
+                         'allocated_at', ra.allocated_at,
+                         'returned_at', ra.returned_at)
+                         ORDER BY ra.allocated_at DESC)
+                          FROM resource_allocations ra
+                          LEFT JOIN teachers t ON ra.teacher_id = t.teacher_id
+                          LEFT JOIN users u ON t.user_id = u.user_id
+                         WHERE ra.resource_id = r.resource_id
+                         LIMIT 10), '[]')::json AS allocations
+         FROM resources r
+        ORDER BY r.created_at DESC LIMIT 200`
     );
     res.json(rows);
   } catch (error) {

@@ -36,7 +36,11 @@ export default function ResourcesPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setResources(data);
+        setResources((data || []).map((r: Resource) => ({
+          ...r,
+          allocated: r.allocated ?? 0,
+          allocations: Array.isArray(r.allocations) ? r.allocations : []
+        })));
       }
     } catch (error) {
       console.error("Error fetching resources:", error);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authFetchFor } from "@/lib/api";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/department-head";
@@ -28,6 +28,7 @@ const EXAM_TYPES = ["MIDTERM", "FINAL", "QUIZ", "UNIT_TEST", "PRACTICAL"] as con
 const EXAM_STATUSES = ["APPROVED", "PENDING_APPROVAL", "COMPLETED", "DRAFT"] as const;
 
 // Subject to department mapping for subjects without department data
+interface Teacher { teacher_id: number; full_name: string }
 const SUBJECT_DEPARTMENT_MAP: Record<string, string> = {
   // Natural Sciences
   'Physics': 'Natural',
@@ -148,6 +149,7 @@ export default function ExamsPage() {
   const [showInvigilatorModal, setShowInvigilatorModal] = useState(false);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const teachersRef = useRef<Teacher[]>([]);
   const [invigilatorFormData, setInvigilatorFormData] = useState({
     selectedInvigilators: [] as number[]
   });
@@ -186,11 +188,11 @@ export default function ExamsPage() {
               return invigilator;
             }
             if (typeof invigilator === 'object' && invigilator.teacher_id) {
-              const teacher = teachers.find(t => t.teacher_id === invigilator.teacher_id);
+              const teacher = teachersRef.current.find(t => t.teacher_id === invigilator.teacher_id);
               return teacher ? teacher.full_name : null;
             }
             if (typeof invigilator === 'number') {
-              const teacher = teachers.find(t => t.teacher_id === invigilator);
+              const teacher = teachersRef.current.find(t => t.teacher_id === invigilator);
               return teacher ? teacher.full_name : null;
             }
             return null;
@@ -224,7 +226,7 @@ export default function ExamsPage() {
     } finally {
       setLoading(false);
     }
-  }, [teachers]);
+  }, []);
 
   const fetchTeachers = useCallback(async () => {
     try {
@@ -239,12 +241,15 @@ export default function ExamsPage() {
 
       if (res.ok) {
         const data = await res.json();
-        setTeachers(data.teachers || []);
+        const list = data.teachers || [];
+        teachersRef.current = list;
+        setTeachers(list);
+        await fetchExams();
       }
     } catch (err) {
       console.error("Error fetching teachers:", err);
     }
-  }, []);
+  }, [fetchExams]);
 
   useEffect(() => {
     fetchExams();

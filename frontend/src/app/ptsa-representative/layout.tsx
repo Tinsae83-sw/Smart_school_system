@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { isAuthenticated, getUser, clearAuth } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/ptsa";
 
 type NavItem = {
   label: string;
@@ -166,7 +166,7 @@ export default function PTSARepresentativeLayout({ children }: { children: React
     
     // Check authentication
     if (!isAuthenticated('PTSA_REPRESENTATIVE')) {
-      router.push("/ptsa-representative/login");
+      router.push("/login");
       return;
     }
 
@@ -180,7 +180,7 @@ export default function PTSARepresentativeLayout({ children }: { children: React
 
   function handleLogout() {
     clearAuth('PTSA_REPRESENTATIVE');
-    router.push("/ptsa-representative/login");
+    router.push("/login");
   }
 
   if (loading) {

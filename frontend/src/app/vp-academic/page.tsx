@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const API_BASE = "/api/vp-academic";
 
 function authToken() {
   return getToken("VP_ACADEMIC");

@@ -1,13 +1,69 @@
 const express = require("express");
+const crypto = require("crypto");
 const pool = require("../config/db");
 const { authenticate } = require("../middleware/auth");
 const { verifyPassword, hashPassword } = require("../utils/password");
 const { signToken, verifyToken } = require("../utils/token");
 const { issueOtp, verifyOtp } = require("../utils/otp");
 const { audit } = require("../utils/audit");
-const { validateFaydaId } = require("../utils/nationalId");
+const { validateFaydaIdOrAlias } = require("../utils/nationalId");
+const fayda = require("../utils/fayda");
 
 const router = express.Router();
+
+const VERIFICATION_TTL_MS = 10 * 60 * 1000;
+const faydaStates = new Map();
+const faydaVerifications = new Map();
+
+function pruneFaydaStore() {
+  const now = Date.now();
+  for (const [key, entry] of faydaStates) if (entry.expiresAt < now) faydaStates.delete(key);
+  for (const [key, entry] of faydaVerifications) if (entry.expiresAt < now) faydaVerifications.delete(key);
+  if (faydaStates.size || faydaVerifications.size) {
+    setTimeout(pruneFaydaStore, VERIFICATION_TTL_MS);
+  }
+}
+
+function createVerificationRef(data) {
+  const ref = crypto.randomUUID();
+  faydaVerifications.set(ref, { data: data || null, expiresAt: Date.now() + VERIFICATION_TTL_MS });
+  if (faydaVerifications.size === 1) setTimeout(pruneFaydaStore, VERIFICATION_TTL_MS);
+  return ref;
+}
+
+function getVerification(ref) {
+  const entry = typeof ref === "string" && faydaVerifications.get(ref);
+  return entry && entry.expiresAt > Date.now() ? entry : null;
+}
+
+function consumeVerification(ref) {
+  const entry = getVerification(ref);
+  if (entry) {
+    faydaVerifications.delete(ref);
+    return entry.data;
+  }
+  return null;
+}
+
+/**
+ * Check that a Fayda verification belongs to the person registering.
+ * Matches on the numeric part of the verified `sub` (the Fayda sub is derived
+ * from the resident's FIN/FAN) or, when that is inconclusive, on the phone
+ * number returned by Fayda matching the phone entered in the form.
+ */
+function verificationMatchesUser(enteredDigits, formPhone, verified) {
+  const entered = String(enteredDigits || "").replace(/\D/g, "");
+  const sub = String((verified && verified.sub) || "").replace(/\D/g, "");
+  const vPhone = String((verified && verified.phone) || "").replace(/\D/g, "");
+  const pPhone = String(formPhone || "").replace(/\D/g, "");
+
+  if (entered && sub) {
+    return sub === entered || sub.endsWith(entered) || sub.includes(entered);
+  }
+  if (entered && !sub) return false;
+  if (pPhone && vPhone) return pPhone === vPhone;
+  return Boolean(sub) || Boolean(vPhone);
+}
 
 function publicUser(user, ext = {}) {
   return {
@@ -124,8 +180,14 @@ router.get("/classes", async (_req, res) => {
 router.post("/register", async (req, res) => {
   const {
     role, full_name, email, phone_number, password, confirm_password,
-    class_id, relationship, national_id,
+    class_id, relationship, national_id, fan, fayda_ref,
   } = req.body || {};
+
+  // Honeypot anti-spam trap: real users never fill this hidden field. Bots that
+  // autofill every input step in it, so reject the request silently.
+  if (req.body && req.body.company_website) {
+    return res.status(400).json({ error: "Invalid request." });
+  }
 
   const userRole = String(role || "").toUpperCase();
   if (!["STUDENT", "PARENT"].includes(userRole)) {
@@ -147,13 +209,25 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ error: "Please select the class you are enrolling into." });
   }
 
-  let normalizedNationalId = null;
-  if (national_id) {
-    const check = validateFaydaId(national_id);
-    if (!check.valid) {
-      return res.status(400).json({ error: check.error });
+  const idCheck = validateFaydaIdOrAlias(national_id);
+  if (!idCheck.valid) {
+    return res.status(400).json({ error: idCheck.error });
+  }
+  const isFan = idCheck.kind === "FAN";
+  const normalizedNationalId = isFan ? null : idCheck.normalized;
+  const normalizedFan = isFan ? idCheck.normalized : null;
+
+  let faydaVerified = null;
+  if (fayda_ref) {
+    const verified = consumeVerification(fayda_ref);
+    if (!verified) {
+      return res.status(400).json({ error: "Fayda verification has expired or is invalid. Please verify again." });
     }
-    normalizedNationalId = check.normalized;
+    if (verificationMatchesUser(idCheck.normalized, phone_number, verified)) {
+      faydaVerified = verified;
+    } else {
+      return res.status(400).json({ error: "The verified Fayda account does not match the National ID or phone number entered." });
+    }
   }
 
   try {
@@ -169,26 +243,50 @@ router.post("/register", async (req, res) => {
       }
     }
 
+    const insert = faydaVerified
+      ? `INSERT INTO users (full_name, email, phone_number, password_hash, role, status,
+                            national_id, fan, fayda_sub, fayda_verified_at, fayda_birthdate, fayda_gender,
+                            requested_class_id, requested_relationship)
+         VALUES ($1, $2, $3, $4, $5, 'PENDING', $6, $7, $8, CURRENT_TIMESTAMP, $9, $10, $11, $12)`
+      : `INSERT INTO users (full_name, email, phone_number, password_hash, role, status,
+                            national_id, fan, requested_class_id, requested_relationship)
+         VALUES ($1, $2, $3, $4, $5, 'PENDING', $6, $7, $8, $9)`;
+
     await pool.query(
-      `INSERT INTO users (full_name, email, phone_number, password_hash, role, status,
-                          national_id, requested_class_id, requested_relationship)
-       VALUES ($1, $2, $3, $4, $5, 'PENDING', $6, $7, $8)`,
-      [
-        full_name.trim(),
-        email.trim().toLowerCase(),
-        phone_number || null,
-        hashPassword(password),
-        userRole,
-        normalizedNationalId,
-        userRole === "STUDENT" ? Number(class_id) || null : null,
-        userRole === "PARENT" ? (relationship || "Guardian") : null,
-      ]
+      insert,
+      faydaVerified
+        ? [
+            full_name.trim(),
+            email.trim().toLowerCase(),
+            phone_number || null,
+            hashPassword(password),
+            userRole,
+            normalizedNationalId,
+            normalizedFan,
+            faydaVerified.sub || null,
+            faydaVerified.birthdate || null,
+            faydaVerified.gender || null,
+            userRole === "STUDENT" ? Number(class_id) || null : null,
+            userRole === "PARENT" ? (relationship || "Guardian") : null,
+          ]
+        : [
+            full_name.trim(),
+            email.trim().toLowerCase(),
+            phone_number || null,
+            hashPassword(password),
+            userRole,
+            normalizedNationalId,
+            normalizedFan,
+            userRole === "STUDENT" ? Number(class_id) || null : null,
+            userRole === "PARENT" ? (relationship || "Guardian") : null,
+          ]
     );
 
     await audit(null, "REGISTRATION_REQUEST", { role: userRole, email: email.trim().toLowerCase() }, req);
 
     res.status(201).json({
       success: true,
+      fayda_verified: Boolean(faydaVerified),
       message: userRole === "STUDENT"
         ? "Your enrollment request has been submitted. The school office will approve it before you can sign in."
         : "Your account request has been submitted. Once approved by the school office you will be able to sign in.",
@@ -381,6 +479,207 @@ router.post("/change-password", authenticate, async (req, res) => {
   } catch (err) {
     console.error("change-password error:", err.message);
     res.status(500).json({ error: "Unable to change password." });
+  }
+});
+
+// ─── Fayda (Ethiopian National ID) eSignet verification ──────────────────────
+
+router.get("/fayda/config", (req, res) => {
+  res.json({ configured: fayda.isConfigured(), mock: fayda.isMockEnabled() });
+});
+
+router.post("/fayda/authorize", (req, res) => {
+  const { national_id, phone_number } = req.body || {};
+  const digits = String(national_id || "").replace(/\D/g, "");
+  const phone = String(phone_number || "").replace(/\D/g, "");
+
+  const state = crypto.randomUUID();
+  const store = { codeVerifier: null, expiresAt: Date.now() + VERIFICATION_TTL_MS };
+
+  if (fayda.isConfigured()) {
+    try {
+      const session = fayda.initAuthorize();
+      store.codeVerifier = session.codeVerifier;
+      faydaStates.set(state, store);
+      if (faydaStates.size === 1) setTimeout(pruneFaydaStore, VERIFICATION_TTL_MS);
+      return res.json({ authorizeUrl: session.authorizeUrl, mode: "live" });
+    } catch (err) {
+      console.error("fayda authorize error:", err.message);
+      return res.status(500).json({ error: err.message || "Unable to start Fayda verification." });
+    }
+  }
+
+  if (fayda.isMockEnabled()) {
+    store.mockId = digits || null;
+    store.mockPhone = phone || null;
+    faydaStates.set(state, store);
+    if (faydaStates.size === 1) setTimeout(pruneFaydaStore, VERIFICATION_TTL_MS);
+    const qs = new URLSearchParams({ state });
+    if (store.mockId) qs.set("id", store.mockId);
+    if (store.mockPhone) qs.set("phone", store.mockPhone);
+    const base = `${req.protocol}://${req.get("host")}`;
+    return res.json({ authorizeUrl: `${base}/api/auth/fayda/mock?${qs.toString()}`, mode: "mock" });
+  }
+
+  return res.status(503).json({ error: "Fayda integration is not configured yet.", configured: false });
+});
+
+// Simulated VeriFayda page (dev/test only - active while Fayda is unconfigured).
+router.get("/fayda/mock", (req, res) => {
+  const { state, id, phone } = req.query || {};
+  const stored = faydaStates.get(state);
+  if (!stored || stored.expiresAt <= Date.now()) {
+    return res.status(400).send("Fayda simulation session expired. Please try again from the registration form.");
+  }
+
+  const idLabel = id ? (/^\d{16}$/.test(id) ? "Fayda Alias Number (FAN)" : "Fayda ID (FIN)") : "—";
+  const phoneDisplay = phone ? `+${phone}` : "—";
+  const callbackUrl = `/api/auth/fayda/callback?code=mock.${encodeURIComponent(state)}&state=${encodeURIComponent(state)}`;
+
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(`<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><title>VeriFayda — Simulation</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f1f5f9;margin:0;padding:2rem;color:#0f172a}
+  .card{max-width:440px;margin:2rem auto;background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:2rem;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+  h1{font-size:1.15rem;margin:0 0 .25rem}
+  .sub{font-size:.8rem;color:#64748b;margin:0 0 1.25rem}
+  .row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f1f5f9;font-size:.85rem}
+  .row span{color:#64748b}.row b{font-weight:600}
+  .badge{display:inline-block;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:999px;font-size:.65rem;font-weight:700;padding:.2rem .6rem;letter-spacing:.03em;text-transform:uppercase}
+  .btn{width:100%;border:0;border-radius:.6rem;padding:.7rem 1rem;font-size:.9rem;font-weight:600;cursor:pointer;margin-top:1rem}
+  .btn-primary{background:#2563eb;color:#fff}.btn-primary:hover{background:#1d4ed8}
+  .btn-muted{background:#e2e8f0;color:#334155}.btn-muted:hover{background:#cbd5e1}
+  .otp-box{display:none;margin-top:1.25rem;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:.6rem;padding:1rem}
+  input{width:100%;padding:.6rem .8rem;border:1px solid #cbd5e1;border-radius:.6rem;font-size:1rem;letter-spacing:.35em;text-align:center;font-weight:700}
+  .note{font-size:.72rem;color:#94a3b8;margin-top:.6rem;line-height:1.4}
+  .err{color:#dc2626;font-size:.8rem;margin-top:.6rem;min-height:1rem}
+</style></head><body>
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h1>VeriFayda <small style="color:#94a3b8">2.0</small></h1>
+    <span class="badge">Simulation</span>
+  </div>
+  <p class="sub">This is the simulated National ID login. In production this is the real Fayda portal and your one-time code is sent by SMS to the phone on file.</p>
+
+  <div class="row"><span>Identity</span><b id="idLabel">${idLabel}</b></div>
+  <div class="row"><span>National ID</span><b>${id || "—"}</b></div>
+  <div class="row"><span>Registered phone</span><b>${phoneDisplay}</b></div>
+
+  <button id="sendBtn" class="btn btn-primary">Send one-time code</button>
+
+  <div id="otpBox" class="otp-box">
+    <label style="font-size:.8rem;font-weight:600;color:#475569">One-time code</label>
+    <input id="otpInput" inputmode="numeric" maxlength="8" placeholder="••••••">
+    <p class="note" id="hint">In production this code is delivered by SMS by the National ID Program.</p>
+    <div class="err" id="err"></div>
+    <button id="confirmBtn" class="btn btn-primary" disabled>Confirm &amp; link identity</button>
+  </div>
+</div>
+<script>
+  var OTP = "123456"; // simulation only
+  document.getElementById("sendBtn").onclick = function () {
+    document.getElementById("otpBox").style.display = "block";
+    document.getElementById("hint").textContent = "Simulation: your one-time code is " + OTP + " (in production this is sent by SMS).";
+    document.getElementById("sendBtn").style.display = "none";
+    document.getElementById("otpInput").focus();
+  };
+  var input = document.getElementById("otpInput");
+  var detect = function () {
+    var v = input.value.trim();
+    var ok = (v === OTP);
+    document.getElementById("confirmBtn").disabled = !ok;
+    document.getElementById("err").textContent = v && !ok ? "Incorrect code." : "";
+  };
+  input.oninput = detect;
+  document.getElementById("confirmBtn").onclick = function () {
+    window.location.href = "${callbackUrl}";
+  };
+</script>
+</body></html>`);
+});
+
+router.get("/fayda/callback", async (req, res) => {
+  const { code, state, error, error_description } = req.query || {};
+  const frontendOrigin = process.env.FAYDA_FRONTEND_ORIGIN || process.env.CORS_ORIGINS?.split(",")[0]?.trim() || "http://localhost:3000";
+
+  function respond(payload) {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    const json = JSON.stringify(payload).replace(/</g, "\\u003c");
+    res.send(`<!doctype html><html><body>
+<script>
+(function () {
+  var payload = ${json};
+  if (window.opener) {
+    try { window.opener.postMessage({ type: "FAYDA_RESULT", payload: payload }, "${frontendOrigin}"); } catch (e) {}
+    setTimeout(function () { window.close(); }, 400);
+  } else {
+    document.body.style.fontFamily = "system-ui, sans-serif";
+    document.body.style.padding = "2rem";
+    document.body.textContent = payload.message || "Fayda verification complete. You can close this window.";
+  }
+})();
+</script>
+</body></html>`);
+  }
+
+  if (error) {
+    return respond({ ok: false, message: error_description || "Fayda authorization was declined." });
+  }
+  if (!code || !state) {
+    return respond({ ok: false, message: "Fayda callback is missing required parameters." });
+  }
+  const stored = faydaStates.get(state);
+  if (stored && stored.expiresAt > Date.now()) {
+    faydaStates.delete(state);
+  } else {
+    return respond({ ok: false, message: "Fayda verification expired or invalid. Please try again." });
+  }
+
+  try {
+    let claims;
+    if (typeof code === "string" && code.startsWith("mock.")) {
+      if (!stored.mockId) {
+        return respond({ ok: false, message: "Simulated Fayda session is missing an identity." });
+      }
+      claims = {
+        sub: stored.mockId,
+        name: "Simulated Identity",
+        birthdate: "1995-06-15",
+        gender: "male",
+        phone: stored.mockPhone || null,
+      };
+    } else {
+      const accessToken = await fayda.exchangeCode(code, stored.codeVerifier);
+      claims = await fayda.getUserInfo(accessToken);
+    }
+
+    if (!claims.sub) {
+      return respond({ ok: false, message: "Fayda did not return an identity." });
+    }
+
+    const data = {
+      sub: claims.sub,
+      name: claims.name,
+      birthdate: claims.birthdate,
+      gender: claims.gender,
+      phone: claims.phone,
+    };
+    const ref = createVerificationRef(data);
+
+    return respond({
+      ok: true,
+      ref,
+      mock: Boolean(stored.mockId),
+      verified: {
+        name: claims.name,
+        birthdate: claims.birthdate,
+        gender: claims.gender,
+      },
+    });
+  } catch (err) {
+    console.error("fayda callback error:", err.message);
+    return respond({ ok: false, message: err.message || "Fayda verification failed." });
   }
 });
 

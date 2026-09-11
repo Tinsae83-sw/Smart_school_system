@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const API_BASE = "/api/vp-academic";
 const api = authFetchFor("VP_ACADEMIC");
 
 type ClassSchedule = {
@@ -85,7 +85,7 @@ export default function TimetablesPage() {
       if (schedulesRes.ok) setSchedules(await schedulesRes.json());
       if (classesRes.ok) {
         const data = await classesRes.json();
-        setClasses(data.classes || []);
+        setClasses(Array.isArray(data) ? data : data.classes || []);
       }
       if (teachersRes.ok) setTeachers(await teachersRes.json());
       if (subjectsRes.ok) setSubjects(await subjectsRes.json());

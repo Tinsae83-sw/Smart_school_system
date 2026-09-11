@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/admin";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/admin";
 const api = authFetchFor("SUPER_ADMIN");
 
 type Approval = {
@@ -226,7 +226,7 @@ export default function AdminUsersPage() {
 
         {createdPassword && (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            <strong>Important:</strong> Copy this one-time password now — it will not be shown again. Share it securely with the user.
+            <strong>Important:</strong> Copy this one-time password now â€” it will not be shown again. Share it securely with the user.
             <div className="mt-2 rounded-lg bg-white px-3 py-2 font-mono text-base font-semibold">{createdPassword}</div>
           </div>
         )}
@@ -334,7 +334,7 @@ function ApprovalsTab({ approvals, loading, classes, students, expandedApproval,
         </button>
       </div>
 
-      {loading && <p className="text-sm text-slate-500">Loading requests…</p>}
+      {loading && <p className="text-sm text-slate-500">Loading requestsâ€¦</p>}
 
       {pending.map((a) => {
         const expanded = expandedApproval === a.user_id;
@@ -343,11 +343,11 @@ function ApprovalsTab({ approvals, loading, classes, students, expandedApproval,
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-semibold text-slate-900">{a.full_name}</p>
-                <p className="text-sm text-slate-500">{a.email}{a.phone_number ? ` • ${a.phone_number}` : ""}</p>
+                <p className="text-sm text-slate-500">{a.email}{a.phone_number ? ` â€¢ ${a.phone_number}` : ""}</p>
                 <p className="text-xs text-slate-400 mt-1">
                   Role: <span className="font-medium text-slate-600">{a.role}</span>
-                  {a.role === "STUDENT" && a.requested_class_name ? ` • Requested class: ${a.requested_class_name}` : ""}
-                  {a.role === "PARENT" && a.requested_relationship ? ` • Relationship: ${a.requested_relationship}` : ""}
+                  {a.role === "STUDENT" && a.requested_class_name ? ` â€¢ Requested class: ${a.requested_class_name}` : ""}
+                  {a.role === "PARENT" && a.requested_relationship ? ` â€¢ Relationship: ${a.requested_relationship}` : ""}
                 </p>
               </div>
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">PENDING</span>
@@ -377,7 +377,7 @@ function ApprovalsTab({ approvals, loading, classes, students, expandedApproval,
                       onChange={(e) => setClassId({ ...classId, [a.user_id]: e.target.value })}
                       className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
                     >
-                      <option value="">Select class…</option>
+                      <option value="">Select classâ€¦</option>
                       {classes.map((c) => (
                         <option key={c.class_id} value={c.class_id}>{c.class_name} ({c.academic_year})</option>
                       ))}
@@ -520,7 +520,7 @@ function CreateAccountTab({ classes, createdPassword, onCreated, onNotice, onDon
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-            <input value={form.phone_number} onChange={(e) => setForm({ ...form, phone_number: e.target.value })} className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="+251…" />
+            <input value={form.phone_number} onChange={(e) => setForm({ ...form, phone_number: e.target.value })} className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="+251â€¦" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Role *</label>
@@ -541,7 +541,7 @@ function CreateAccountTab({ classes, createdPassword, onCreated, onNotice, onDon
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Class (optional, link later)</label>
             <select value={form.current_class_id} onChange={(e) => setForm({ ...form, current_class_id: e.target.value })} className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
-              <option value="">Select class…</option>
+              <option value="">Select classâ€¦</option>
               {classes.map((c) => (
                 <option key={c.class_id} value={c.class_id}>{c.class_name} ({c.academic_year})</option>
               ))}
@@ -629,7 +629,7 @@ function LinkParentTab({ students, parents, onNotice, loadStudents, loadParents 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Student</label>
           <select value={studentId} onChange={(e) => setStudentId(e.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
-            <option value="">Select student…</option>
+            <option value="">Select studentâ€¦</option>
             {students.map((s) => (
               <option key={s.user_id} value={s.user_id}>{s.full_name} ({s.student_number})</option>
             ))}
@@ -638,7 +638,7 @@ function LinkParentTab({ students, parents, onNotice, loadStudents, loadParents 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Parent</label>
           <select value={parentId} onChange={(e) => setParentId(e.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
-            <option value="">Select parent…</option>
+            <option value="">Select parentâ€¦</option>
             {parents.map((p) => (
               <option key={p.user_id} value={p.user_id}>{p.full_name} ({p.relationship})</option>
             ))}

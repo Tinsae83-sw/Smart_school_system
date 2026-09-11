@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { isAuthenticated, getUser, clearAuth } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/vp-administration";
 
 type NavItem = {
   label: string;
@@ -92,7 +92,7 @@ export default function VPAdministrationLayout({ children }: { children: React.R
     
     // Check authentication
     if (!isAuthenticated('VP_ADMINISTRATION')) {
-      router.push("/vp-administration/login");
+      router.push("/login");
       return;
     }
 
@@ -106,7 +106,7 @@ export default function VPAdministrationLayout({ children }: { children: React.R
 
   function handleLogout() {
     clearAuth('VP_ADMINISTRATION');
-    router.push("/vp-administration/login");
+    router.push("/login");
   }
 
   if (loading) {

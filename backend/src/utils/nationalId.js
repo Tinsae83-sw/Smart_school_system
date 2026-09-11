@@ -63,10 +63,76 @@ function isFaydaIdLike(value) {
   return /^\d{12}$/.test(normalize(value));
 }
 
+/**
+ * Validate a Fayda Alias Number (FAN).
+ *
+ * FAN is an alias a resident can set instead of sharing their FIN. It is
+ * typically 16 digits and can be changed/revoked, so we only enforce the
+ * digit count here (no uniqueness in the DB).
+ * @param {string} fan - The alias to validate
+ * @returns {{ valid: boolean, error?: string, normalized?: string }}
+ */
+function validateFaydaFan(fan) {
+  const normalized = normalize(fan);
+
+  if (!normalized) {
+    return { valid: true, normalized: null };
+  }
+
+  if (!/^\d+$/.test(normalized)) {
+    return { valid: false, error: "Fayda Alias Number (FAN) must contain only digits." };
+  }
+
+  if (normalized.length !== 16) {
+    return {
+      valid: false,
+      error: `Fayda Alias Number (FAN) must be exactly 16 digits (got ${normalized.length}).`,
+    };
+  }
+
+  return { valid: true, normalized };
+}
+
+/**
+ * Validate a single optional Fayda identifier input.
+ *
+ * Accepts either a 12-digit FIN (Fayda Identification Number) or a 16-digit
+ * FAN (Fayda Alias Number) so the UI only needs one field. Empty input is
+ * valid (the field is optional).
+ * @param {string} value - Raw FIN or FAN
+ * @returns {{ valid: boolean, error?: string, kind?: null|'FIN'|'FAN', normalized?: string|null }}
+ */
+function validateFaydaIdOrAlias(value) {
+  const normalized = normalize(value);
+
+  if (!normalized) {
+    return { valid: true, kind: null, normalized: null };
+  }
+
+  if (!/^\d+$/.test(normalized)) {
+    return { valid: false, error: "Fayda ID must contain only digits." };
+  }
+
+  if (normalized.length === 12) {
+    return { valid: true, kind: "FIN", normalized };
+  }
+
+  if (normalized.length === 16) {
+    return { valid: true, kind: "FAN", normalized };
+  }
+
+  return {
+    valid: false,
+    error: `Enter your 12-digit Fayda ID (FIN) or your 16-digit Fayda Alias (FAN) (got ${normalized.length}).`,
+  };
+}
+
 module.exports = {
   validateFaydaId,
   formatFaydaId,
   normalize,
   isFaydaIdLike,
+  validateFaydaFan,
+  validateFaydaIdOrAlias,
   FAYDA_LENGTH,
 };

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/department-head";
 const api = authFetchFor("DEPARTMENT_HEAD");
 
 type AtRiskStudent = {

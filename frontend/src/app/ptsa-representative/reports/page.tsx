@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/ptsa";
 const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type Report = {
@@ -178,7 +178,7 @@ export default function ReportsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <p className="font-medium text-slate-900 text-sm">{report.title}</p>
-                      <p className="text-xs text-slate-500 mt-1">{report.type} • {report.description}</p>
+                      <p className="text-xs text-slate-500 mt-1">{report.type} â€¢ {report.description}</p>
                       <p className="text-xs text-slate-400 mt-2">Generated: {new Date(report.generated_at).toLocaleDateString()}</p>
                     </div>
                     <button

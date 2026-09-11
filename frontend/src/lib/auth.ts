@@ -33,7 +33,7 @@ export const AUTH_CONFIGS: Record<UserRole, AuthConfig> = {
   STUDENT: {
     tokenKey: 'student_token',
     userKey: 'student_name',
-    loginPath: '/student/login',
+    loginPath: '/login',
     dashboardPath: '/student',
   },
   TEACHER: {
@@ -45,49 +45,49 @@ export const AUTH_CONFIGS: Record<UserRole, AuthConfig> = {
   PARENT: {
     tokenKey: 'parent_token',
     userKey: 'parent_name',
-    loginPath: '/parent/login',
+    loginPath: '/login',
     dashboardPath: '/parent',
   },
   PRINCIPAL: {
     tokenKey: 'principal_token',
     userKey: 'principal_user',
-    loginPath: '/principal/login',
+    loginPath: '/login',
     dashboardPath: '/principal',
   },
   VP_ACADEMIC: {
     tokenKey: 'vp_academic_token',
     userKey: 'vp_academic_user',
-    loginPath: '/vp-academic/login',
+    loginPath: '/login',
     dashboardPath: '/vp-academic',
   },
   VP_ADMINISTRATION: {
     tokenKey: 'vp_admin_token',
     userKey: 'vp_admin_user',
-    loginPath: '/vp-administration/login',
+    loginPath: '/login',
     dashboardPath: '/vp-administration',
   },
   DEPARTMENT_HEAD: {
     tokenKey: 'dept_head_token',
     userKey: 'dept_head_user',
-    loginPath: '/department-head/login',
+    loginPath: '/login',
     dashboardPath: '/department-head',
   },
   PTSA_REPRESENTATIVE: {
     tokenKey: 'ptsa_rep_token',
     userKey: 'ptsa_rep_user',
-    loginPath: '/ptsa-representative/login',
+    loginPath: '/login',
     dashboardPath: '/ptsa-representative',
   },
   SIC_MEMBER: {
     tokenKey: 'sic_member_token',
     userKey: 'sic_member_user',
-    loginPath: '/sic-member/login',
+    loginPath: '/login',
     dashboardPath: '/sic-member',
   },
   ADMIN: {
     tokenKey: 'admin_token',
     userKey: 'admin_user',
-    loginPath: '/admin/login',
+    loginPath: '/login',
     dashboardPath: '/admin/classes',
   },
   NON_ACADEMIC_STAFF: {

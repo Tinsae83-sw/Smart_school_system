@@ -14,7 +14,11 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
     headers.set("Content-Type", "application/json");
   }
 
-  const res = await fetch(`${API_BASE}${path}`, { ...rest, headers });
+  const url = path.startsWith("http://") || path.startsWith("https://")
+    ? path
+    : `${API_BASE}${path}`;
+
+  const res = await fetch(url, { ...rest, headers });
 
   if (!res.ok) {
     let message = `Request failed (${res.status})`;

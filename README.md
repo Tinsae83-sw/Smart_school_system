@@ -1,91 +1,140 @@
 # Smart School System
 
-A production-oriented school management platform. This branch (`feat/user-management`) delivers a **real**, self-service account management system backed by a Postgres database with SMTP email delivery — replacing the earlier dummy/mock registration.
+A full school-management platform: attendance, grades, assignments, messaging, reporting, discipline, and more — with role-based dashboards for every stakeholder.
 
-## What's included in this branch
+## Tech Stack
 
-### Account lifecycle (Backend)
-- `users` now carries an account `status` (`PENDING` / `ACTIVE` / `REJECTED` / `SUSPENDED`) plus:
-  - `requested_class_id`, `requested_relationship` — captured at self-service signup
-  - `approved_by`, `approved_at` — audit trail for admin decisions
-  - `must_reset_password` — flags admin-created accounts that must complete a first-login setup
-- Migrations:
-  - `20260902010000_account_lifecycle`
-  - `20260902020000_first_login_setup`
+- **Backend** — Express.js + PostgreSQL (REST API, JWT auth, OTP setup flow)
+- **Frontend** — Next.js 15 / React 19 (role-based dashboards)
+- **Database** — PostgreSQL 15 via Docker (optional: any Postgres 14+)
+- **Roles** — SUPER_ADMIN, ADMIN, PRINCIPAL, VP_ACADEMIC, VP_ADMINISTRATION, DEPARTMENT_HEAD, TEACHER, STUDENT, PARENT, PTSA_REPRESENTATIVE, SIC_MEMBER
 
-### Self-service registration
-- `POST /api/auth/register` for `STUDENT` / `PARENT` roles (real password rules, confirm-password check).
-- New accounts are created `PENDING` and wait for admin approval.
-- Public `GET /api/auth/classes` feeds the signup form's class dropdown.
+## Prerequisites
 
-### Admin user management
-- Admin sidebar with **Class Management** + **User Management**.
-- `/admin/users` tabs:
-  - **Approvals** — review self-service signups with an inline form (class dropdown for students, student picker to link parents), Approve / Reject.
-  - **Create Account** — admin-created accounts are `ACTIVE`, get a generated password, and are flagged `must_reset_password` (first-login OTP setup).
-  - **Link Parent** — associate a parent with a student.
-  - **All Accounts** — full user list.
-- Endpoints: `GET /approvals`, `PUT /approvals/:id/approve`, `DELETE /approvals/:id/approve`, `POST /users`, `GET /students`, `GET /parents`, `POST /users/link-parent`.
+- **Node.js 18+** (tested with 20/22)
+- **npm**
+- **Docker Desktop** (for the local PostgreSQL database)
+- ~2 GB free RAM extra (more if you run everything at once)
 
-### First-login setup with email OTP
-- Admin-created accounts must verify via a short-lived OTP and set their own real password on first login. Self-service registrants set their password at signup (no OTP).
-- `POST /api/auth/verify-otp`, `POST /api/auth/setup-password`.
-- OTP delivery via real SMTP (nodemailer) when `OTP_DELIVERY=email`, console fallback otherwise.
-  - Env vars: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `OTP_EMAIL_FROM`.
-- Session vs. one-time-setup tokens: a `setup` token grants **only** the set-password endpoint; all protected routes require a proper `session` token.
+---
 
-### Login UI
-- `/login` is a 3-step flow: credentials → OTP → set-password, with role-aware redirect.
+## 1. Clone and install
 
-## Setup
+```bash
+git clone https://github.com/Tinsae83-sw/Smart_school_system.git
+cd Smart_school_system
+```
+
+### Backend
 
 ```bash
 cd backend
 npm install
-# copy backend/.env.example -> backend/.env and fill in DB + SMTP values
-node scripts/applyMigrations.js   # apply the migrations
-node scripts/seed.js              # seed demo users (password: Password123!)
-npm run dev                       # backend on :5000
+copy .env.example .env        # Windows
+# cp .env.example .env        # macOS / Linux
 ```
 
-Frontend:
+### Frontend
+
+```bash
+cd ../frontend
+npm install
+copy .env.example .env        # Windows
+# cp .env.example .env        # macOS / Linux
+```
+
+---
+
+## 2. Start the database
+
+From the project root:
+
+```bash
+docker compose up -d db
+```
+
+This runs PostgreSQL 15 on `localhost:5433` (container `smart_school_db`).
+If you prefer your own Postgres, just point `DATABASE_URL` in `backend/.env` at it.
+
+## 3. Prepare the schema and seed data
+
+```bash
+cd backend
+npm run db:setup     # applies Prisma migrations
+npm run db:seed      # creates demo accounts
+```
+
+## 4. Run
+
+### Backend (terminal 1)
+
+```bash
+cd backend
+npm run dev        # nodemon (auto-reload)
+# or: npm start    # plain node src/server.js
+```
+
+Backend listens on `http://localhost:5000`.
+
+### Frontend (terminal 2)
 
 ```bash
 cd frontend
-npm install
-npm run dev                       # frontend on :3000
+npm run dev        # Next.js dev server (Turbopack)
 ```
 
-Demo logins (all password `Password123!`):
-`superadmin@example.com`, `principal@example.com`, `depthead@example.com`, `teacher@example.com`, etc.
+Open **http://localhost:3000**.
 
-## Ethiopian National ID (Fayda)
+For a faster production-like experience:
 
-The system integrates Ethiopia's 12-digit Fayda National ID:
+```bash
+cd frontend
+npm run build
+npm start
+```
 
-- `users.national_id` column (unique, optional) added via migration `20260903000000_add_national_id`.
-- Validation utility `backend/src/utils/nationalId.js` — `validateFaydaId()`, `formatFaydaId()`, `normalize()`.
-- Accepted/validated in: self-service registration, admin user creation/update, teacher profile.
-- Frontend forms: `/register`, `/admin/users`, `/teacher/profile`.
+---
 
-## Deployment
+## Demo accounts
 
-### Recommended free stack
-| Component | Provider | Free tier |
-|-----------|----------|-----------|
-| Frontend  | Vercel   | Unlimited static + serverless |
-| Backend   | Render   | 750 hrs/mo (spins down after 15 min idle) |
-| Database  | Supabase / Neon | 0.5 GB Postgres |
+Every demo account's password is `Password123!` (created by `npm run db:seed`):
 
-### Backend (Render)
-- `backend/Dockerfile` + `render.yaml` at repo root.
-- Env vars to set in Render: `DATABASE_URL`, `DATABASE_SSL=true`, `JWT_SECRET`, `CORS_ORIGINS` (the deployed Vercel URL), plus SMTP vars for OTP emails.
-- Migrations run automatically on container boot.
+| Role              | Email                     |
+|-------------------|---------------------------|
+| Super Admin       | superadmin@example.com    |
+| Principal         | principal@example.com     |
+| VP Academic       | vpacademic@example.com    |
+| VP Administration | vpadmin@example.com       |
+| Department Head   | depthead@example.com      |
+| Teacher           | teacher@example.com       |
+| Student           | student@example.com       |
+| Parent            | parent@example.com        |
+| PTSA Representative | ptsa@example.com        |
+| SIC Member        | sic@example.com           |
 
-### Frontend (Vercel)
-- Root deploys the `frontend/` folder; `vercel.json` sets the build/install commands.
-- Env var: `NEXT_PUBLIC_API_BASE` = your deployed backend URL (e.g. `https://your-backend.onrender.com`).
-- `frontend/.env.example` documents the required variable; the API base reads it and falls back to `http://localhost:5000` in dev.
+First login prompts for an email OTP — with `OTP_DELIVERY=console` (backend default) the code is printed to the backend terminal.
 
-### Local endpoints
-- Health: `GET /api/health` returns DB connectivity status.
+---
+
+## Fayda (Ethiopian National ID)
+
+Registration works offline with an optional 12-digit FIN / 16-digit FAN field. The "Verify with Fayda" button runs a simulated flow until real partner credentials are set:
+
+```
+FAYDA_CLIENT_ID, FAYDA_PRIVATE_KEY, FAYDA_REDIRECT_URI, FAYDA_MOCK
+```
+
+Live verification activates automatically when the three credentials above are filled in. See the comments in `backend/.env.example`.
+
+---
+
+## Useful scripts
+
+| Command                     | What it does                              |
+|-----------------------------|-------------------------------------------|
+| `docker compose up -d db`   | Start PostgreSQL (root dir)               |
+| `npm run db:setup`          | Apply migrations (backend)                |
+| `npm run db:seed`           | Seed demo accounts (backend)              |
+| `npm run db:reset`          | Drop + recreate schema                    |
+| `npm run dev`               | backend: nodemon / frontend: Turbopack    |
+| `npm run build && npm start`| Frontend production mode                  |

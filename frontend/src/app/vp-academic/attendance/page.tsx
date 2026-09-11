@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const API_BASE = "/api/vp-academic";
 const api = authFetchFor("VP_ACADEMIC");
 
 type AttendanceRecord = {
@@ -60,6 +60,7 @@ export default function AttendancePage() {
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [showModal, setShowModal] = useState(false);
+  const [studentsList, setStudentsList] = useState<Array<{ student_id: number; full_name: string; class_id: number | null; class_name: string }>>([]);
   const [formData, setFormData] = useState({
     student_id: "",
     status: "PRESENT" as "PRESENT" | "ABSENT" | "LATE",
@@ -163,8 +164,34 @@ export default function AttendancePage() {
     fetchData();
   }, [activeTab, selectedClass, selectedDate]);
 
+  async function loadStudents() {
+    try {
+      const res = await api(`${API_BASE}/students`);
+      if (res.ok) {
+        const data = await res.json();
+        const list = (data.all || []).map((s: any) => ({
+          student_id: s.student_id,
+          full_name: s.user?.full_name || `Student #${s.student_id}`,
+          class_id: s.current_class?.class_id ?? null,
+          class_name: s.current_class?.class_name || "Unassigned",
+        }));
+        setStudentsList(list);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!selectedClass) {
+      alert("Please select a class before recording attendance.");
+      return;
+    }
+    if (!formData.student_id) {
+      alert("Please choose a student.");
+      return;
+    }
     try {
       const res = await api(`${API_BASE}/academic/attendance`, {
         method: "POST",
@@ -244,6 +271,7 @@ export default function AttendancePage() {
             onClick={() => {
               setFormData({ student_id: "", status: "PRESENT", remarks: "" });
               setShowModal(true);
+              loadStudents();
             }}
             className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
           >
@@ -525,14 +553,27 @@ export default function AttendancePage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Student ID</label>
-                <input
-                  type="number"
+                <label className="block text-sm font-medium text-slate-700 mb-1">Student</label>
+                <select
                   required
                   value={formData.student_id}
                   onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
                   className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
+                >
+                  <option value="">
+                    {selectedClass
+                      ? "Select a student..."
+                      : "Select a class filter first..."}
+                  </option>
+                  {(selectedClass
+                    ? studentsList.filter((s) => String(s.class_id) === String(selectedClass))
+                    : studentsList
+                  ).map((s) => (
+                    <option key={s.student_id} value={s.student_id}>
+                      {s.full_name} &mdash; {s.class_name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

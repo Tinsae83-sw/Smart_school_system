@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+const API_BASE = "/api/vp-academic";
 const api = authFetchFor("VP_ACADEMIC");
 
 // Subject to department mapping for subjects without department data

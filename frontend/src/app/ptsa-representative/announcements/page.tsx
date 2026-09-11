@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { authFetchFor } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/ptsa";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000") + "/api/ptsa";
 const api = authFetchFor("PTSA_REPRESENTATIVE");
 
 type Announcement = {
@@ -104,7 +104,7 @@ export default function AnnouncementsPage() {
                   </div>
                   <h3 className="text-lg font-bold text-slate-900">{announcement.title}</h3>
                   <p className="text-sm text-slate-500 mt-1">
-                    By {announcement.created_by} • {new Date(announcement.created_at).toLocaleDateString()}
+                    By {announcement.created_by} â€¢ {new Date(announcement.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 {!announcement.is_active && (

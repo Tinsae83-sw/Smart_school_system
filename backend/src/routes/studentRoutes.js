@@ -574,24 +574,42 @@ router.get("/grades", async (req, res) => {
 router.get("/messages", async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT m.*, u.full_name AS other_name, u.role AS other_role
+      `SELECT m.message_id, m.sender_id, m.receiver_id, m.content, m.timestamp, m.is_read, m.attachment,
+              u.full_name AS other_name, u.role AS other_role
          FROM messages m
          LEFT JOIN users u ON u.user_id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
         WHERE m.sender_id = $1 OR m.receiver_id = $1
         ORDER BY m.timestamp ASC`,
       [req.user.user_id]
     );
-    res.json(rows.map((m) => ({
-      message_id: m.message_id,
-      sender_id: m.sender_id,
-      receiver_id: m.receiver_id,
-      content: m.content,
-      timestamp: m.timestamp,
-      is_read: m.is_read,
-      attachment: m.attachment,
-      other_name: m.other_name,
-      other_role: m.other_role,
-    })));
+
+    // Group into threads keyed by the other participant's user id.
+    const threads = new Map();
+    for (const m of rows) {
+      const otherId = m.sender_id === req.user.user_id ? m.receiver_id : m.sender_id;
+      if (!threads.has(otherId)) {
+        threads.set(otherId, {
+          thread_id: otherId,
+          recipient_name: m.other_name || "Unknown",
+          recipient_role: m.other_role || "Staff",
+          student_id: null,
+          last_message: "",
+          unread: 0,
+          messages: [],
+        });
+      }
+      const thread = threads.get(otherId);
+      thread.messages.push({
+        sender: m.sender_id === req.user.user_id ? "student" : thread.recipient_role?.toLowerCase() === "teacher" ? "teacher" : "staff",
+        body: m.content,
+        attachment: m.attachment,
+        created_at: m.timestamp,
+      });
+      thread.last_message = m.content;
+      if (m.receiver_id === req.user.user_id && !m.is_read) thread.unread += 1;
+    }
+
+    res.json(Array.from(threads.values()));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Unable to fetch messages." });
@@ -599,14 +617,16 @@ router.get("/messages", async (req, res) => {
 });
 
 router.post("/messages", async (req, res) => {
-  const { recipient_id, content } = req.body || {};
-  if (!recipient_id || !content) {
-    return res.status(400).json({ error: "recipient_id and content are required." });
+  const { recipient_id, content, thread_id, body } = req.body || {};
+  const receiverId = recipient_id != null ? Number(recipient_id) : thread_id != null ? Number(thread_id) : null;
+  const messageBody = content != null ? content : body;
+  if (!receiverId || !messageBody) {
+    return res.status(400).json({ error: "recipient_id (or thread_id) and content (or body) are required." });
   }
   try {
     await pool.query(
       `INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3)`,
-      [req.user.user_id, recipient_id, content]
+      [req.user.user_id, receiverId, messageBody]
     );
     res.json({ success: true });
   } catch (error) {

@@ -105,7 +105,7 @@ export default function StudentMessages() {
 
               {/* Message History */}
               <div className="flex-1 p-4 space-y-3 max-h-80 overflow-y-auto">
-                {currentThread.messages.map((message: any, index: number) => (
+                {Array.isArray(currentThread.messages) && currentThread.messages.length > 0 ? currentThread.messages.map((message: any, index: number) => (
                   <div key={index} className={`flex ${message.sender === "student" ? "justify-end" : "justify-start"}`}>
                     <div className={`rounded-2xl px-4 py-2.5 max-w-[80%] ${
                       message.sender === "student"
@@ -118,7 +118,7 @@ export default function StudentMessages() {
                       </p>
                     </div>
                   </div>
-                ))}
+                )) : null}
               </div>
 
               {/* Compose Area */}

@@ -1,0 +1,158 @@
+SMART SCHOOL SYSTEM — WHERE WE ARE
+=================================
+Generado: 07 Sep 2026
+Branch/git state captured at the time of writing.
+
+---------------------------------------------------
+1. BIG PICTURE
+---------------------------------------------------
+Smart School System is a full school-management platform:
+  - Express.js + PostgreSQL backend  (REST API, JWT auth)
+  - Next.js 15 / React 19 frontend   (role-based dashboards)
+  - Local dev DB: Postgres 15 via docker-compose on port 5433
+  - 11 user roles (SUPER_ADMIN, ADMIN, PRINCIPAL, VP_ACADEMIC,
+    VP_ADMINISTRATION, DEPARTMENT_HEAD, TEACHER, STUDENT, PARENT,
+    PTSA_REPRESENTATIVE, SIC_MEMBER)
+  - ~105 frontend page routes across 10 role dashboards
+  - 12 database migrations
+
+---------------------------------------------------
+2. GIT STATUS (CURRENT)
+---------------------------------------------------
+Repo URL:   https://github.com/Tinsae83-sw/Smart_school_system.git
+Current branch:  feat/user-management
+Working tree:   CLEAN (nothing uncommitted)
+
+Recent commits (newest first):
+  1.  fb5926e  feat: deployment readiness, Ethiopian National ID (Fayda),
+               and complete vp-admin routes
+  2.  5bb8015  feat: real account lifecycle with self-service registration,
+               admin approvals, and email-OTP first-login setup
+  3.  269134a  feat: add AI assistant for all roles
+  4.  c9de788  Add frontend source code
+  5.  2ad6220  Update management features
+  (older commits below: merge of functional requirements, initial commits)
+
+Origin branches include: main, feature/ai-assistant, feat/user-management,
+functionalrequ, functionalrequirements, managements_side, mubeyin, update1.
+
+---------------------------------------------------
+3. WHERE WE ARE IN THE PROJECT
+---------------------------------------------------
+We are in the BETA / PRODUCTION-READINESS phase.
+
+We have been converting the system from a "demo/dummy" project into a real,
+production-oriented system. The work done so far, in order:
+
+  A) ACCOUNT LIFECYCLE  (real registration + approval)
+     - users table now tracks status: PENDING / ACTIVE / REJECTED / SUSPENDED
+     - self-service signup (STUDENT / PARENT) creates PENDING accounts
+     - admin must approve before the account can log in
+     - admin can create accounts directly (immediately ACTIVE)
+     - migrations:
+        20260902010000_account_lifecycle
+        20260902020000_first_login_setup
+
+  B) FIRST-LOGIN OTP SETUP  (real email delivery)
+     - admin-created accounts must verify via a short-lived OTP
+     - then set their own real password (must_reset_password flag)
+     - OTP delivered by real SMTP email via Brevo (nodemailer)
+       (OTP_DELIVERY=email); console fallback in dev
+     - login UI is a 3-step flow: credentials -> OTP -> set-password
+     - "setup" JWTs only unlock the set-password endpoint (no full session)
+
+  C) ADMIN USER MANAGEMENT UI
+     - /admin/users with tabs: Approvals, Create Account, Link Parent,
+       All Accounts
+     - approvals use inline dropdowns (class picker for students,
+       student picker to link parents) — no more raw prompt() dialogs
+     - admin sidebar navigation (Class Management + User Management)
+
+  D) DEPLOYMENT READINESS + ETHIOPIAN NATIONAL ID (Fayda) + VP-ADMIN
+     (newest commit fb5926e)
+     - deployment blueprint (render.yaml, backend Dockerfile)
+     - Fayda National ID validation (nationalId.js utility)
+     - completed vp-administration routes
+
+---------------------------------------------------
+4. HOW EVERYTHING RUNS (LOCAL)
+---------------------------------------------------
+Database (only the DB runs in Docker; backend/frontend run natively):
+  docker compose up -d db
+  # Postgres 15, port 5433, database smart_school, user/pass school/school
+
+Backend (port 5000):
+  cd backend
+  npm install
+  # copy backend/.env.example -> backend/.env and fill real values
+  node scripts/applyMigrations.js    # apply migrations
+  node scripts/seed.js               # demo users (password: Password123!)
+  npm run dev                        # nodemon
+
+Frontend (port 3000):
+  cd frontend
+  npm install
+  npm run dev
+
+URLs:
+  Frontend   -> http://localhost:3000
+  Backend    -> http://localhost:5000
+  Login page -> http://localhost:3000/login
+
+Demo users (password Password123!):
+  superadmin@example.com
+  principal@example.com
+  depthead@example.com
+  teacher@example.com
+  (and others seeded by scripts/seed.js)
+
+---------------------------------------------------
+5. REPO / FOLDER LAYOUT
+---------------------------------------------------
+Smart_school_system/
+  README.md               project docs
+  docker-compose.yml      local Postgres 15 (dev only)
+  render.yaml             Render.com deployment blueprint
+  backend/
+    src/
+      server.js           Express entry point (mounts all routes)
+      config/             db.js (pg pool), assistantKnowledge.js
+      middleware/         auth.js (JWT verify + role authorize)
+      routes/             auth, admin, teacher, student, parent, principal,
+                          vpAcademic, vpAdministration, departmentHead,
+                          ptsa, sic, chat (AI), governance/ (shared)
+      utils/              token, password, otp, audit, nationalId,
+                          storage (S3/local), llm, assistant
+    prisma/migrations/    12 SQL migration folders
+    scripts/              applyMigrations.js, db.js, seed.js
+    .env                 real secrets (gitignored, NOT committed)
+    .env.example         template (committed)
+    Dockerfile           Node 20 Alpine, runs migrations + server
+  frontend/
+    src/app/              role dashboards (~105 pages), login, register,
+                          chat, contact
+    src/lib/              auth.ts (roles + routing), api.ts (HTTP client)
+
+---------------------------------------------------
+6. IMPORTANT NOTES / CAVEATS
+---------------------------------------------------
+  - backend/.env is NOT in git and must NOT be committed.
+    It currently holds live Brevo SMTP credentials used for real OTP emails.
+  - backend/uploads/ holds runtime files, not committed.
+  - The repo has several older branches (main, feature/ai-assistant, etc.)
+    These predate the current work. feat/user-management contains the
+    newest, coherent, bootable state.
+  - feature/ai-assistant HEAD was found to be internally inconsistent
+    (a commit referenced middleware/auth.js which that branch lacked).
+    feat/user-management has the complete working backend instead.
+
+---------------------------------------------------
+7. NEXT POSSIBLE STEPS (if you want to keep going)
+---------------------------------------------------
+  1. Deploy to Render (backend Dockerfile + render.yaml are ready).
+     Set DATABASE_URL + JWT_SECRET + SMTP_* env vars on Render.
+  2. Merge feat/user-management -> main via a Pull Request when ready,
+     so main becomes the deployable branch.
+  3. Add passkey (WebAuthn) support to the existing auth if you want
+     passwordless logins WITHOUT adopting a provider like PocketID.
+  4. Seed more realistic demo data (classes, subjects, terms) per role.

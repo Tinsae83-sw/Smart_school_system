@@ -221,34 +221,34 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-slate-800">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading profile...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 dark:border-emerald-400 mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-300">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-6 md:p-8">
+    <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6 md:p-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
             My Profile
           </h1>
-          <p className="text-slate-600 mt-2">Manage your personal information and account settings</p>
+          <p className="text-slate-600 dark:text-slate-300 mt-2">Manage your personal information and account settings</p>
         </div>
 
         {message && (
-          <div className={`mb-6 rounded-xl p-4 ${messageType === "success" ? "bg-emerald-50 border border-emerald-200 text-emerald-800" : "bg-red-50 border border-red-200 text-red-800"}`}>
+          <div className={`mb-6 rounded-xl p-4 ${messageType === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-400" : "bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-400"}`}>
             <p className="text-sm font-medium">{message}</p>
           </div>
         )}
 
         {/* Profile Card */}
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6">
           {/* Cover Image */}
           <div className="h-32 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
 
@@ -256,7 +256,7 @@ export default function ProfilePage() {
             <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16 mb-6">
               <div className="flex items-end gap-6">
                 <div className="relative group">
-                  <div className="h-32 w-32 rounded-2xl bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-white">
+                  <div className="h-32 w-32 rounded-2xl bg-white dark:bg-slate-700 shadow-lg flex items-center justify-center overflow-hidden border-4 border-white dark:border-slate-700">
                     {editForm.profile_picture_url ? (
                       <img
                         src={editForm.profile_picture_url}
@@ -264,7 +264,7 @@ export default function ProfilePage() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="text-5xl font-bold text-emerald-600">
+                      <span className="text-5xl font-bold text-emerald-600 dark:text-emerald-400">
                         {profile?.full_name?.charAt(0) || "T"}
                       </span>
                     )}
@@ -285,17 +285,17 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <div className="pb-2">
-                  <h2 className="text-2xl font-bold text-slate-900">{profile?.full_name}</h2>
-                  <p className="text-emerald-600 font-medium">{profile?.department}</p>
-                  <p className="text-slate-500 text-sm">{profile?.email}</p>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{profile?.full_name}</h2>
+                  <p className="text-emerald-600 dark:text-emerald-400 font-medium">{profile?.department}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">{profile?.email}</p>
                 </div>
               </div>
               <button
                 onClick={() => setEditMode(!editMode)}
                 className={`mt-4 md:mt-0 rounded-xl px-6 py-3 text-sm font-semibold transition-all ${
                   editMode
-                    ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-200"
+                    ? "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
+                    : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/50"
                 }`}
               >
                 {editMode ? "Cancel" : "Edit Profile"}
@@ -306,39 +306,39 @@ export default function ProfilePage() {
               <form onSubmit={handleUpdateProfile} className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Full Name</label>
                     <input
                       type="text"
                       value={editForm.full_name}
                       onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Phone Number</label>
                     <input
                       type="tel"
                       value={editForm.phone_number}
                       onChange={(e) => setEditForm({ ...editForm, phone_number: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Email</label>
                     <input
                       type="email"
                       value={editForm.email}
                       onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Qualification</label>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Qualification</label>
                     <input
                       type="text"
                       value={editForm.qualification}
                       onChange={(e) => setEditForm({ ...editForm, qualification: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                     />
                   </div>
                 </div>
@@ -346,14 +346,14 @@ export default function ProfilePage() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="rounded-xl bg-emerald-600 px-8 py-3 text-white font-semibold hover:bg-emerald-700 transition disabled:bg-slate-300 shadow-lg shadow-emerald-200"
+                    className="rounded-xl bg-emerald-600 px-8 py-3 text-white font-semibold hover:bg-emerald-700 transition disabled:bg-slate-300 dark:disabled:bg-slate-600 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/50"
                   >
                     {saving ? "Saving..." : "Save Changes"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditMode(false)}
-                    className="rounded-xl bg-slate-100 px-8 py-3 text-slate-700 font-semibold hover:bg-slate-200 transition"
+                    className="rounded-xl bg-slate-100 dark:bg-slate-700 px-8 py-3 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition"
                   >
                     Cancel
                   </button>
@@ -361,21 +361,21 @@ export default function ProfilePage() {
               </form>
             ) : (
               <div className="grid gap-6 md:grid-cols-2">
-                <div className="bg-slate-50 rounded-xl p-5">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Employee ID</label>
-                  <p className="text-lg font-semibold text-slate-900">{profile?.employee_id || "N/A"}</p>
+                <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-5">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Employee ID</label>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{profile?.employee_id || "N/A"}</p>
                 </div>
-                <div className="bg-slate-50 rounded-xl p-5">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Phone</label>
-                  <p className="text-lg font-semibold text-slate-900">{profile?.phone_number || "N/A"}</p>
+                <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-5">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Phone</label>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{profile?.phone_number || "N/A"}</p>
                 </div>
-                <div className="bg-slate-50 rounded-xl p-5">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Qualification</label>
-                  <p className="text-lg font-semibold text-slate-900">{profile?.qualification || "N/A"}</p>
+                <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-5">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Qualification</label>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{profile?.qualification || "N/A"}</p>
                 </div>
-                <div className="bg-slate-50 rounded-xl p-5">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Joined Date</label>
-                  <p className="text-lg font-semibold text-slate-900">
+                <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-5">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Joined Date</label>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">
                     {profile?.joined_date ? new Date(profile.joined_date).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "N/A"}
                   </p>
                 </div>
@@ -385,18 +385,18 @@ export default function ProfilePage() {
         </div>
 
         {/* Change Password Section */}
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-700 p-8 mb-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Security</h2>
-              <p className="text-slate-500 text-sm mt-1">Change your password to keep your account secure</p>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Security</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Change your password to keep your account secure</p>
             </div>
             <button
               onClick={() => setShowPasswordForm(!showPasswordForm)}
               className={`rounded-xl px-6 py-3 text-sm font-semibold transition-all ${
                 showPasswordForm
-                  ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  : "bg-slate-900 text-white hover:bg-slate-800"
+                  ? "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
+                  : "bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 dark:hover:bg-slate-600"
               }`}
             >
               {showPasswordForm ? "Cancel" : "Change Password"}
@@ -406,41 +406,41 @@ export default function ProfilePage() {
           {showPasswordForm && (
             <form onSubmit={handleChangePassword} className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Current Password</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Current Password</label>
                 <input
                   type="password"
                   value={passwordForm.current_password}
                   onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
                   required
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                 />
               </div>
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">New Password</label>
                   <input
                     type="password"
                     value={passwordForm.new_password}
                     onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
                     required
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Password</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Confirm New Password</label>
                   <input
                     type="password"
                     value={passwordForm.confirm_password}
                     onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
                     required
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                   />
                 </div>
               </div>
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-xl bg-emerald-600 px-8 py-3 text-white font-semibold hover:bg-emerald-700 transition disabled:bg-slate-300 shadow-lg shadow-emerald-200"
+                className="rounded-xl bg-emerald-600 px-8 py-3 text-white font-semibold hover:bg-emerald-700 transition disabled:bg-slate-300 dark:disabled:bg-slate-600 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/50"
               >
                 {saving ? "Changing..." : "Update Password"}
               </button>
@@ -451,7 +451,7 @@ export default function ProfilePage() {
         {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="w-full rounded-2xl bg-red-600 px-6 py-4 text-white font-semibold hover:bg-red-700 transition shadow-lg shadow-red-200"
+          className="w-full rounded-2xl bg-red-600 px-6 py-4 text-white font-semibold hover:bg-red-700 transition shadow-lg shadow-red-200 dark:shadow-red-900/50"
         >
           Logout
         </button>

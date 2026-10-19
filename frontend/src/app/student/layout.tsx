@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { StudentContext, authHeaders, BACKEND_URL } from "./StudentContext";
 import { isAuthenticated, getUser, clearAuth, getToken, clearAllAuth } from "@/lib/auth";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
   { href: "/student", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 5a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -116,10 +117,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading...</p>
+          <p className="text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
     );
@@ -135,16 +136,16 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         refreshProfile: loadProfile,
       }}
     >
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
         {/* Top bar */}
-        <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+        <header className="fixed top-0 left-0 right-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
           <div className="flex items-center justify-between px-4 h-16">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 rounded-xl hover:bg-slate-100 transition"
+                className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition"
               >
-                <svg className="w-6 h-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-6 h-6 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
@@ -155,21 +156,22 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                   </svg>
                 </div>
-                <span className="text-lg font-bold text-slate-900 hidden sm:block">EduConnect</span>
+                <span className="text-lg font-bold text-slate-900 dark:text-slate-100 hidden sm:block">EduConnect</span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
+              <ThemeToggle />
               <div className="hidden sm:block text-right">
-                <p className="text-sm font-semibold text-slate-900">{profile?.full_name || "Student"}</p>
-                <p className="text-xs text-slate-500">{profile?.student_number || ""}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile?.full_name || "Student"}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{profile?.student_number || ""}</p>
               </div>
-              <div className="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold text-sm">
+              <div className="w-9 h-9 rounded-full bg-sky-100 dark:bg-sky-900 flex items-center justify-center text-sky-700 dark:text-sky-300 font-bold text-sm">
                 {profile?.full_name?.charAt(0) || "S"}
               </div>
               <button
                 onClick={logout}
-                className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 transition"
+                className="rounded-xl bg-slate-100 dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
               >
                 Logout
               </button>
@@ -183,7 +185,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
         {/* Sidebar */}
         <aside
-          className={`fixed top-16 left-0 bottom-0 z-40 w-64 bg-white border-r border-slate-200 overflow-y-auto transition-transform duration-200 ${
+          className={`fixed top-16 left-0 bottom-0 z-40 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 overflow-y-auto transition-transform duration-200 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } lg:translate-x-0`}
         >
@@ -197,8 +199,8 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition ${
                     isActive
-                      ? "bg-sky-50 text-sky-700 border border-sky-100"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      ? "bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-100 dark:border-sky-800"
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
                   <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={isActive ? 2 : 1.5}>

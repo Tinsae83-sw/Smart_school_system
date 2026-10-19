@@ -19,10 +19,11 @@ type SIPItem = {
 type ProgressItem = {
   progress_id: number;
   sip_id: number;
-  goal_description: string;
+  action_item_id: string;
   progress_percentage: number;
   status: string;
-  target_date: string;
+  notes?: string;
+  updated_at: string;
 };
 
 type FeedbackItem = {
@@ -135,7 +136,7 @@ export default function SIPManagementPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-slate-500">Loading SIP data...</div>
+        <div className="text-slate-500 dark:text-slate-400">Loading SIP data...</div>
       </div>
     );
   }
@@ -143,32 +144,32 @@ export default function SIPManagementPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">School Improvement Plan Management</h1>
-        <p className="mt-1 text-sm text-slate-500">Monitor and manage the school improvement plan</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">School Improvement Plan Management</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Monitor and manage the school improvement plan</p>
       </div>
 
       {!sip ? (
-        <div className="rounded-2xl bg-white p-8 shadow-sm border border-slate-200 text-center">
-          <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <div className="rounded-2xl bg-white dark:bg-slate-800 p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+          <svg className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
           </svg>
-          <h3 className="text-lg font-medium text-slate-900 mb-2">No Active SIP</h3>
-          <p className="text-sm text-slate-500">There is currently no active School Improvement Plan for this academic year.</p>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No Active SIP</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">There is currently no active School Improvement Plan for this academic year.</p>
         </div>
       ) : (
         <div className="space-y-6">
           {/* SIP Overview */}
-          <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+          <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="flex items-start justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">{sip.plan_name}</h2>
-                <p className="text-sm text-slate-500 mt-1">Academic Year: {sip.academic_year}</p>
-                <p className="text-xs text-slate-400 mt-1">Last updated: {new Date(sip.updated_at).toLocaleDateString()}</p>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">{sip.plan_name}</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Academic Year: {sip.academic_year}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Last updated: {new Date(sip.updated_at).toLocaleDateString()}</p>
               </div>
               <span className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium ${
-                sip.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700' :
-                sip.status === 'IN_PROGRESS' ? 'bg-blue-50 text-blue-700' :
-                'bg-amber-50 text-amber-700'
+                sip.status === 'APPROVED' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' :
+                sip.status === 'IN_PROGRESS' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
               }`}>
                 {sip.status}
               </span>
@@ -177,15 +178,15 @@ export default function SIPManagementPage() {
             {/* Goals Summary */}
             {sip.goals && Array.isArray(sip.goals) && sip.goals.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">Goals</h3>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Goals</h3>
                 <div className="space-y-2">
                   {sip.goals.map((goal: any, index: number) => {
-                    const goalText = typeof goal === 'object' 
+                    const goalText = typeof goal === 'object'
                       ? (goal.description || goal.goal || goal.target || JSON.stringify(goal))
                       : goal;
                     return (
-                      <div key={index} className="rounded-lg bg-slate-50 p-3">
-                        <p className="text-sm text-slate-700">{goalText}</p>
+                      <div key={index} className="rounded-lg bg-slate-50 dark:bg-slate-700/50 p-3">
+                        <p className="text-sm text-slate-700 dark:text-slate-300">{goalText}</p>
                       </div>
                     );
                   })}
@@ -195,9 +196,9 @@ export default function SIPManagementPage() {
           </div>
 
           {/* Progress Tracking */}
-          <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+          <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between gap-4 mb-5">
-              <h2 className="text-lg font-bold text-slate-900">Progress Tracking</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Progress Tracking</h2>
               <button
                 onClick={() => setShowAmendmentForm(!showAmendmentForm)}
                 className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition"
@@ -207,35 +208,35 @@ export default function SIPManagementPage() {
             </div>
 
             {showAmendmentForm && (
-              <form onSubmit={proposeAmendment} className="mb-6 rounded-xl bg-rose-50 p-4">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">Propose SIP Amendment</h3>
+              <form onSubmit={proposeAmendment} className="mb-6 rounded-xl bg-rose-50 dark:bg-rose-900/30 p-4">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Propose SIP Amendment</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Title</label>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
                     <input
                       type="text"
                       value={newAmendment.amendment_title}
                       onChange={(e) => setNewAmendment(prev => ({ ...prev, amendment_title: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Description</label>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
                     <textarea
                       value={newAmendment.amendment_description}
                       onChange={(e) => setNewAmendment(prev => ({ ...prev, amendment_description: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       rows={3}
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Priority</label>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Priority</label>
                     <select
                       value={newAmendment.priority}
                       onChange={(e) => setNewAmendment(prev => ({ ...prev, priority: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                     >
                       <option value="LOW">Low</option>
                       <option value="MEDIUM">Medium</option>
@@ -249,7 +250,7 @@ export default function SIPManagementPage() {
                     <button
                       type="button"
                       onClick={() => setShowAmendmentForm(false)}
-                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                      className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                     >
                       Cancel
                     </button>
@@ -259,57 +260,71 @@ export default function SIPManagementPage() {
             )}
 
             {progressItems.length === 0 ? (
-              <p className="text-sm text-slate-400">No progress items available.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">No progress items available.</p>
             ) : (
               <div className="space-y-3">
-                {progressItems.map((item) => (
-                  <div key={item.progress_id} className="rounded-xl border border-slate-200 p-4">
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <p className="font-medium text-slate-900 text-sm">{item.goal_description}</p>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                        item.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700' :
-                        item.status === 'ON_TRACK' ? 'bg-blue-50 text-blue-700' :
-                        item.status === 'DELAYED' ? 'bg-rose-50 text-rose-700' :
-                        'bg-slate-50 text-slate-700'
-                      }`}>
-                        {item.status}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-rose-500 rounded-full" style={{ width: `${item.progress_percentage}%` }} />
+                {progressItems.map((item) => {
+                  // Find the corresponding action item from SIP
+                  const actionItem = sip?.action_items && Array.isArray(sip.action_items)
+                    ? sip.action_items.find((ai: any) => ai.id === parseInt(item.action_item_id) || ai.id === item.action_item_id)
+                    : null;
+                  const itemDescription = actionItem?.item || actionItem?.description || `Action Item ${item.action_item_id}`;
+                  const itemDeadline = actionItem?.deadline || null;
+
+                  return (
+                    <div key={item.progress_id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <p className="font-medium text-slate-900 dark:text-white text-sm">{itemDescription}</p>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          item.status === 'COMPLETED' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' :
+                          item.status === 'ON_TRACK' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                          item.status === 'DELAYED' ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300' :
+                          'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                        }`}>
+                          {item.status}
+                        </span>
                       </div>
-                      <span className="text-xs text-slate-600">{item.progress_percentage}%</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div className="h-full bg-rose-500 rounded-full" style={{ width: `${item.progress_percentage}%` }} />
+                        </div>
+                        <span className="text-xs text-slate-600 dark:text-slate-400">{item.progress_percentage}%</span>
+                      </div>
+                      {itemDeadline && (
+                        <p className="text-xs text-slate-400 dark:text-slate-500">Target: {new Date(itemDeadline).toLocaleDateString()}</p>
+                      )}
+                      {item.notes && (
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Notes: {item.notes}</p>
+                      )}
                     </div>
-                    <p className="text-xs text-slate-400">Target: {new Date(item.target_date).toLocaleDateString()}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* Feedback Section */}
-          <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+          <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between gap-4 mb-5">
-              <h2 className="text-lg font-bold text-slate-900">SIC Feedback</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">SIC Feedback</h2>
               <button
                 onClick={() => setShowFeedbackForm(!showFeedbackForm)}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                className="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
               >
                 Submit Feedback
               </button>
             </div>
 
             {showFeedbackForm && (
-              <form onSubmit={submitFeedback} className="mb-6 rounded-xl bg-slate-50 p-4">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">Submit SIP Feedback</h3>
+              <form onSubmit={submitFeedback} className="mb-6 rounded-xl bg-slate-50 dark:bg-slate-700/50 p-4">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Submit SIP Feedback</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Your Feedback</label>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Your Feedback</label>
                     <textarea
                       value={newFeedback.feedback}
                       onChange={(e) => setNewFeedback(prev => ({ ...prev, feedback: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       rows={4}
                       placeholder="Share your observations, concerns, or suggestions about the SIP implementation..."
                       required
@@ -322,7 +337,7 @@ export default function SIPManagementPage() {
                     <button
                       type="button"
                       onClick={() => setShowFeedbackForm(false)}
-                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                      className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                     >
                       Cancel
                     </button>
@@ -332,13 +347,13 @@ export default function SIPManagementPage() {
             )}
 
             {feedback.length === 0 ? (
-              <p className="text-sm text-slate-400">No feedback submitted yet.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">No feedback submitted yet.</p>
             ) : (
               <div className="space-y-3">
                 {feedback.map((item) => (
-                  <div key={item.feedback_id} className="rounded-xl border border-slate-200 p-4">
-                    <p className="text-sm text-slate-700">{item.feedback}</p>
-                    <p className="mt-2 text-xs text-slate-400">Submitted: {new Date(item.submitted_at).toLocaleString()}</p>
+                  <div key={item.feedback_id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                    <p className="text-sm text-slate-700 dark:text-slate-300">{item.feedback}</p>
+                    <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">Submitted: {new Date(item.submitted_at).toLocaleString()}</p>
                   </div>
                 ))}
               </div>

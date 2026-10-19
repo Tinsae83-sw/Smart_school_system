@@ -48,8 +48,8 @@ export default function StudentNotifications() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Notifications</h1>
-          <p className="text-sm text-slate-500 mt-1">Stay on top of deadlines and announcements.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Notifications</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Stay on top of deadlines and announcements.</p>
         </div>
         {unreadCount > 0 && (
           <button
@@ -70,7 +70,7 @@ export default function StudentNotifications() {
             className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
               filter === type
                 ? "bg-sky-600 text-white"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             }`}
           >
             {type}
@@ -82,18 +82,18 @@ export default function StudentNotifications() {
       <div className="space-y-3">
         {filtered.length > 0 ? (
           filtered.map((notification) => (
-            <div key={notification.id} className={`bg-white rounded-2xl border p-5 shadow-sm transition ${
-              notification.read ? "border-slate-200" : "border-sky-200 bg-sky-50/30"
+            <div key={notification.id} className={`bg-white dark:bg-slate-800 rounded-2xl border p-5 shadow-sm transition ${
+              notification.read ? "border-slate-200 dark:border-slate-700" : "border-sky-200 dark:border-sky-800 bg-sky-50/30 dark:bg-sky-900/20"
             }`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                    notification.type === "ASSIGNMENT" ? "bg-amber-50 text-amber-700" :
-                    notification.type === "GRADE" ? "bg-emerald-50 text-emerald-700" :
-                    notification.type === "ATTENDANCE" ? "bg-blue-50 text-blue-700" :
-                    notification.type === "MESSAGE" ? "bg-purple-50 text-purple-700" :
-                    notification.type === "EVALUATION" ? "bg-orange-50 text-orange-700" :
-                    "bg-slate-50 text-slate-700"
+                    notification.type === "ASSIGNMENT" ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400" :
+                    notification.type === "GRADE" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
+                    notification.type === "ATTENDANCE" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400" :
+                    notification.type === "MESSAGE" ? "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400" :
+                    notification.type === "EVALUATION" ? "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400" :
+                    "bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                   }`}>
                     {notification.type === "ASSIGNMENT" ? "A" :
                      notification.type === "GRADE" ? "G" :
@@ -102,9 +102,9 @@ export default function StudentNotifications() {
                      notification.type === "EVALUATION" ? "E" : "S"}
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-slate-900 text-sm">{notification.title}</p>
-                    <p className="mt-1 text-sm text-slate-600">{notification.content}</p>
-                    <p className="mt-2 text-xs text-slate-400">{new Date(notification.sent_at).toLocaleString()}</p>
+                    <p className="font-semibold text-slate-900 dark:text-white text-sm">{notification.title}</p>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{notification.content}</p>
+                    <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">{new Date(notification.sent_at).toLocaleString()}</p>
                     {notification.type === "EVALUATION" && notification.metadata?.evaluation_url && (
                       <a
                         href={notification.metadata.evaluation_url}
@@ -133,8 +133,8 @@ export default function StudentNotifications() {
             </div>
           ))
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-            <p className="text-slate-500">No notifications match the selected filter.</p>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+            <p className="text-slate-500 dark:text-slate-400">No notifications match the selected filter.</p>
           </div>
         )}
       </div>

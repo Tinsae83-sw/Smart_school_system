@@ -140,50 +140,50 @@ export default function ConductPage() {
 
   function getGradeColor(grade: string) {
     switch (grade) {
-      case "A": return "bg-emerald-100 text-emerald-700 border-emerald-200";
-      case "B": return "bg-blue-100 text-blue-700 border-blue-200";
-      case "C": return "bg-amber-100 text-amber-700 border-amber-200";
-      case "D": return "bg-orange-100 text-orange-700 border-orange-200";
-      case "F": return "bg-red-100 text-red-700 border-red-200";
-      default: return "bg-slate-100 text-slate-700 border-slate-200";
+      case "A": return "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700";
+      case "B": return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700";
+      case "C": return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700";
+      case "D": return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-700";
+      case "F": return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-700";
+      default: return "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600";
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-600 font-medium">Loading class data...</p>
+          <p className="text-slate-600 dark:text-slate-300 font-medium">Loading class data...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <GraduationCap className="w-8 h-8 text-emerald-600" />
-            <h1 className="text-3xl font-bold text-slate-900">Student Conduct</h1>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Student Conduct</h1>
           </div>
-          <p className="text-slate-600 ml-11">Submit conduct grades for your students</p>
+          <p className="text-slate-600 dark:text-slate-300 ml-11">Submit conduct grades for your students</p>
         </div>
-        
+
         {/* Class and Term Selection */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-6">
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
                 <FolderOpen className="w-4 h-4" />
                 Select Class
               </label>
               <select
                 value={selectedClass || ''}
                 onChange={(e) => setSelectedClass(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
               >
                 {classes.map((cls: any) => (
                   <option key={cls.class_id} value={cls.class_id}>
@@ -193,11 +193,11 @@ export default function ConductPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Term</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Term</label>
               <select
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
               >
                 <option value="1">Term 1</option>
                 <option value="2">Term 2</option>
@@ -205,19 +205,19 @@ export default function ConductPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Academic Year</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Academic Year</label>
               <input
                 type="text"
                 value={academicYear}
                 onChange={(e) => setAcademicYear(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
               />
             </div>
           </div>
         </div>
 
         {message.text && (
-          <div className={`mb-4 flex items-center gap-2 rounded-xl px-4 py-3 ${message.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+          <div className={`mb-4 flex items-center gap-2 rounded-xl px-4 py-3 ${message.type === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400"}`}>
             {message.type === "success" ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
             <span className="text-sm font-medium">{message.text}</span>
           </div>
@@ -225,9 +225,9 @@ export default function ConductPage() {
 
         {/* Students Conduct Grid */}
         {students.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <Award className="w-6 h-6 text-emerald-600" />
                 Grade Students ({students.length})
               </h2>
@@ -252,16 +252,16 @@ export default function ConductPage() {
 
             <div className="space-y-4">
               {students.map((student: any) => (
-                <div key={student.student_id} className="border border-slate-200 rounded-xl p-4 hover:border-emerald-300 transition">
+                <div key={student.student_id} className="border border-slate-200 dark:border-slate-600 rounded-xl p-4 hover:border-emerald-300 dark:hover:border-emerald-500 transition">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                      <User className="w-6 h-6 text-emerald-600" />
+                    <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                      <User className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-3">
                         <div>
-                          <p className="font-semibold text-slate-900">{student.user?.full_name}</p>
-                          <p className="text-sm text-slate-500">{student.student_number}</p>
+                          <p className="font-semibold text-slate-900 dark:text-white">{student.user?.full_name}</p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">{student.student_number}</p>
                         </div>
                         <button
                           onClick={() => handleIndividualSubmit(student.student_id)}
@@ -281,10 +281,10 @@ export default function ConductPage() {
                           )}
                         </button>
                       </div>
-                      
+
                       <div className="grid gap-4 md:grid-cols-3">
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Grade</label>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Grade</label>
                           <select
                             value={conductGrades[student.student_id]?.grade || "B"}
                             onChange={(e) => handleGradeChange(student.student_id, 'grade', e.target.value)}
@@ -297,9 +297,9 @@ export default function ConductPage() {
                             <option value="F">F - Unsatisfactory</option>
                           </select>
                         </div>
-                        
+
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Rating</label>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Rating</label>
                           <div className="flex items-center gap-1">
                             {[1, 2, 3, 4, 5].map((rating) => (
                               <button
@@ -307,32 +307,32 @@ export default function ConductPage() {
                                 type="button"
                                 onClick={() => handleGradeChange(student.student_id, 'rating', rating)}
                                 className={`p-1 transition ${
-                                  (conductGrades[student.student_id]?.rating || 4) >= rating 
-                                    ? 'text-amber-400' 
-                                    : 'text-slate-300 hover:text-amber-200'
+                                  (conductGrades[student.student_id]?.rating || 4) >= rating
+                                    ? 'text-amber-400'
+                                    : 'text-slate-300 dark:text-slate-600 hover:text-amber-200'
                                 }`}
                               >
                                 <Star className={`w-5 h-5 ${
-                                  (conductGrades[student.student_id]?.rating || 4) >= rating 
-                                    ? 'fill-current' 
+                                  (conductGrades[student.student_id]?.rating || 4) >= rating
+                                    ? 'fill-current'
                                     : ''
                                 }`} />
                               </button>
                             ))}
-                            <span className="text-sm text-slate-600 ml-2">
+                            <span className="text-sm text-slate-600 dark:text-slate-400 ml-2">
                               {conductGrades[student.student_id]?.rating || 4}/5
                             </span>
                           </div>
                         </div>
-                        
+
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Comments</label>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Comments</label>
                           <input
                             type="text"
                             value={conductGrades[student.student_id]?.comments || ""}
                             onChange={(e) => handleGradeChange(student.student_id, 'comments', e.target.value)}
                             placeholder="Add comments..."
-                            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                           />
                         </div>
                       </div>
@@ -345,10 +345,10 @@ export default function ConductPage() {
         )}
 
         {students.length === 0 && selectedClass && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center">
-            <User className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-700 mb-2">No students in this class</h3>
-            <p className="text-slate-500">Select a different class to grade conduct</p>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-12 text-center">
+            <User className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">No students in this class</h3>
+            <p className="text-slate-500 dark:text-slate-400">Select a different class to grade conduct</p>
           </div>
         )}
       </div>

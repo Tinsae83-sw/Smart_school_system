@@ -55,8 +55,8 @@ export default function FeedbackPage() {
     setLoading(true);
     try {
       const [feedbackRes, announcementsRes] = await Promise.all([
-        fetch(`${API_BASE}/feedback`),
-        fetch(`${API_BASE}/announcements`),
+        fetch(`${API_BASE}/feedback-items`),
+        fetch(`${API_BASE}/ptsa-announcements`),
       ]);
 
       if (feedbackRes.ok) setFeedback(await feedbackRes.json());
@@ -73,9 +73,9 @@ export default function FeedbackPage() {
       alert("Please fill in subject and message.");
       return;
     }
-    
+
     try {
-      await fetch(`${API_BASE}/feedback`, {
+      await fetch(`${API_BASE}/feedback-items`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newFeedback),
@@ -95,9 +95,9 @@ export default function FeedbackPage() {
       alert("Please fill in title and message.");
       return;
     }
-    
+
     try {
-      await fetch(`${API_BASE}/announcements`, {
+      await fetch(`${API_BASE}/ptsa-announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newAnnouncement),

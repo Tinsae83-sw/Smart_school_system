@@ -63,27 +63,27 @@ export default function ClassesPage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">Loading...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-6">My Classes</h1>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">My Classes</h1>
         {classes.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-            <p className="text-slate-600">No classes available.</p>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+            <p className="text-slate-600 dark:text-slate-400">No classes available.</p>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {classes.map((cls: any) => (
-              <div key={cls.class_subject_id || cls.class_id} className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-md transition-shadow">
-                <h2 className="text-xl font-semibold text-slate-900">{cls.school_class?.class_name || cls.class_name || 'Unknown Class'}</h2>
-                <p className="text-slate-600 mt-2">{cls.subject?.subject_name || 'Unknown Subject'}</p>
-                <p className="text-sm text-slate-500 mt-1">Academic Year: {cls.school_class?.academic_year || cls.academic_year || 'N/A'}</p>
-                <p className="text-sm text-slate-500 mt-1">Credit Hours: {cls.credit_hour || 'N/A'}</p>
+              <div key={cls.class_subject_id || cls.class_id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-shadow">
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{cls.school_class?.class_name || cls.class_name || 'Unknown Class'}</h2>
+                <p className="text-slate-600 dark:text-slate-300 mt-2">{cls.subject?.subject_name || 'Unknown Subject'}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Academic Year: {cls.school_class?.academic_year || cls.academic_year || 'N/A'}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Credit Hours: {cls.credit_hour || 'N/A'}</p>
                 {cls.student_count !== undefined && (
-                  <p className="text-sm text-slate-500 mt-1">Students: {cls.student_count}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Students: {cls.student_count}</p>
                 )}
               </div>
             ))}

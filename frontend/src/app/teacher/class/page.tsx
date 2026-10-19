@@ -44,64 +44,64 @@ export default function ClassPage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">Loading...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-6">My Classes</h1>
-        
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">My Classes</h1>
+
         {!selectedClass ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {classes.map((cls: any) => (
-              <div 
-                key={cls.class_id} 
-                className="bg-white rounded-2xl border border-slate-200 p-6 cursor-pointer hover:shadow-lg transition-shadow"
+              <div
+                key={cls.class_id}
+                className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 cursor-pointer hover:shadow-lg transition-shadow"
                 onClick={() => handleClassClick(cls)}
               >
-                <h2 className="text-xl font-semibold text-slate-900">{cls.class_name}</h2>
-                <p className="text-slate-600 mt-2">{cls.subject?.subject_name || cls.subject}</p>
-                <p className="text-sm text-slate-500 mt-2">Room: {cls.room_number}</p>
-                <p className="text-sm text-slate-500 mt-1">Students: {cls.student_count || 0}</p>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{cls.class_name}</h2>
+                <p className="text-slate-600 dark:text-slate-300 mt-2">{cls.subject?.subject_name || cls.subject}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Room: {cls.room_number}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Students: {cls.student_count || 0}</p>
               </div>
             ))}
           </div>
         ) : (
           <div className="space-y-6">
-            <button 
+            <button
               onClick={() => setSelectedClass(null)}
-              className="text-emerald-600 hover:text-emerald-700 font-medium"
+              className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
             >
               ← Back to Classes
             </button>
-            
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h2 className="text-2xl font-bold text-slate-900">{selectedClass.class_name}</h2>
-              <p className="text-slate-600 mt-2">{selectedClass.subject?.subject_name || selectedClass.subject}</p>
-              <p className="text-sm text-slate-500 mt-2">Room: {selectedClass.room_number}</p>
+
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedClass.class_name}</h2>
+              <p className="text-slate-600 dark:text-slate-300 mt-2">{selectedClass.subject?.subject_name || selectedClass.subject}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Room: {selectedClass.room_number}</p>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h3 className="text-xl font-semibold text-slate-900 mb-4">Class Roster ({students.length} students)</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Class Roster ({students.length} students)</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Student ID</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Email</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Status</th>
+                    <tr className="border-b border-slate-200 dark:border-slate-700">
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Student ID</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Name</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Email</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {students.map((student: any) => (
-                      <tr key={student.student_id} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="py-3 px-4 text-sm text-slate-900">{student.student_number}</td>
-                        <td className="py-3 px-4 text-sm text-slate-900 font-medium">{student.user?.full_name || student.full_name}</td>
-                        <td className="py-3 px-4 text-sm text-slate-600">{student.user?.email || student.email}</td>
+                      <tr key={student.student_id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                        <td className="py-3 px-4 text-sm text-slate-900 dark:text-white">{student.student_number}</td>
+                        <td className="py-3 px-4 text-sm text-slate-900 dark:text-white font-medium">{student.user?.full_name || student.full_name}</td>
+                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{student.user?.email || student.email}</td>
                         <td className="py-3 px-4">
-                          <span className="rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-semibold">
+                          <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-3 py-1 text-xs font-semibold">
                             Active
                           </span>
                         </td>

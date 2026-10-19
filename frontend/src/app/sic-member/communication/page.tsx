@@ -126,7 +126,7 @@ export default function CommunicationPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-slate-500">Loading communication data...</div>
+        <div className="text-slate-500 dark:text-slate-400">Loading communication data...</div>
       </div>
     );
   }
@@ -134,19 +134,19 @@ export default function CommunicationPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Communication</h1>
-        <p className="mt-1 text-sm text-slate-500">Manage recommendations and announcements</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Communication</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Manage recommendations and announcements</p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="mb-6 border-b border-slate-200">
+      <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
         <nav className="flex gap-6">
           <button
             onClick={() => setActiveTab("recommendations")}
             className={`pb-3 text-sm font-medium transition-colors ${
               activeTab === "recommendations"
-                ? "text-rose-600 border-b-2 border-rose-600"
-                : "text-slate-500 hover:text-slate-700"
+                ? "text-rose-600 dark:text-rose-400 border-b-2 border-rose-600"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Recommendations
@@ -155,8 +155,8 @@ export default function CommunicationPage() {
             onClick={() => setActiveTab("announcements")}
             className={`pb-3 text-sm font-medium transition-colors ${
               activeTab === "announcements"
-                ? "text-rose-600 border-b-2 border-rose-600"
-                : "text-slate-500 hover:text-slate-700"
+                ? "text-rose-600 dark:text-rose-400 border-b-2 border-rose-600"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Announcements
@@ -167,9 +167,9 @@ export default function CommunicationPage() {
       {/* Recommendations Tab */}
       {activeTab === "recommendations" && (
         <div className="space-y-6">
-          <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+          <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between gap-4 mb-5">
-              <h2 className="text-lg font-bold text-slate-900">My Recommendations</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">My Recommendations</h2>
               <button
                 onClick={() => setShowRecForm(!showRecForm)}
                 className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition"
@@ -179,25 +179,25 @@ export default function CommunicationPage() {
             </div>
 
             {showRecForm && (
-              <form onSubmit={submitRecommendation} className="mb-6 rounded-xl bg-rose-50 p-4">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">Submit New Recommendation</h3>
+              <form onSubmit={submitRecommendation} className="mb-6 rounded-xl bg-rose-50 dark:bg-rose-900/30 p-4">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Submit New Recommendation</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Title</label>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
                     <input
                       type="text"
                       value={newRecommendation.title}
                       onChange={(e) => setNewRecommendation(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Description</label>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
                     <textarea
                       value={newRecommendation.description}
                       onChange={(e) => setNewRecommendation(prev => ({ ...prev, description: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       rows={4}
                       placeholder="Provide detailed explanation of your recommendation..."
                       required
@@ -205,11 +205,11 @@ export default function CommunicationPage() {
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Category</label>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
                       <select
                         value={newRecommendation.category}
                         onChange={(e) => setNewRecommendation(prev => ({ ...prev, category: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                        className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       >
                         <option value="ACADEMIC">Academic</option>
                         <option value="INFRASTRUCTURE">Infrastructure</option>
@@ -220,11 +220,11 @@ export default function CommunicationPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Priority</label>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Priority</label>
                       <select
                         value={newRecommendation.priority}
                         onChange={(e) => setNewRecommendation(prev => ({ ...prev, priority: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                        className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       >
                         <option value="LOW">Low</option>
                         <option value="MEDIUM">Medium</option>
@@ -239,7 +239,7 @@ export default function CommunicationPage() {
                     <button
                       type="button"
                       onClick={() => setShowRecForm(false)}
-                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                      className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                     >
                       Cancel
                     </button>
@@ -249,35 +249,35 @@ export default function CommunicationPage() {
             )}
 
             {recommendations.length === 0 ? (
-              <p className="text-sm text-slate-400">No recommendations submitted yet.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">No recommendations submitted yet.</p>
             ) : (
               <div className="space-y-3">
                 {recommendations.map((rec) => (
-                  <div key={rec.recommendation_id} className="rounded-xl border border-slate-200 p-4">
+                  <div key={rec.recommendation_id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div>
-                        <p className="font-medium text-slate-900 text-sm">{rec.title}</p>
-                        <p className="mt-1 text-xs text-slate-500">{rec.category}</p>
+                        <p className="font-medium text-slate-900 dark:text-white text-sm">{rec.title}</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{rec.category}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                          rec.priority === 'HIGH' ? 'bg-rose-50 text-rose-700' :
-                          rec.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-700' :
-                          'bg-slate-50 text-slate-700'
+                          rec.priority === 'HIGH' ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300' :
+                          rec.priority === 'MEDIUM' ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+                          'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                         }`}>
                           {rec.priority}
                         </span>
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                          rec.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700' :
-                          rec.status === 'REJECTED' ? 'bg-rose-50 text-rose-700' :
-                          'bg-blue-50 text-blue-700'
+                          rec.status === 'APPROVED' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' :
+                          rec.status === 'REJECTED' ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300' :
+                          'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                         }`}>
                           {rec.status}
                         </span>
                       </div>
                     </div>
-                    <p className="text-sm text-slate-700 mb-2">{rec.description}</p>
-                    <p className="text-xs text-slate-400">Submitted: {new Date(rec.submitted_at).toLocaleString()}</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">{rec.description}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">Submitted: {new Date(rec.submitted_at).toLocaleString()}</p>
                   </div>
                 ))}
               </div>
@@ -289,9 +289,9 @@ export default function CommunicationPage() {
       {/* Announcements Tab */}
       {activeTab === "announcements" && (
         <div className="space-y-6">
-          <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+          <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between gap-4 mb-5">
-              <h2 className="text-lg font-bold text-slate-900">School Announcements</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">School Announcements</h2>
               <button
                 onClick={() => setShowAnnForm(!showAnnForm)}
                 className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition"
@@ -301,25 +301,25 @@ export default function CommunicationPage() {
             </div>
 
             {showAnnForm && (
-              <form onSubmit={postAnnouncement} className="mb-6 rounded-xl bg-rose-50 p-4">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">Post New Announcement</h3>
+              <form onSubmit={postAnnouncement} className="mb-6 rounded-xl bg-rose-50 dark:bg-rose-900/30 p-4">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Post New Announcement</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Title</label>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
                     <input
                       type="text"
                       value={newAnnouncement.title}
                       onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Content</label>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Content</label>
                     <textarea
                       value={newAnnouncement.content}
                       onChange={(e) => setNewAnnouncement(prev => ({ ...prev, content: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       rows={4}
                       placeholder="Enter the announcement content..."
                       required
@@ -327,11 +327,11 @@ export default function CommunicationPage() {
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Type</label>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Type</label>
                       <select
                         value={newAnnouncement.announcement_type}
                         onChange={(e) => setNewAnnouncement(prev => ({ ...prev, announcement_type: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                        className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       >
                         <option value="GENERAL">General</option>
                         <option value="URGENT">Urgent</option>
@@ -340,11 +340,11 @@ export default function CommunicationPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Target Audience</label>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Target Audience</label>
                       <select
                         value={newAnnouncement.target_audience}
                         onChange={(e) => setNewAnnouncement(prev => ({ ...prev, target_audience: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                        className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       >
                         <option value="ALL">All</option>
                         <option value="STAFF">Staff</option>
@@ -360,7 +360,7 @@ export default function CommunicationPage() {
                     <button
                       type="button"
                       onClick={() => setShowAnnForm(false)}
-                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                      className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                     >
                       Cancel
                     </button>
@@ -370,25 +370,25 @@ export default function CommunicationPage() {
             )}
 
             {announcements.length === 0 ? (
-              <p className="text-sm text-slate-400">No announcements available.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">No announcements available.</p>
             ) : (
               <div className="space-y-3">
                 {announcements.map((ann) => (
-                  <div key={ann.announcement_id} className="rounded-xl border border-slate-200 p-4">
+                  <div key={ann.announcement_id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div>
-                        <p className="font-medium text-slate-900 text-sm">{ann.title}</p>
-                        <p className="mt-1 text-xs text-slate-500">{ann.announcement_type}</p>
+                        <p className="font-medium text-slate-900 dark:text-white text-sm">{ann.title}</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{ann.announcement_type}</p>
                       </div>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                        ann.announcement_type === 'URGENT' ? 'bg-rose-50 text-rose-700' :
-                        'bg-slate-50 text-slate-700'
+                        ann.announcement_type === 'URGENT' ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300' :
+                        'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                       }`}>
                         {ann.target_audience}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-700 mb-2">{ann.content}</p>
-                    <p className="text-xs text-slate-400">Published: {new Date(ann.publish_date).toLocaleString()}</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">{ann.content}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">Published: {new Date(ann.publish_date).toLocaleString()}</p>
                   </div>
                 ))}
               </div>

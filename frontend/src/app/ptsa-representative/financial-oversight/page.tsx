@@ -94,7 +94,7 @@ export default function FinancialOversightPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Financial Oversight</h1>
-          <p className="text-sm text-slate-500 mt-1">School budget and expenditure monitoring (Read-Only / Advisory)</p>
+          <p className="text-sm text-slate-500 mt-1">School budget and expenditure monitoring</p>
         </div>
         <button
           onClick={() => setShowAdvisoryForm(true)}

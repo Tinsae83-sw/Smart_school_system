@@ -143,11 +143,11 @@ export default function GradePage() {
   }
 
   function getGradeColor(score: number) {
-    if (score >= 90) return "bg-emerald-100 text-emerald-700";
-    if (score >= 80) return "bg-blue-100 text-blue-700";
-    if (score >= 70) return "bg-amber-100 text-amber-700";
-    if (score >= 60) return "bg-orange-100 text-orange-700";
-    return "bg-red-100 text-red-700";
+    if (score >= 90) return "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400";
+    if (score >= 80) return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400";
+    if (score >= 70) return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400";
+    if (score >= 60) return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400";
+    return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400";
   }
 
   function getLetterGrade(score: number) {
@@ -159,37 +159,37 @@ export default function GradePage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">Loading...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">Grade Management</h1>
-            <p className="text-slate-600">Enter and manage student marks for tests, midterms, finals, and other assessments</p>
+            <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">Grade Management</h1>
+            <p className="text-slate-600 dark:text-slate-300">Enter and manage student marks for tests, midterms, finals, and other assessments</p>
           </div>
         </div>
-        
+
         {/* Class Selection Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+              <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700">Select Class</label>
-              <p className="text-xs text-slate-500">Choose the class to manage grades</p>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Select Class</label>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Choose the class to manage grades</p>
             </div>
           </div>
           <select
             value={selectedClass || ''}
             onChange={(e) => setSelectedClass(Number(e.target.value))}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
           >
             {classes.map((cls: any) => (
               <option key={cls.class_subject_id || cls.class_id} value={cls.school_class?.class_id || cls.class_id}>
@@ -200,18 +200,18 @@ export default function GradePage() {
         </div>
 
         {message && (
-          <div className={`mb-6 rounded-xl p-4 ${message.includes("success") ? "bg-emerald-50 border border-emerald-200" : "bg-red-50 border border-red-200"}`}>
+          <div className={`mb-6 rounded-xl p-4 ${message.includes("success") ? "bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700" : "bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700"}`}>
             <div className="flex items-center gap-2">
               {message.includes("success") ? (
-                <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               )}
-              <p className={`text-sm font-medium ${message.includes("success") ? "text-emerald-700" : "text-red-700"}`}>
+              <p className={`text-sm font-medium ${message.includes("success") ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}`}>
                 {message}
               </p>
             </div>
@@ -221,22 +221,22 @@ export default function GradePage() {
         {/* Excel-like Grade Entry Table */}
         {students.length > 0 ? (
           <form onSubmit={handleSubmitAllMarks}>
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-slate-900">Student Marks</h2>
-                    <p className="text-xs text-slate-500">Enter marks for each student (out of 100)</p>
+                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Student Marks</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Enter marks for each student (out of 100)</p>
                   </div>
                 </div>
                 <button
                   type="submit"
-                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-3 text-white font-semibold hover:from-emerald-700 hover:to-emerald-800 transition shadow-lg shadow-emerald-200"
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-3 text-white font-semibold hover:from-emerald-700 hover:to-emerald-800 transition shadow-lg shadow-emerald-200 dark:shadow-emerald-900/50"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -248,15 +248,15 @@ export default function GradePage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-slate-50 border-b-2 border-slate-200">
-                      <th className="text-left py-4 px-4 text-sm font-semibold text-slate-700 sticky left-0 bg-slate-50 z-10">Student</th>
-                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 w-24">Test</th>
-                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 w-24">Mid</th>
-                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 w-24">Final</th>
-                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 w-24">Assignment</th>
-                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 w-24">Other</th>
-                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 w-24">Total</th>
-                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 w-20">Grade</th>
+                    <tr className="bg-slate-50 dark:bg-slate-700 border-b-2 border-slate-200 dark:border-slate-600">
+                      <th className="text-left py-4 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 sticky left-0 bg-slate-50 dark:bg-slate-700 z-10">Student</th>
+                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-24">Test</th>
+                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-24">Mid</th>
+                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-24">Final</th>
+                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-24">Assignment</th>
+                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-24">Other</th>
+                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-24">Total</th>
+                      <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-20">Grade</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -265,19 +265,19 @@ export default function GradePage() {
                       const total = marks.total || (marks.test + marks.mid + marks.final + marks.assignment + marks.other);
                       const average = total / 5;
                       const letterGrade = getLetterGrade(average);
-                      
+
                       return (
-                        <tr key={student.student_id} className="border-b border-slate-100 hover:bg-slate-50 transition">
-                          <td className="py-4 px-4 sticky left-0 bg-white z-10">
+                        <tr key={student.student_id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
+                          <td className="py-4 px-4 sticky left-0 bg-white dark:bg-slate-800 z-10">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                 {(student.user?.full_name || student.full_name || "S").charAt(0)}
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-slate-900">
+                                <p className="text-sm font-medium text-slate-900 dark:text-white">
                                   {student.user?.full_name || student.full_name}
                                 </p>
-                                <p className="text-xs text-slate-500">{student.student_number || `ID: ${student.student_id}`}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">{student.student_number || `ID: ${student.student_id}`}</p>
                               </div>
                             </div>
                           </td>
@@ -288,7 +288,7 @@ export default function GradePage() {
                               max="100"
                               value={marks.test || ''}
                               onChange={(e) => handleMarkChange(student.student_id, 'test', e.target.value)}
-                              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-center text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                               placeholder="0"
                             />
                           </td>
@@ -299,7 +299,7 @@ export default function GradePage() {
                               max="100"
                               value={marks.mid || ''}
                               onChange={(e) => handleMarkChange(student.student_id, 'mid', e.target.value)}
-                              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-center text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                               placeholder="0"
                             />
                           </td>
@@ -310,7 +310,7 @@ export default function GradePage() {
                               max="100"
                               value={marks.final || ''}
                               onChange={(e) => handleMarkChange(student.student_id, 'final', e.target.value)}
-                              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-center text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                               placeholder="0"
                             />
                           </td>
@@ -321,7 +321,7 @@ export default function GradePage() {
                               max="100"
                               value={marks.assignment || ''}
                               onChange={(e) => handleMarkChange(student.student_id, 'assignment', e.target.value)}
-                              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-center text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                               placeholder="0"
                             />
                           </td>
@@ -332,12 +332,12 @@ export default function GradePage() {
                               max="100"
                               value={marks.other || ''}
                               onChange={(e) => handleMarkChange(student.student_id, 'other', e.target.value)}
-                              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-center text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                               placeholder="0"
                             />
                           </td>
                           <td className="py-4 px-4 text-center">
-                            <span className={`font-semibold text-sm ${total > 0 ? 'text-slate-900' : 'text-slate-400'}`}>
+                            <span className={`font-semibold text-sm ${total > 0 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>
                               {total > 0 ? total.toFixed(1) : '-'}
                             </span>
                           </td>
@@ -347,7 +347,7 @@ export default function GradePage() {
                                 {letterGrade}
                               </span>
                             ) : (
-                              <span className="text-slate-400">-</span>
+                              <span className="text-slate-400 dark:text-slate-500">-</span>
                             )}
                           </td>
                         </tr>
@@ -359,14 +359,14 @@ export default function GradePage() {
             </div>
           </form>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-12 text-center">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">No Students Found</h3>
-            <p className="text-slate-600">Select a class to view and manage student grades</p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Students Found</h3>
+            <p className="text-slate-600 dark:text-slate-300">Select a class to view and manage student grades</p>
           </div>
         )}
       </div>

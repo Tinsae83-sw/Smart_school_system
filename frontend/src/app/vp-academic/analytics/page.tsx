@@ -136,27 +136,27 @@ export default function AnalyticsPage() {
   }
 
   function getPerformanceColor(score: number) {
-    if (score >= 80) return "text-emerald-600";
-    if (score >= 60) return "text-sky-600";
-    if (score >= 40) return "text-amber-600";
-    return "text-rose-600";
+    if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
+    if (score >= 60) return "text-sky-600 dark:text-sky-400";
+    if (score >= 40) return "text-amber-600 dark:text-amber-400";
+    return "text-rose-600 dark:text-rose-400";
   }
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Performance Analytics</h1>
-        <p className="mt-1 text-sm text-slate-500">Comprehensive analysis of academic performance metrics</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Performance Analytics</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Comprehensive analysis of academic performance metrics</p>
       </div>
 
-      <div className="mb-6 border-b border-slate-200">
+      <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
         <nav className="flex gap-6">
           <button
             onClick={() => setActiveTab("subjects")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "subjects"
-                ? "border-b-2 border-emerald-600 text-emerald-600"
-                : "text-slate-500 hover:text-slate-700"
+                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
             Subject Performance
@@ -165,8 +165,8 @@ export default function AnalyticsPage() {
             onClick={() => setActiveTab("teachers")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "teachers"
-                ? "border-b-2 border-emerald-600 text-emerald-600"
-                : "text-slate-500 hover:text-slate-700"
+                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
             Teacher Performance
@@ -175,8 +175,8 @@ export default function AnalyticsPage() {
             onClick={() => setActiveTab("classes")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "classes"
-                ? "border-b-2 border-emerald-600 text-emerald-600"
-                : "text-slate-500 hover:text-slate-700"
+                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
             Class Performance
@@ -185,8 +185,8 @@ export default function AnalyticsPage() {
             onClick={() => setActiveTab("trends")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "trends"
-                ? "border-b-2 border-emerald-600 text-emerald-600"
-                : "text-slate-500 hover:text-slate-700"
+                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
             Trends & Comparisons
@@ -203,21 +203,21 @@ export default function AnalyticsPage() {
           {activeTab === "subjects" && (
             <div className="grid gap-6 lg:grid-cols-2">
               {subjectPerformance.map((subject) => (
-                <div key={subject.subject_name} className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+                <div key={subject.subject_name} className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                   <div className="mb-4">
-                    <h3 className="text-lg font-bold text-slate-900">{subject.subject_name}</h3>
-                    <p className="text-sm text-slate-500">{subject.total_students} students</p>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{subject.subject_name}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-300">{subject.total_students} students</p>
                   </div>
-                  
+
                   <div className="grid gap-4 sm:grid-cols-2 mb-4">
                     <div>
-                      <p className="text-xs text-slate-500 uppercase tracking-wide">Average Score</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wide">Average Score</p>
                       <p className={`text-2xl font-bold ${getPerformanceColor(subject.average_score)}`}>
                         {(subject.average_score ?? 0).toFixed(1)}%
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500 uppercase tracking-wide">Pass Rate</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wide">Pass Rate</p>
                       <p className={`text-2xl font-bold ${getPerformanceColor(subject.pass_rate)}`}>
                         {(subject.pass_rate ?? 0).toFixed(1)}%
                       </p>
@@ -225,7 +225,7 @@ export default function AnalyticsPage() {
                   </div>
 
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Grade Distribution</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-2">Grade Distribution</p>
                     <div className="flex gap-1 h-8">
                       {Object.entries(subject.grade_distribution).map(([grade, count]) => (
                         <div
@@ -236,7 +236,7 @@ export default function AnalyticsPage() {
                         />
                       ))}
                     </div>
-                    <div className="flex gap-4 mt-2 text-xs text-slate-600">
+                    <div className="flex gap-4 mt-2 text-xs text-slate-600 dark:text-slate-400">
                       {Object.entries(subject.grade_distribution).map(([grade, count]) => (
                         <span key={grade}>
                           {grade}: {count}
@@ -247,7 +247,7 @@ export default function AnalyticsPage() {
                 </div>
               ))}
               {subjectPerformance.length === 0 && (
-                <div className="col-span-2 rounded-2xl bg-white p-12 text-center text-sm text-slate-400">
+                <div className="col-span-2 rounded-2xl bg-white dark:bg-slate-800 p-12 text-center text-sm text-slate-400 dark:text-slate-500">
                   No subject performance data available.
                 </div>
               )}
@@ -255,11 +255,11 @@ export default function AnalyticsPage() {
           )}
 
           {activeTab === "teachers" && (
-            <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+            <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+                    <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-300">
                       <th className="px-6 py-4">Teacher</th>
                       <th className="px-6 py-4">Department</th>
                       <th className="px-6 py-4">Students</th>
@@ -268,13 +268,13 @@ export default function AnalyticsPage() {
                       <th className="px-6 py-4">Pass Rate</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                     {teacherPerformance.map((teacher) => (
-                      <tr key={teacher.teacher_id} className="hover:bg-slate-50">
-                        <td className="px-6 py-4 text-sm font-medium text-slate-900">{teacher.teacher_name}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500">{teacher.department}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500">{teacher.total_students}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500">{teacher.subjects_taught}</td>
+                      <tr key={teacher.teacher_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                        <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{teacher.teacher_name}</td>
+                        <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teacher.department}</td>
+                        <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teacher.total_students}</td>
+                        <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teacher.subjects_taught}</td>
                         <td className="px-6 py-4">
                           <span className={`text-sm font-semibold ${getPerformanceColor(teacher.average_student_grade)}`}>
                             {(teacher.average_student_grade ?? 0).toFixed(1)}%
@@ -289,7 +289,7 @@ export default function AnalyticsPage() {
                     ))}
                     {teacherPerformance.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">
+                        <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
                           No teacher performance data available.
                         </td>
                       </tr>
@@ -303,21 +303,21 @@ export default function AnalyticsPage() {
           {activeTab === "classes" && (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {classPerformance.map((cls) => (
-                <div key={cls.class_name} className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+                <div key={cls.class_name} className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                   <div className="mb-4">
-                    <h3 className="text-lg font-bold text-slate-900">{cls.class_name}</h3>
-                    <p className="text-sm text-slate-500">{cls.total_students} students</p>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{cls.class_name}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-300">{cls.total_students} students</p>
                   </div>
 
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-slate-500">Average Grade</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-300">Average Grade</p>
                         <p className={`text-sm font-semibold ${getPerformanceColor(cls.average_grade)}`}>
                           {(cls.average_grade ?? 0).toFixed(1)}%
                         </p>
                       </div>
-                      <div className="h-2 rounded-full bg-slate-200">
+                      <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
                         <div
                           className={`h-2 rounded-full ${(cls.average_grade ?? 0) >= 60 ? "bg-emerald-500" : "bg-rose-500"}`}
                           style={{ width: `${cls.average_grade ?? 0}%` }}
@@ -327,12 +327,12 @@ export default function AnalyticsPage() {
 
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-slate-500">Attendance Rate</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-300">Attendance Rate</p>
                         <p className={`text-sm font-semibold ${getPerformanceColor(cls.attendance_rate)}`}>
                           {(cls.attendance_rate ?? 0).toFixed(1)}%
                         </p>
                       </div>
-                      <div className="h-2 rounded-full bg-slate-200">
+                      <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
                         <div
                           className={`h-2 rounded-full ${(cls.attendance_rate ?? 0) >= 75 ? "bg-emerald-500" : "bg-amber-500"}`}
                           style={{ width: `${cls.attendance_rate ?? 0}%` }}
@@ -340,20 +340,20 @@ export default function AnalyticsPage() {
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-100">
-                      <p className="text-xs text-slate-500 mb-1">Top Subject</p>
-                      <p className="text-sm font-medium text-emerald-700">{cls.top_performing_subject}</p>
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-700">
+                      <p className="text-xs text-slate-500 dark:text-slate-300 mb-1">Top Subject</p>
+                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">{cls.top_performing_subject}</p>
                     </div>
 
                     <div>
-                      <p className="text-xs text-slate-500 mb-1">Needs Improvement</p>
-                      <p className="text-sm font-medium text-rose-700">{cls.needs_improvement_subject}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-300 mb-1">Needs Improvement</p>
+                      <p className="text-sm font-medium text-rose-700 dark:text-rose-300">{cls.needs_improvement_subject}</p>
                     </div>
                   </div>
                 </div>
               ))}
               {classPerformance.length === 0 && (
-                <div className="col-span-3 rounded-2xl bg-white p-12 text-center text-sm text-slate-400">
+                <div className="col-span-3 rounded-2xl bg-white dark:bg-slate-800 p-12 text-center text-sm text-slate-400 dark:text-slate-500">
                   No class performance data available.
                 </div>
               )}
@@ -362,33 +362,33 @@ export default function AnalyticsPage() {
 
           {activeTab === "trends" && (
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Performance Trends Over Time</h3>
+              <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Performance Trends Over Time</h3>
                 {trendData.length > 0 ? (
                   <div className="space-y-4">
                     {trendData.map((trend, index) => (
                       <div key={index} className="flex items-center gap-4">
-                        <div className="w-24 text-sm text-slate-600">{trend.period}</div>
+                        <div className="w-24 text-sm text-slate-600 dark:text-slate-400">{trend.period}</div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <div className="flex-1 h-6 rounded-full bg-slate-200">
+                            <div className="flex-1 h-6 rounded-full bg-slate-200 dark:bg-slate-700">
                               <div
                                 className="h-6 rounded-full bg-emerald-500"
                                 style={{ width: `${trend.average_grade ?? 0}%` }}
                               />
                             </div>
-                            <span className="text-sm font-medium text-slate-900 w-16 text-right">
+                            <span className="text-sm font-medium text-slate-900 dark:text-white w-16 text-right">
                               {(trend.average_grade ?? 0).toFixed(1)}%
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-4 rounded-full bg-slate-200">
+                            <div className="flex-1 h-4 rounded-full bg-slate-200 dark:bg-slate-700">
                               <div
                                 className="h-4 rounded-full bg-sky-500"
                                 style={{ width: `${trend.attendance_rate ?? 0}%` }}
                               />
                             </div>
-                            <span className="text-xs text-slate-600 w-16 text-right">
+                            <span className="text-xs text-slate-600 dark:text-slate-400 w-16 text-right">
                               {(trend.attendance_rate ?? 0).toFixed(1)}%
                             </span>
                           </div>
@@ -397,16 +397,16 @@ export default function AnalyticsPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-400 text-center py-8">No trend data available.</p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-8">No trend data available.</p>
                 )}
               </div>
 
-              <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Key Insights</h3>
+              <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Key Insights</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
-                    <p className="text-xs text-emerald-600 uppercase tracking-wide mb-1">Best Performing Period</p>
-                    <p className="text-lg font-bold text-emerald-900">
+                  <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 p-4">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">Best Performing Period</p>
+                    <p className="text-lg font-bold text-emerald-900 dark:text-emerald-300">
                       {trendData.length > 0
                         ? trendData.reduce((best, current) =>
                             current.average_grade > best.average_grade ? current : best
@@ -414,9 +414,9 @@ export default function AnalyticsPage() {
                         : "N/A"}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
-                    <p className="text-xs text-amber-600 uppercase tracking-wide mb-1">Needs Attention</p>
-                    <p className="text-lg font-bold text-amber-900">
+                  <div className="rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 p-4">
+                    <p className="text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">Needs Attention</p>
+                    <p className="text-lg font-bold text-amber-900 dark:text-amber-300">
                       {trendData.length > 0
                         ? trendData.reduce((worst, current) =>
                             current.average_grade < worst.average_grade ? current : worst

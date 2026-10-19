@@ -206,15 +206,15 @@ export default function StudentLearningPage() {
   const getSessionStatusBadge = (status: string) => {
     switch (status) {
       case "SCHEDULED":
-        return <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Scheduled</span>;
+        return <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-full">Scheduled</span>;
       case "LIVE":
-        return <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full animate-pulse">Live Now</span>;
+        return <span className="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full animate-pulse">Live Now</span>;
       case "ENDED":
-        return <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded-full">Ended</span>;
+        return <span className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full">Ended</span>;
       case "CANCELLED":
-        return <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">Cancelled</span>;
+        return <span className="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full">Cancelled</span>;
       default:
-        return <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded-full">{status}</span>;
+        return <span className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full">{status}</span>;
     }
   };
 
@@ -222,18 +222,18 @@ export default function StudentLearningPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Learning Center</h1>
-        <p className="text-sm text-slate-500 mt-1">Access online classes, course materials, and AI books</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Learning Center</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Access online classes, course materials, and AI books</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200">
+      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
           onClick={() => setActiveTab("classes")}
           className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
             activeTab === "classes"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "border-blue-500 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -247,8 +247,8 @@ export default function StudentLearningPage() {
           onClick={() => setActiveTab("materials")}
           className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
             activeTab === "materials"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "border-blue-500 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -262,8 +262,8 @@ export default function StudentLearningPage() {
           onClick={() => setActiveTab("books")}
           className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
             activeTab === "books"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "border-blue-500 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -279,18 +279,18 @@ export default function StudentLearningPage() {
       {activeTab === "classes" && (
         <div className="space-y-6">
           {/* Virtual Classes */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Virtual Classes</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Virtual Classes</h2>
             {virtualClasses.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2">
                 {virtualClasses.map((vc) => (
-                  <div key={vc.virtual_class_id} className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-5">
+                  <div key={vc.virtual_class_id} className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800 p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-slate-900">{vc.title}</h3>
-                        <p className="text-sm text-slate-600 mt-1">{vc.description}</p>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">{vc.title}</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{vc.description}</p>
                         {vc.is_active && (
-                          <span className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                          <span className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
                             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                             Active
                           </span>
@@ -313,24 +313,24 @@ export default function StudentLearningPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">No virtual classes available.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No virtual classes available.</p>
             )}
           </div>
 
           {/* Live Sessions */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Session Schedule</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Session Schedule</h2>
             {liveSessions.length > 0 ? (
               <div className="space-y-3">
                 {liveSessions.map((session) => (
-                  <div key={session.session_id} className="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                  <div key={session.session_id} className="rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-slate-900 text-sm">{session.title}</h3>
+                          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">{session.title}</h3>
                           {getSessionStatusBadge(session.status)}
                         </div>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
                           <span className="flex items-center gap-1">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -376,21 +376,21 @@ export default function StudentLearningPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">No sessions scheduled.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No sessions scheduled.</p>
             )}
           </div>
         </div>
       )}
 
       {activeTab === "materials" && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Course Materials</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Course Materials</h2>
           {courseMaterials.length > 0 ? (
             <div className="space-y-3">
               {courseMaterials.map((material) => {
                 const progress = materialProgress[material.material_id] || { completed: false, completion_percentage: 0, time_spent_minutes: 0 };
                 return (
-                  <div key={material.material_id} className="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                  <div key={material.material_id} className="rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 p-4">
                     <div className="flex items-start gap-4">
                       <div className="flex-shrink-0">
                         {getMaterialIcon(material.material_type)}
@@ -398,24 +398,24 @@ export default function StudentLearningPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <h3 className="font-semibold text-slate-900 text-sm">{material.title}</h3>
-                            <p className="text-xs text-slate-500 mt-1">{material.description}</p>
-                            <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                            <h3 className="font-semibold text-slate-900 dark:text-white text-sm">{material.title}</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{material.description}</p>
+                            <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500">
                               <span className="uppercase">{material.material_type}</span>
                               {material.duration_minutes && <span>• {material.duration_minutes} min</span>}
                             </div>
                           </div>
                           <div className="flex flex-col items-end gap-2">
                             {progress.completed ? (
-                              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">Completed</span>
+                              <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">Completed</span>
                             ) : (
-                              <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded-full">{progress.completion_percentage}%</span>
+                              <span className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full">{progress.completion_percentage}%</span>
                             )}
                             <a
                               href={material.file_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                              className="flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -426,7 +426,7 @@ export default function StudentLearningPage() {
                         </div>
                         {!progress.completed && progress.completion_percentage > 0 && (
                           <div className="mt-3">
-                            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="h-2 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-blue-500 rounded-full transition-all duration-300"
                                 style={{ width: `${progress.completion_percentage}%` }}
@@ -441,43 +441,43 @@ export default function StudentLearningPage() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">No course materials available.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">No course materials available.</p>
           )}
         </div>
       )}
 
       {activeTab === "books" && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">AI Books</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">AI Books</h2>
           {aiBooks.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {aiBooks.map((book) => {
                 const progress = bookProgress[book.book_id] || { current_page: 0, total_pages: 0, completion_percentage: 0 };
                 return (
-                  <div key={book.book_id} className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 p-5">
-                    <div className="aspect-[3/4] bg-white rounded-lg mb-4 flex items-center justify-center border border-amber-200">
+                  <div key={book.book_id} className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-100 dark:border-amber-800 p-5">
+                    <div className="aspect-[3/4] bg-white dark:bg-slate-800 rounded-lg mb-4 flex items-center justify-center border border-amber-200 dark:border-amber-800">
                       {book.cover_image_url ? (
                         <img src={book.cover_image_url} alt={book.title} className="w-full h-full object-cover rounded-lg" />
                       ) : (
-                        <svg className="w-16 h-16 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <svg className="w-16 h-16 text-amber-300 dark:text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                       )}
                     </div>
-                    <h3 className="font-semibold text-slate-900 text-sm">{book.title}</h3>
-                    <p className="text-xs text-slate-500 mt-1">{book.subject} • Grade {book.grade_level}</p>
+                    <h3 className="font-semibold text-slate-900 dark:text-white text-sm">{book.title}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{book.subject} • Grade {book.grade_level}</p>
                     <div className="mt-3">
-                      <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
                         <span>Progress</span>
                         <span>{progress.completion_percentage}%</span>
                       </div>
-                      <div className="h-2 bg-amber-200 rounded-full overflow-hidden">
+                      <div className="h-2 bg-amber-200 dark:bg-amber-900/50 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-amber-500 rounded-full transition-all duration-300"
                           style={{ width: `${progress.completion_percentage}%` }}
                         />
                       </div>
-                      <p className="text-xs text-slate-400 mt-1">
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                         Page {progress.current_page} of {progress.total_pages}
                       </p>
                     </div>
@@ -489,7 +489,7 @@ export default function StudentLearningPage() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">No AI books available.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">No AI books available.</p>
           )}
         </div>
       )}

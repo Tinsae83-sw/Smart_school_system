@@ -30,19 +30,19 @@ export default function MessagesPage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">Loading...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-6">Messages</h1>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">Messages</h1>
         <div className="space-y-4">
           {messages.map((thread: any) => (
-            <div key={thread.thread_id} className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h2 className="text-xl font-semibold">{thread.recipient_name}</h2>
-              <p className="text-slate-600 mt-2">{thread.last_message}</p>
-              <p className="text-sm text-slate-500 mt-2">Unread: {thread.unread}</p>
+            <div key={thread.thread_id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{thread.recipient_name}</h2>
+              <p className="text-slate-600 dark:text-slate-300 mt-2">{thread.last_message}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Unread: {thread.unread}</p>
             </div>
           ))}
         </div>

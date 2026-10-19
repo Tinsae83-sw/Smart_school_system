@@ -44,13 +44,13 @@ export default function ActivityLogPage() {
 
   function getActivityColor(type: string) {
     switch (type) {
-      case "attendance": return "bg-blue-50 border-blue-200";
-      case "assignment": return "bg-purple-50 border-purple-200";
-      case "grade": return "bg-emerald-50 border-emerald-200";
-      case "exam": return "bg-red-50 border-red-200";
-      case "login": return "bg-slate-50 border-slate-200";
-      case "logout": return "bg-slate-50 border-slate-200";
-      default: return "bg-amber-50 border-amber-200";
+      case "attendance": return "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700";
+      case "assignment": return "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-700";
+      case "grade": return "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700";
+      case "exam": return "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700";
+      case "login": return "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700";
+      case "logout": return "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700";
+      default: return "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700";
     }
   }
 
@@ -59,22 +59,22 @@ export default function ActivityLogPage() {
     : activities.filter(a => a.type === filter);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">Loading...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-6">Activity Log</h1>
-        
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">Activity Log</h1>
+
         {/* Filter Tabs */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-2 mb-6 inline-flex gap-2 flex-wrap">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-2 mb-6 inline-flex gap-2 flex-wrap">
           <button
             onClick={() => setFilter("all")}
             className={`px-4 py-2 rounded-xl font-medium transition ${
-              filter === "all" 
-                ? "bg-emerald-600 text-white" 
-                : "text-slate-600 hover:bg-slate-100"
+              filter === "all"
+                ? "bg-emerald-600 text-white"
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
             }`}
           >
             All
@@ -82,9 +82,9 @@ export default function ActivityLogPage() {
           <button
             onClick={() => setFilter("attendance")}
             className={`px-4 py-2 rounded-xl font-medium transition ${
-              filter === "attendance" 
-                ? "bg-emerald-600 text-white" 
-                : "text-slate-600 hover:bg-slate-100"
+              filter === "attendance"
+                ? "bg-emerald-600 text-white"
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
             }`}
           >
             Attendance
@@ -92,9 +92,9 @@ export default function ActivityLogPage() {
           <button
             onClick={() => setFilter("assignment")}
             className={`px-4 py-2 rounded-xl font-medium transition ${
-              filter === "assignment" 
-                ? "bg-emerald-600 text-white" 
-                : "text-slate-600 hover:bg-slate-100"
+              filter === "assignment"
+                ? "bg-emerald-600 text-white"
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
             }`}
           >
             Assignments
@@ -102,9 +102,9 @@ export default function ActivityLogPage() {
           <button
             onClick={() => setFilter("grade")}
             className={`px-4 py-2 rounded-xl font-medium transition ${
-              filter === "grade" 
-                ? "bg-emerald-600 text-white" 
-                : "text-slate-600 hover:bg-slate-100"
+              filter === "grade"
+                ? "bg-emerald-600 text-white"
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
             }`}
           >
             Grades
@@ -112,9 +112,9 @@ export default function ActivityLogPage() {
           <button
             onClick={() => setFilter("exam")}
             className={`px-4 py-2 rounded-xl font-medium transition ${
-              filter === "exam" 
-                ? "bg-emerald-600 text-white" 
-                : "text-slate-600 hover:bg-slate-100"
+              filter === "exam"
+                ? "bg-emerald-600 text-white"
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
             }`}
           >
             Exams
@@ -124,14 +124,14 @@ export default function ActivityLogPage() {
         {/* Activity List */}
         <div className="space-y-4">
           {filteredActivities.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-              <p className="text-slate-500">No activities found</p>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center">
+              <p className="text-slate-500 dark:text-slate-400">No activities found</p>
             </div>
           ) : (
             filteredActivities.map((activity: any) => (
               <div
                 key={activity.id || activity.activity_id}
-                className={`bg-white rounded-2xl border p-6 ${getActivityColor(activity.type)}`}
+                className={`bg-white dark:bg-slate-800 rounded-2xl border p-6 ${getActivityColor(activity.type)}`}
               >
                 <div className="flex items-start gap-4">
                   <div className="text-3xl">
@@ -140,11 +140,11 @@ export default function ActivityLogPage() {
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="text-lg font-semibold text-slate-900 capitalize">
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white capitalize">
                           {activity.type || "Activity"}
                         </h3>
-                        <p className="text-slate-600 mt-1">{activity.description}</p>
-                        <p className="text-sm text-slate-500 mt-2">
+                        <p className="text-slate-600 dark:text-slate-300 mt-1">{activity.description}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
                           {new Date(activity.timestamp || activity.created_at).toLocaleString()}
                         </p>
                       </div>

@@ -216,27 +216,27 @@ export default function SchoolSettingsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">School Settings</h1>
-        <p className="mt-1 text-sm text-slate-500">Manage school information and academic calendar</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">School Settings</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage school information and academic calendar</p>
       </div>
 
       {statusMessage && (
         <div className={`mb-6 rounded-xl px-4 py-3 text-sm ${
-          statusMessage.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-rose-50 text-rose-800 border border-rose-200"
+          statusMessage.type === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-rose-50 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
         }`}>
           {statusMessage.message}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-slate-200">
+      <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
         <nav className="flex gap-8">
           <button
             onClick={() => setActiveTab("general")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "general"
                 ? "border-b-2 border-indigo-600 text-indigo-600"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             General Information
@@ -246,7 +246,7 @@ export default function SchoolSettingsPage() {
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "academic"
                 ? "border-b-2 border-indigo-600 text-indigo-600"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Academic Calendar
@@ -256,7 +256,7 @@ export default function SchoolSettingsPage() {
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "policies"
                 ? "border-b-2 border-indigo-600 text-indigo-600"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             School Policies
@@ -265,16 +265,16 @@ export default function SchoolSettingsPage() {
       </div>
 
       {loading ? (
-        <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm border border-slate-200">
+        <div className="rounded-2xl bg-white dark:bg-slate-800 p-8 text-center text-sm text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-700">
           Loading...
         </div>
       ) : (
         <>
           {activeTab === "general" && settings && (
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+              <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-900">School Information</h2>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">School Information</h2>
                   <button
                     onClick={handleEdit}
                     className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
@@ -285,62 +285,62 @@ export default function SchoolSettingsPage() {
 
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">School Name</label>
-                    <p className="text-sm text-slate-900">{settings.school_name}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">School Name</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.school_name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Principal Name</label>
-                    <p className="text-sm text-slate-900">{settings.principal_name}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Principal Name</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.principal_name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
-                    <p className="text-sm text-slate-900">{settings.address}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.address}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                    <p className="text-sm text-slate-900">{settings.phone}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.phone}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                    <p className="text-sm text-slate-900">{settings.email}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.email}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">School Type</label>
-                    <p className="text-sm text-slate-900">{settings.school_type}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">School Type</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.school_type}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Grades Offered</label>
-                    <p className="text-sm text-slate-900">{settings.grades_offered}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Grades Offered</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.grades_offered}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Established Year</label>
-                    <p className="text-sm text-slate-900">{settings.established_year}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Established Year</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.established_year}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Student Capacity</label>
-                    <p className="text-sm text-slate-900">{settings.student_capacity}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Student Capacity</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.student_capacity}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Current Academic Year</label>
-                    <p className="text-sm text-slate-900">{settings.academic_year}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Current Academic Year</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.academic_year}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Current Term</label>
-                    <p className="text-sm text-slate-900">{settings.current_term}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Current Term</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.current_term}</p>
                   </div>
                 </div>
 
                 {settings.mission_statement && (
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Mission Statement</label>
-                    <p className="text-sm text-slate-900">{settings.mission_statement}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mission Statement</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.mission_statement}</p>
                   </div>
                 )}
 
                 {settings.vision_statement && (
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Vision Statement</label>
-                    <p className="text-sm text-slate-900">{settings.vision_statement}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Vision Statement</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{settings.vision_statement}</p>
                   </div>
                 )}
               </div>
@@ -349,12 +349,12 @@ export default function SchoolSettingsPage() {
 
           {activeTab === "academic" && calendar && (
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+              <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-900">Academic Calendar - {calendar.academic_year}</h2>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Academic Calendar - {calendar.academic_year}</h2>
                   <div className="flex items-center gap-3">
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      calendar.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-700"
+                      calendar.status === "ACTIVE" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" : "bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                     }`}>
                       {calendar.status}
                     </span>
@@ -369,27 +369,27 @@ export default function SchoolSettingsPage() {
 
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Term Start Date</label>
-                    <p className="text-sm text-slate-900">{new Date(calendar.term_start_date).toLocaleDateString()}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Term Start Date</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{new Date(calendar.term_start_date).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Term End Date</label>
-                    <p className="text-sm text-slate-900">{new Date(calendar.term_end_date).toLocaleDateString()}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Term End Date</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{new Date(calendar.term_end_date).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Exam Period Start</label>
-                    <p className="text-sm text-slate-900">{new Date(calendar.exam_period_start).toLocaleDateString()}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Exam Period Start</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{new Date(calendar.exam_period_start).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Exam Period End</label>
-                    <p className="text-sm text-slate-900">{new Date(calendar.exam_period_end).toLocaleDateString()}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Exam Period End</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{new Date(calendar.exam_period_end).toLocaleDateString()}</p>
                   </div>
                 </div>
 
                 {calendar.break_periods && (
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Break Periods</label>
-                    <p className="text-sm text-slate-900">{calendar.break_periods}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Break Periods</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{calendar.break_periods}</p>
                   </div>
                 )}
               </div>
@@ -398,9 +398,9 @@ export default function SchoolSettingsPage() {
 
           {activeTab === "policies" && (
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+              <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-900">School Policies</h2>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">School Policies</h2>
                   <button
                     onClick={handleAddPolicy}
                     className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
@@ -409,30 +409,30 @@ export default function SchoolSettingsPage() {
                   </button>
                 </div>
                 {policies.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-slate-500">No policies found. Click "Add Policy" to create one.</div>
+                  <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No policies found. Click "Add Policy" to create one.</div>
                 ) : (
                   <div className="space-y-4">
                     {policies.map((policy) => (
-                      <div key={policy.policy_id} className="rounded-xl border border-slate-200 p-4">
+                      <div key={policy.policy_id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-medium text-slate-900">{policy.policy_name}</h3>
+                          <h3 className="font-medium text-slate-900 dark:text-white">{policy.policy_name}</h3>
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleEditPolicy(policy)}
-                              className="text-sm text-indigo-600 hover:text-indigo-700"
+                              className="text-sm text-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => handleDeletePolicy(policy.policy_id)}
-                              className="text-sm text-rose-600 hover:text-rose-700"
+                              className="text-sm text-rose-600 hover:text-rose-700 dark:hover:text-rose-400"
                             >
                               Delete
                             </button>
                           </div>
                         </div>
-                        <p className="text-sm text-slate-600 mb-2">{policy.content}</p>
-                        <div className="flex gap-4 text-xs text-slate-400">
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">{policy.content}</p>
+                        <div className="flex gap-4 text-xs text-slate-400 dark:text-slate-500">
                           <span>Type: {policy.policy_type}</span>
                           <span>Effective: {new Date(policy.effective_date).toLocaleDateString()}</span>
                         </div>
@@ -449,12 +449,12 @@ export default function SchoolSettingsPage() {
       {/* Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">Edit School Settings</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit School Settings</h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 ✕
               </button>
@@ -463,62 +463,62 @@ export default function SchoolSettingsPage() {
             <form onSubmit={handleSaveSettings} className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">School Name</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">School Name</label>
                   <input
                     type="text"
                     required
                     value={formData.school_name || ""}
                     onChange={(e) => setFormData({ ...formData, school_name: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Principal Name</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Principal Name</label>
                   <input
                     type="text"
                     required
                     value={formData.principal_name || ""}
                     onChange={(e) => setFormData({ ...formData, principal_name: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
                   <input
                     type="text"
                     required
                     value={formData.address || ""}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
                   <input
                     type="text"
                     required
                     value={formData.phone || ""}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
                   <input
                     type="email"
                     required
                     value={formData.email || ""}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">School Type</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">School Type</label>
                   <select
                     required
                     value={formData.school_type || ""}
                     onChange={(e) => setFormData({ ...formData, school_type: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   >
                     <option value="Secondary">Secondary School</option>
                     <option value="High School">High School</option>
@@ -526,42 +526,42 @@ export default function SchoolSettingsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Grades Offered</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Grades Offered</label>
                   <input
                     type="text"
                     required
                     value={formData.grades_offered || ""}
                     onChange={(e) => setFormData({ ...formData, grades_offered: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Student Capacity</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Student Capacity</label>
                   <input
                     type="number"
                     required
                     value={formData.student_capacity || 0}
                     onChange={(e) => setFormData({ ...formData, student_capacity: parseInt(e.target.value) })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Academic Year</label>
                   <input
                     type="text"
                     required
                     value={formData.academic_year || ""}
                     onChange={(e) => setFormData({ ...formData, academic_year: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Current Term</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Current Term</label>
                   <select
                     required
                     value={formData.current_term || ""}
                     onChange={(e) => setFormData({ ...formData, current_term: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   >
                     <option value="First Semester">First Semester</option>
                     <option value="Second Semester">Second Semester</option>
@@ -570,22 +570,22 @@ export default function SchoolSettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Mission Statement</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mission Statement</label>
                 <textarea
                   rows={3}
                   value={formData.mission_statement || ""}
                   onChange={(e) => setFormData({ ...formData, mission_statement: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Vision Statement</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Vision Statement</label>
                 <textarea
                   rows={3}
                   value={formData.vision_statement || ""}
                   onChange={(e) => setFormData({ ...formData, vision_statement: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
 
@@ -593,7 +593,7 @@ export default function SchoolSettingsPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>
@@ -612,12 +612,12 @@ export default function SchoolSettingsPage() {
       {/* Edit Calendar Modal */}
       {showCalendarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">Edit Academic Calendar</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit Academic Calendar</h2>
               <button
                 onClick={() => setShowCalendarModal(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 ✕
               </button>
@@ -625,67 +625,67 @@ export default function SchoolSettingsPage() {
 
             <form onSubmit={handleSaveCalendar} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Academic Year</label>
                 <input
                   type="text"
                   required
                   value={calendarFormData.academic_year || ""}
                   onChange={(e) => setCalendarFormData({ ...calendarFormData, academic_year: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   placeholder="e.g., 2024-2025"
                 />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Term Start Date</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Term Start Date</label>
                   <input
                     type="date"
                     required
                     value={calendarFormData.term_start_date ? calendarFormData.term_start_date.split('T')[0] : ""}
                     onChange={(e) => setCalendarFormData({ ...calendarFormData, term_start_date: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Term End Date</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Term End Date</label>
                   <input
                     type="date"
                     required
                     value={calendarFormData.term_end_date ? calendarFormData.term_end_date.split('T')[0] : ""}
                     onChange={(e) => setCalendarFormData({ ...calendarFormData, term_end_date: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Exam Period Start</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Exam Period Start</label>
                   <input
                     type="date"
                     required
                     value={calendarFormData.exam_period_start ? calendarFormData.exam_period_start.split('T')[0] : ""}
                     onChange={(e) => setCalendarFormData({ ...calendarFormData, exam_period_start: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Exam Period End</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Exam Period End</label>
                   <input
                     type="date"
                     required
                     value={calendarFormData.exam_period_end ? calendarFormData.exam_period_end.split('T')[0] : ""}
                     onChange={(e) => setCalendarFormData({ ...calendarFormData, exam_period_end: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Break Periods</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Break Periods</label>
                 <textarea
                   rows={3}
                   value={calendarFormData.break_periods || ""}
                   onChange={(e) => setCalendarFormData({ ...calendarFormData, break_periods: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   placeholder="e.g., December 20 - January 5, February 8-12"
                 />
               </div>
@@ -694,7 +694,7 @@ export default function SchoolSettingsPage() {
                 <button
                   type="button"
                   onClick={() => setShowCalendarModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>
@@ -713,14 +713,14 @@ export default function SchoolSettingsPage() {
       {/* Edit Policy Modal */}
       {showPolicyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                 {policyFormData.policy_id ? "Edit Policy" : "Add Policy"}
               </h2>
               <button
                 onClick={() => setShowPolicyModal(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 ✕
               </button>
@@ -728,24 +728,24 @@ export default function SchoolSettingsPage() {
 
             <form onSubmit={handleSavePolicy} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Policy Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Policy Name</label>
                 <input
                   type="text"
                   required
                   value={policyFormData.policy_name || ""}
                   onChange={(e) => setPolicyFormData({ ...policyFormData, policy_name: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   placeholder="e.g., Attendance Policy"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Policy Type</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Policy Type</label>
                 <select
                   required
                   value={policyFormData.policy_type || ""}
                   onChange={(e) => setPolicyFormData({ ...policyFormData, policy_type: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 >
                   <option value="ATTENDANCE">Attendance</option>
                   <option value="GRADING">Grading</option>
@@ -758,25 +758,25 @@ export default function SchoolSettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Content</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Content</label>
                 <textarea
                   rows={5}
                   required
                   value={policyFormData.content || ""}
                   onChange={(e) => setPolicyFormData({ ...policyFormData, content: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   placeholder="Enter the policy details..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Effective Date</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Effective Date</label>
                 <input
                   type="date"
                   required
                   value={policyFormData.effective_date ? policyFormData.effective_date.split('T')[0] : new Date().toISOString().split('T')[0]}
                   onChange={(e) => setPolicyFormData({ ...policyFormData, effective_date: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
 
@@ -784,7 +784,7 @@ export default function SchoolSettingsPage() {
                 <button
                   type="button"
                   onClick={() => setShowPolicyModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>

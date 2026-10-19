@@ -151,7 +151,7 @@ export default function MeetingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-slate-500">Loading meetings...</div>
+        <div className="text-slate-500 dark:text-slate-400">Loading meetings...</div>
       </div>
     );
   }
@@ -159,17 +159,17 @@ export default function MeetingsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Meeting Management</h1>
-        <p className="mt-1 text-sm text-slate-500">View and manage SIC meetings</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Meeting Management</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">View and manage SIC meetings</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         {/* Meetings List */}
         <div className="space-y-4">
-          <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">All Meetings</h2>
+          <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">All Meetings</h2>
             {meetings.length === 0 ? (
-              <p className="text-sm text-slate-400">No meetings scheduled.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">No meetings scheduled.</p>
             ) : (
               <div className="space-y-3">
                 {meetings.map((meeting) => (
@@ -178,22 +178,22 @@ export default function MeetingsPage() {
                     onClick={() => handleMeetingSelect(meeting)}
                     className={`rounded-xl border p-4 cursor-pointer transition ${
                       selectedMeeting?.meeting_id === meeting.meeting_id
-                        ? "border-rose-500 bg-rose-50"
-                        : "border-slate-200 hover:border-rose-300"
+                        ? "border-rose-500 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/30"
+                        : "border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-600"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-medium text-slate-900 text-sm">{meeting.title}</p>
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="font-medium text-slate-900 dark:text-white text-sm">{meeting.title}</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                           {new Date(meeting.scheduled_date).toLocaleDateString()} at {meeting.scheduled_time}
                         </p>
-                        <p className="text-xs text-slate-400">{meeting.location || 'TBD'}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">{meeting.location || 'TBD'}</p>
                       </div>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                        meeting.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700' :
-                        meeting.status === 'CANCELLED' ? 'bg-rose-50 text-rose-700' :
-                        'bg-blue-50 text-blue-700'
+                        meeting.status === 'COMPLETED' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' :
+                        meeting.status === 'CANCELLED' ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300' :
+                        'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                       }`}>
                         {meeting.status}
                       </span>
@@ -209,35 +209,35 @@ export default function MeetingsPage() {
         <div className="space-y-4">
           {selectedMeeting ? (
             <>
-              <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+              <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">{selectedMeeting.title}</h2>
-                    <p className="text-sm text-slate-500 mt-1">{selectedMeeting.description || 'No description'}</p>
-                    <p className="text-xs text-slate-400 mt-2">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">{selectedMeeting.title}</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{selectedMeeting.description || 'No description'}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
                       {new Date(selectedMeeting.scheduled_date).toLocaleDateString()} at {selectedMeeting.scheduled_time}
                     </p>
-                    <p className="text-xs text-slate-400">{selectedMeeting.location || 'TBD'}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">{selectedMeeting.location || 'TBD'}</p>
                   </div>
                   <span className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium ${
-                    selectedMeeting.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700' :
-                    selectedMeeting.status === 'CANCELLED' ? 'bg-rose-50 text-rose-700' :
-                    'bg-blue-50 text-blue-700'
+                    selectedMeeting.status === 'COMPLETED' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' :
+                    selectedMeeting.status === 'CANCELLED' ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300' :
+                    'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                   }`}>
                     {selectedMeeting.status}
                   </span>
                 </div>
 
                 <div className="mt-4">
-                  <p className="text-xs text-slate-500">Attendees: {selectedMeeting.attendees.length}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Attendees: {selectedMeeting.attendees.length}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {selectedMeeting.attendees.slice(0, 5).map((attendee, index) => (
-                      <span key={index} className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                      <span key={index} className="rounded-full bg-slate-100 dark:bg-slate-700 px-2 py-1 text-xs text-slate-600 dark:text-slate-300">
                         {attendee.user.full_name}
                       </span>
                     ))}
                     {selectedMeeting.attendees.length > 5 && (
-                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                      <span className="rounded-full bg-slate-100 dark:bg-slate-700 px-2 py-1 text-xs text-slate-600 dark:text-slate-300">
                         +{selectedMeeting.attendees.length - 5} more
                       </span>
                     )}
@@ -246,9 +246,9 @@ export default function MeetingsPage() {
               </div>
 
               {/* Agenda Items */}
-              <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+              <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between gap-4 mb-4">
-                  <h3 className="text-lg font-bold text-slate-900">Agenda Items</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Agenda Items</h3>
                   <button
                     onClick={() => setShowAgendaForm(!showAgendaForm)}
                     className="rounded-xl bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-rose-700 transition"
@@ -258,34 +258,34 @@ export default function MeetingsPage() {
                 </div>
 
                 {showAgendaForm && (
-                  <form onSubmit={submitAgendaItem} className="mb-4 rounded-xl bg-rose-50 p-4">
-                    <h4 className="text-sm font-semibold text-slate-900 mb-3">Submit Agenda Item</h4>
+                  <form onSubmit={submitAgendaItem} className="mb-4 rounded-xl bg-rose-50 dark:bg-rose-900/30 p-4">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Submit Agenda Item</h4>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">Title</label>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
                         <input
                           type="text"
                           value={newAgendaItem.title}
                           onChange={(e) => setNewAgendaItem(prev => ({ ...prev, title: e.target.value }))}
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                          className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">Description</label>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
                         <textarea
                           value={newAgendaItem.description}
                           onChange={(e) => setNewAgendaItem(prev => ({ ...prev, description: e.target.value }))}
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                          className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                           rows={2}
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">Priority</label>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Priority</label>
                         <select
                           value={newAgendaItem.priority}
                           onChange={(e) => setNewAgendaItem(prev => ({ ...prev, priority: e.target.value }))}
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                          className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                         >
                           <option value="LOW">Low</option>
                           <option value="MEDIUM">Medium</option>
@@ -299,7 +299,7 @@ export default function MeetingsPage() {
                         <button
                           type="button"
                           onClick={() => setShowAgendaForm(false)}
-                          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                          className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                         >
                           Cancel
                         </button>
@@ -309,20 +309,20 @@ export default function MeetingsPage() {
                 )}
 
                 {agendaItems.length === 0 ? (
-                  <p className="text-sm text-slate-400">No agenda items for this meeting.</p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500">No agenda items for this meeting.</p>
                 ) : (
                   <div className="space-y-3">
                     {agendaItems.map((item) => (
-                      <div key={item.agenda_id} className="rounded-xl border border-slate-200 p-4">
+                      <div key={item.agenda_id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="font-medium text-slate-900 text-sm">{item.title}</p>
-                            {item.description && <p className="mt-1 text-xs text-slate-500">{item.description}</p>}
+                            <p className="font-medium text-slate-900 dark:text-white text-sm">{item.title}</p>
+                            {item.description && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.description}</p>}
                           </div>
                           <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                            item.priority === 'HIGH' ? 'bg-rose-50 text-rose-700' :
-                            item.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-700' :
-                            'bg-slate-50 text-slate-700'
+                            item.priority === 'HIGH' ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300' :
+                            item.priority === 'MEDIUM' ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+                            'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                           }`}>
                             {item.priority}
                           </span>
@@ -334,34 +334,34 @@ export default function MeetingsPage() {
               </div>
 
               {/* Meeting Minutes */}
-              <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Meeting Minutes</h3>
+              <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Meeting Minutes</h3>
                 {!minutes ? (
-                  <p className="text-sm text-slate-400">No minutes available for this meeting yet.</p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500">No minutes available for this meeting yet.</p>
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <p className="text-xs text-slate-500 mb-1">Content</p>
-                      <p className="text-sm text-slate-700 whitespace-pre-wrap">{minutes.content}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Content</p>
+                      <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{minutes.content}</p>
                     </div>
                     {minutes.action_items && (
                       <div>
-                        <p className="text-xs text-slate-500 mb-1">Action Items</p>
-                        <p className="text-sm text-slate-700 whitespace-pre-wrap">{minutes.action_items}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Action Items</p>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{minutes.action_items}</p>
                       </div>
                     )}
-                    <p className="text-xs text-slate-400">Recorded: {new Date(minutes.created_at).toLocaleString()}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">Recorded: {new Date(minutes.created_at).toLocaleString()}</p>
                   </div>
                 )}
               </div>
             </>
           ) : (
-            <div className="rounded-2xl bg-white p-8 shadow-sm border border-slate-200 text-center">
-              <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="rounded-2xl bg-white dark:bg-slate-800 p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+              <svg className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
               </svg>
-              <h3 className="text-lg font-medium text-slate-900 mb-2">Select a Meeting</h3>
-              <p className="text-sm text-slate-500">Choose a meeting from the list to view details.</p>
+              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Select a Meeting</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Choose a meeting from the list to view details.</p>
             </div>
           )}
         </div>

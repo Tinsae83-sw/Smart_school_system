@@ -121,7 +121,7 @@ export default function TeachersPage() {
 
         if (!res.ok) {
           const error = await res.json();
-          throw new Error(error.error || "Failed to assign course");
+          throw new Error(error.error || error.message || "Failed to assign course");
         }
       }
 
@@ -133,7 +133,7 @@ export default function TeachersPage() {
       fetchTeachers();
     } catch (error) {
       console.error("Error assigning course:", error);
-      alert("Failed to assign course. Please try again.");
+      alert(error instanceof Error ? error.message : "Failed to assign course. Please try again.");
     }
   }
 

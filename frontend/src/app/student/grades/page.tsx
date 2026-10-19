@@ -108,13 +108,13 @@ export default function StudentGrades() {
   }
 
   function getGradeColor(letterGrade: string | null): string {
-    if (!letterGrade) return "text-slate-500";
+    if (!letterGrade) return "text-slate-500 dark:text-slate-400";
     const grade = letterGrade.toUpperCase();
-    if (["A", "A+", "A-"].includes(grade)) return "text-green-600 bg-green-50";
-    if (["B", "B+", "B-"].includes(grade)) return "text-blue-600 bg-blue-50";
-    if (["C", "C+", "C-"].includes(grade)) return "text-yellow-600 bg-yellow-50";
-    if (["D", "D+", "D-"].includes(grade)) return "text-orange-600 bg-orange-50";
-    return "text-red-600 bg-red-50";
+    if (["A", "A+", "A-"].includes(grade)) return "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20";
+    if (["B", "B+", "B-"].includes(grade)) return "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20";
+    if (["C", "C+", "C-"].includes(grade)) return "text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20";
+    if (["D", "D+", "D-"].includes(grade)) return "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20";
+    return "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20";
   }
 
   function getTypeLabel(type: string): string {
@@ -132,8 +132,8 @@ export default function StudentGrades() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading grades...</p>
+          <div className="w-12 h-12 border-4 border-sky-200 dark:border-slate-600 border-t-sky-600 dark:border-t-sky-400 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading grades...</p>
         </div>
       </div>
     );
@@ -141,8 +141,8 @@ export default function StudentGrades() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-        <p className="text-red-600 font-medium">{error}</p>
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+        <p className="text-red-600 dark:text-red-400 font-medium">{error}</p>
         <button
           onClick={loadGrades}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
@@ -155,12 +155,12 @@ export default function StudentGrades() {
 
   if (subjectGrades.length === 0) {
     return (
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-12 text-center">
-        <svg className="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-12 text-center">
+        <svg className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
-        <h3 className="text-lg font-semibold text-slate-700 mb-2">No Grades Available</h3>
-        <p className="text-slate-500">Your grades will appear here once they are posted by your teachers.</p>
+        <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">No Grades Available</h3>
+        <p className="text-slate-500 dark:text-slate-400">Your grades will appear here once they are posted by your teachers.</p>
       </div>
     );
   }
@@ -169,8 +169,8 @@ export default function StudentGrades() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">My Grades</h1>
-          <p className="text-slate-500 mt-1">View your academic performance by subject</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Grades</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">View your academic performance by subject</p>
         </div>
         <button
           onClick={loadGrades}
@@ -184,7 +184,7 @@ export default function StudentGrades() {
       </div>
 
       {subjectGrades.map((subject, index) => (
-        <div key={`${subject.subject_code}-${index}`} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div key={`${subject.subject_code}-${index}`} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
           {/* Subject Header */}
           <div className="bg-gradient-to-r from-sky-500 to-sky-600 px-6 py-4">
             <div className="flex items-center justify-between">
@@ -206,36 +206,36 @@ export default function StudentGrades() {
             {/* Student Marks (Test, Mid, Final, etc.) */}
             {subject.grades.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">Assessment Grades</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-3">Assessment Grades</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-slate-200">
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-600">Type</th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-600">Score</th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-600">Letter Grade</th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-600">Date</th>
+                      <tr className="border-b border-slate-200 dark:border-slate-700">
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-600 dark:text-slate-400">Type</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-600 dark:text-slate-400">Score</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-600 dark:text-slate-400">Letter Grade</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-600 dark:text-slate-400">Date</th>
                       </tr>
                     </thead>
                     <tbody>
                       {subject.grades.map((grade) => (
-                        <tr key={grade.mark_id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <tr key={grade.mark_id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700">
                           <td className="py-3 px-4">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                               {getTypeLabel(grade.type)}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-sm font-medium text-slate-900">{grade.score.toFixed(2)}</td>
+                          <td className="py-3 px-4 text-sm font-medium text-slate-900 dark:text-white">{grade.score.toFixed(2)}</td>
                           <td className="py-3 px-4">
                             {grade.letter_grade ? (
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${getGradeColor(grade.letter_grade)}`}>
                                 {grade.letter_grade}
                               </span>
                             ) : (
-                              <span className="text-slate-400 text-sm">—</span>
+                              <span className="text-slate-400 dark:text-slate-500 text-sm">—</span>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-sm text-slate-500">
+                          <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400">
                             {new Date(grade.graded_at).toLocaleDateString()}
                           </td>
                         </tr>
@@ -249,18 +249,18 @@ export default function StudentGrades() {
             {/* Assignment Submissions */}
             {subject.submissions.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">Assignment Grades</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-3">Assignment Grades</h3>
                 <div className="space-y-3">
                   {subject.submissions.map((sub) => (
-                    <div key={sub.submission_id} className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition">
+                    <div key={sub.submission_id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h4 className="font-medium text-slate-900">{sub.assignment_title}</h4>
-                          <p className="text-sm text-slate-500 mt-1">
+                          <h4 className="font-medium text-slate-900 dark:text-white">{sub.assignment_title}</h4>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                             Score: {sub.score !== null ? sub.score.toFixed(2) : 'N/A'} / {sub.max_score.toFixed(2)}
                           </p>
                           {sub.feedback && (
-                            <p className="text-sm text-slate-600 mt-2 italic">"{sub.feedback}"</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 mt-2 italic">"{sub.feedback}"</p>
                           )}
                         </div>
                         <div className="ml-4 text-right">
@@ -269,9 +269,9 @@ export default function StudentGrades() {
                               {sub.grade}
                             </span>
                           ) : (
-                            <span className="text-slate-400 text-sm">—</span>
+                            <span className="text-slate-400 dark:text-slate-500 text-sm">—</span>
                           )}
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                             {new Date(sub.submitted_at).toLocaleDateString()}
                           </p>
                         </div>
@@ -283,7 +283,7 @@ export default function StudentGrades() {
             )}
 
             {subject.grades.length === 0 && subject.submissions.length === 0 && (
-              <div className="text-center py-8 text-slate-500">
+              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                 <p>No grades posted yet for this subject.</p>
               </div>
             )}

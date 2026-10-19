@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ParentContext, authHeaders, BACKEND_URL } from "./ParentContext";
 import { isAuthenticated, getUser, clearAuth, getToken } from "@/lib/auth";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
   { href: "/parent", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 5a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -68,13 +69,19 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
   async function doAuthFetch(path: string, options: RequestInit = {}) {
     if (!token) throw new Error("Not authenticated.");
 
-    const headers = {
+    const headers: Record<string, string> = {
       ...options.headers,
       Authorization: `Bearer ${token}`,
     };
 
+    // Set Content-Type to application/json if body is present
+    if (options.body) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     console.log('[ParentLayout] Fetching:', path);
     console.log('[ParentLayout] Token being sent:', token.substring(0, 20) + '...');
+    console.log('[ParentLayout] Headers:', headers);
 
     try {
       const response = await fetch(`${BACKEND_URL}${path}`, {
@@ -167,10 +174,10 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading...</p>
+          <p className="text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
     );
@@ -190,16 +197,16 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         refreshProfile: loadProfile,
       }}
     >
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
         {/* Top bar */}
-        <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+        <header className="fixed top-0 left-0 right-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
           <div className="flex items-center justify-between px-4 h-16">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 rounded-xl hover:bg-slate-100 transition"
+                className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition"
               >
-                <svg className="w-6 h-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-6 h-6 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
@@ -210,18 +217,19 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                   </svg>
                 </div>
-                <span className="text-lg font-bold text-slate-900 hidden sm:block">EduConnect</span>
+                <span className="text-lg font-bold text-slate-900 dark:text-slate-100 hidden sm:block">EduConnect</span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
+              <ThemeToggle />
               {token ? (
                 <>
                   {linkedChildren.length > 1 && (
                     <select
                       value={selectedChildId || ""}
                       onChange={(e) => setSelectedChildId(Number(e.target.value))}
-                      className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     >
                       {linkedChildren.map((child) => (
                         <option key={child.student_id} value={child.student_id}>
@@ -231,15 +239,15 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
                     </select>
                   )}
                   <div className="hidden sm:block text-right">
-                    <p className="text-sm font-semibold text-slate-900">{profile?.full_name || "Parent"}</p>
-                    <p className="text-xs text-slate-500">{profile?.relationship || ""}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile?.full_name || "Parent"}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{profile?.relationship || ""}</p>
                   </div>
-                  <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm">
+                  <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold text-sm">
                     {profile?.full_name?.charAt(0) || "P"}
                   </div>
                   <button
                     onClick={logout}
-                    className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 transition"
+                    className="rounded-xl bg-slate-100 dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
                   >
                     Logout
                   </button>
@@ -262,21 +270,21 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
         {/* Sidebar */}
         <aside
-          className={`fixed top-16 left-0 bottom-0 z-40 w-64 bg-white border-r border-slate-200 overflow-y-auto transition-transform duration-200 ${
+          className={`fixed top-16 left-0 bottom-0 z-40 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 overflow-y-auto transition-transform duration-200 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } lg:translate-x-0`}
         >
           {token && selectedChild && (
-            <div className="p-4 border-b border-slate-100">
-              <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-700">
+              <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-800 font-bold text-sm">
+                  <div className="w-10 h-10 rounded-full bg-emerald-200 dark:bg-emerald-800 flex items-center justify-center text-emerald-800 dark:text-emerald-200 font-bold text-sm">
                     {selectedChild.full_name.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900 text-sm">{selectedChild.full_name}</p>
-                    <p className="text-xs text-slate-500">{selectedChild.class_name}</p>
-                    <p className="text-xs text-emerald-600">{selectedChild.school_name}</p>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{selectedChild.full_name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{selectedChild.class_name}</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">{selectedChild.school_name}</p>
                   </div>
                 </div>
               </div>
@@ -293,8 +301,8 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition ${
                     isActive
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800"
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
                   <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={isActive ? 2 : 1.5}>

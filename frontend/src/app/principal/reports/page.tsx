@@ -104,27 +104,27 @@ export default function ReportsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Reports & Compliance</h1>
-        <p className="mt-1 text-sm text-slate-500">View academic reports, compliance documents, and audit logs</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Reports & Compliance</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">View academic reports, compliance documents, and audit logs</p>
       </div>
 
       {statusMessage && (
         <div className={`mb-6 rounded-xl px-4 py-3 text-sm ${
-          statusMessage.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-rose-50 text-rose-800 border border-rose-200"
+          statusMessage.type === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-rose-50 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
         }`}>
           {statusMessage.message}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-slate-200">
+      <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
         <nav className="flex gap-8">
           <button
             onClick={() => setActiveTab("academic")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "academic"
                 ? "border-b-2 border-indigo-600 text-indigo-600"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Academic Reports ({academicReports.length})
@@ -134,7 +134,7 @@ export default function ReportsPage() {
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "compliance"
                 ? "border-b-2 border-indigo-600 text-indigo-600"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Compliance Reports ({complianceReports.length})
@@ -144,7 +144,7 @@ export default function ReportsPage() {
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "audit"
                 ? "border-b-2 border-indigo-600 text-indigo-600"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Audit Logs ({auditLogs.length})
@@ -153,7 +153,7 @@ export default function ReportsPage() {
       </div>
 
       {loading ? (
-        <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm border border-slate-200">
+        <div className="rounded-2xl bg-white dark:bg-slate-800 p-8 text-center text-sm text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-700">
           Loading...
         </div>
       ) : (
@@ -161,36 +161,36 @@ export default function ReportsPage() {
           {activeTab === "academic" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900">Academic Reports</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Academic Reports</h2>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleGenerateReport("ENROLLMENT")}
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                   >
                     Generate Enrollment Report
                   </button>
                   <button
                     onClick={() => handleGenerateReport("PERFORMANCE")}
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                   >
                     Generate Performance Report
                   </button>
                   <button
                     onClick={() => handleGenerateReport("ATTENDANCE")}
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                   >
                     Generate Attendance Report
                   </button>
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+              <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 {academicReports.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-slate-500">No academic reports found.</div>
+                  <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No academic reports found.</div>
                 ) : (
                   <table className="min-w-full">
-                    <thead className="bg-slate-50">
-                      <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
+                    <thead className="bg-slate-50 dark:bg-slate-700">
+                      <tr className="text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th className="px-6 py-3">Title</th>
                         <th className="px-6 py-3">Type</th>
                         <th className="px-6 py-3">Description</th>
@@ -199,16 +199,16 @@ export default function ReportsPage() {
                         <th className="px-6 py-3">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                       {academicReports.map((report) => (
-                        <tr key={report.report_id} className="hover:bg-slate-50">
-                          <td className="px-6 py-4 text-sm font-medium text-slate-900">{report.title}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{report.report_type}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500 max-w-md truncate">{report.description}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{report.academic_year}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{new Date(report.generated_date).toLocaleDateString()}</td>
+                        <tr key={report.report_id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
+                          <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{report.title}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{report.report_type}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 max-w-md truncate">{report.description}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{report.academic_year}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{new Date(report.generated_date).toLocaleDateString()}</td>
                           <td className="px-6 py-4">
-                            <button className="text-sm text-indigo-600 hover:text-indigo-700">View</button>
+                            <button className="text-sm text-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400">View</button>
                           </td>
                         </tr>
                       ))}
@@ -222,7 +222,7 @@ export default function ReportsPage() {
           {activeTab === "compliance" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900">Compliance Reports</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Compliance Reports</h2>
                 <button
                   onClick={() => handleGenerateReport("COMPLIANCE")}
                   className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
@@ -231,13 +231,13 @@ export default function ReportsPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+              <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 {complianceReports.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-slate-500">No compliance reports found.</div>
+                  <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No compliance reports found.</div>
                 ) : (
                   <table className="min-w-full">
-                    <thead className="bg-slate-50">
-                      <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
+                    <thead className="bg-slate-50 dark:bg-slate-700">
+                      <tr className="text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th className="px-6 py-3">Title</th>
                         <th className="px-6 py-3">Type</th>
                         <th className="px-6 py-3">Description</th>
@@ -247,27 +247,27 @@ export default function ReportsPage() {
                         <th className="px-6 py-3">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                       {complianceReports.map((report) => (
-                        <tr key={report.report_id} className="hover:bg-slate-50">
-                          <td className="px-6 py-4 text-sm font-medium text-slate-900">{report.title}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{report.report_type}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500 max-w-md truncate">{report.description}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{new Date(report.generated_date).toLocaleDateString()}</td>
+                        <tr key={report.report_id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
+                          <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{report.title}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{report.report_type}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 max-w-md truncate">{report.description}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{new Date(report.generated_date).toLocaleDateString()}</td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                              report.status === "SUBMITTED" ? "bg-emerald-50 text-emerald-700" :
-                              report.status === "PENDING" ? "bg-amber-50 text-amber-700" :
-                              "bg-slate-50 text-slate-700"
+                              report.status === "SUBMITTED" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" :
+                              report.status === "PENDING" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" :
+                              "bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                             }`}>
                               {report.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-sm text-slate-500">
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                             {report.submitted_date ? new Date(report.submitted_date).toLocaleDateString() : "N/A"}
                           </td>
                           <td className="px-6 py-4">
-                            <button className="text-sm text-indigo-600 hover:text-indigo-700">View</button>
+                            <button className="text-sm text-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400">View</button>
                           </td>
                         </tr>
                       ))}
@@ -281,35 +281,35 @@ export default function ReportsPage() {
           {activeTab === "audit" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900">Audit Logs</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Audit Logs</h2>
                 <button
                   onClick={() => handleGenerateReport("AUDIT")}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   Export Audit Log
                 </button>
               </div>
 
-              <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+              <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 {auditLogs.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-slate-500">No audit logs found.</div>
+                  <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No audit logs found.</div>
                 ) : (
                   <table className="min-w-full">
-                    <thead className="bg-slate-50">
-                      <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
+                    <thead className="bg-slate-50 dark:bg-slate-700">
+                      <tr className="text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th className="px-6 py-3">Action</th>
                         <th className="px-6 py-3">Performed By</th>
                         <th className="px-6 py-3">Timestamp</th>
                         <th className="px-6 py-3">Details</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                       {auditLogs.map((log) => (
-                        <tr key={log.log_id} className="hover:bg-slate-50">
-                          <td className="px-6 py-4 text-sm font-medium text-slate-900">{log.action}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{log.performed_by}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{new Date(log.timestamp).toLocaleString()}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500 max-w-md truncate">{log.details}</td>
+                        <tr key={log.log_id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
+                          <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{log.action}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{log.performed_by}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{new Date(log.timestamp).toLocaleString()}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 max-w-md truncate">{log.details}</td>
                         </tr>
                       ))}
                     </tbody>

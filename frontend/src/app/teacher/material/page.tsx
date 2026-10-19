@@ -192,30 +192,30 @@ export default function MaterialPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-600 font-medium">Loading materials...</p>
+          <p className="text-slate-600 dark:text-slate-300 font-medium">Loading materials...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <FolderOpen className="w-8 h-8 text-emerald-600" />
-            <h1 className="text-3xl font-bold text-slate-900">Study Materials</h1>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Study Materials</h1>
           </div>
-          <p className="text-slate-600 ml-11">Manage and share learning resources with your students</p>
+          <p className="text-slate-600 dark:text-slate-300 ml-11">Manage and share learning resources with your students</p>
         </div>
-        
+
         {/* Class Selection */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
-          <label className="block text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-6">
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
             <FolderOpen className="w-4 h-4" />
             Select Classes
           </label>
@@ -225,8 +225,8 @@ export default function MaterialPage() {
                 key={cls.class_id}
                 className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                   selectedClasses.includes(cls.class_id)
-                    ? "border-emerald-500 bg-emerald-50"
-                    : "border-slate-200 bg-slate-50 hover:border-emerald-300"
+                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
+                    : "border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 hover:border-emerald-300 dark:hover:border-emerald-500"
                 }`}
               >
                 <input
@@ -239,10 +239,10 @@ export default function MaterialPage() {
                       setSelectedClasses(selectedClasses.filter(id => id !== cls.class_id));
                     }
                   }}
-                  className="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                  className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
                 />
                 <div>
-                  <p className="font-medium text-slate-900">
+                  <p className="font-medium text-slate-900 dark:text-white">
                     {cls.school_class?.class_name || cls.class_name} - {cls.subject?.subject_name || cls.subject}
                   </p>
                 </div>
@@ -273,8 +273,8 @@ export default function MaterialPage() {
 
         {/* Upload Material Form */}
         {showUploadForm && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold text-slate-900 mb-6 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
               <Upload className="w-6 h-6 text-emerald-600" />
               Upload Material
             </h2>
@@ -285,9 +285,9 @@ export default function MaterialPage() {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
-                  isDragging 
-                    ? "border-emerald-500 bg-emerald-50" 
-                    : "border-slate-300 hover:border-emerald-400 bg-slate-50"
+                  isDragging
+                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
+                    : "border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-500 bg-slate-50 dark:bg-slate-700"
                 }`}
               >
                 <input
@@ -298,27 +298,27 @@ export default function MaterialPage() {
                 />
                 {!selectedFile ? (
                   <label htmlFor="file-upload" className="cursor-pointer">
-                    <Upload className="w-12 h-12 mx-auto text-slate-400 mb-4" />
-                    <p className="text-slate-600 font-medium mb-2">
+                    <Upload className="w-12 h-12 mx-auto text-slate-400 dark:text-slate-500 mb-4" />
+                    <p className="text-slate-600 dark:text-slate-300 font-medium mb-2">
                       Drag and drop your file here, or click to browse
                     </p>
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-slate-400 dark:text-slate-500 text-sm">
                       Supports PDF, DOCX, PPTX, Images, and Videos
                     </p>
                   </label>
                 ) : (
-                  <div className="flex items-center justify-between bg-white rounded-lg p-4 border border-slate-200">
+                  <div className="flex items-center justify-between bg-white dark:bg-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600">
                     <div className="flex items-center gap-3">
                       {getFileIcon(formData.file_type)}
                       <div className="text-left">
-                        <p className="font-medium text-slate-900">{selectedFile.name}</p>
-                        <p className="text-sm text-slate-500">{formatFileSize(selectedFile.size)}</p>
+                        <p className="font-medium text-slate-900 dark:text-white">{selectedFile.name}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{formatFileSize(selectedFile.size)}</p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={handleRemoveFile}
-                      className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition"
+                      className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 transition"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -328,22 +328,22 @@ export default function MaterialPage() {
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Title</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Title</label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     required
                     placeholder="Enter material title"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Category</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Category</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                   >
                     <option value="NOTES">Notes</option>
                     <option value="TEXTBOOK">Textbook</option>
@@ -355,24 +355,24 @@ export default function MaterialPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
                   placeholder="Add a description for this material"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition resize-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition resize-none"
                 />
               </div>
 
               {isUploading && (
-                <div className="bg-slate-100 rounded-xl p-4">
+                <div className="bg-slate-100 dark:bg-slate-700 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700">Uploading...</span>
-                    <span className="text-sm text-slate-500">{uploadProgress}%</span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Uploading...</span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">{uploadProgress}%</span>
                   </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div 
+                  <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
+                    <div
                       className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${uploadProgress}%` }}
                     ></div>
@@ -402,7 +402,7 @@ export default function MaterialPage() {
         )}
 
         {message.text && (
-          <div className={`mb-4 flex items-center gap-2 rounded-xl px-4 py-3 ${message.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+          <div className={`mb-4 flex items-center gap-2 rounded-xl px-4 py-3 ${message.type === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400"}`}>
             {message.type === "success" ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
             <span className="text-sm font-medium">{message.text}</span>
           </div>
@@ -411,34 +411,34 @@ export default function MaterialPage() {
         {/* Materials List */}
         <div className="space-y-4">
           {materials.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-              <FolderOpen className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-              <h3 className="text-lg font-semibold text-slate-700 mb-2">No materials yet</h3>
-              <p className="text-slate-500">Upload your first study material to get started</p>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center">
+              <FolderOpen className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">No materials yet</h3>
+              <p className="text-slate-500 dark:text-slate-400">Upload your first study material to get started</p>
             </div>
           ) : (
             materials.map((material: any) => (
-              <div 
-                key={material.material_id} 
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-6"
+              <div
+                key={material.material_id}
+                className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow p-6"
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
                     {getFileIcon(material.file_type)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-slate-900 mb-1">{material.title}</h3>
-                        <p className="text-slate-600 text-sm mb-3 line-clamp-2">{material.description || "No description"}</p>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">{material.title}</h3>
+                        <p className="text-slate-600 dark:text-slate-300 text-sm mb-3 line-clamp-2">{material.description || "No description"}</p>
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 font-medium">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-3 py-1 font-medium">
                             {material.category}
                           </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-600 px-3 py-1 font-medium">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 px-3 py-1 font-medium">
                             {material.file_type}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-slate-500">
+                          <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
                             <Calendar className="w-3 h-3" />
                             {new Date(material.uploaded_at).toLocaleDateString()}
                           </span>
@@ -447,7 +447,7 @@ export default function MaterialPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleDeleteMaterial(material.material_id)}
-                          className="flex items-center gap-2 rounded-xl bg-red-50 text-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-100 transition"
+                          className="flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-4 py-2 text-sm font-semibold hover:bg-red-100 dark:hover:bg-red-900/50 transition"
                         >
                           <Trash2 className="w-4 h-4" />
                           Delete

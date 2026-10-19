@@ -66,19 +66,19 @@ export default function PaymentsPage() {
 
   function getStatusStyle(status: string) {
     switch (status) {
-      case "COMPLETED": return "bg-emerald-100 text-emerald-700 border-emerald-200";
-      case "PENDING": return "bg-amber-100 text-amber-700 border-amber-200";
-      case "FAILED": return "bg-red-100 text-red-700 border-red-200";
-      case "REFUNDED": return "bg-blue-100 text-blue-700 border-blue-200";
-      default: return "bg-slate-100 text-slate-700 border-slate-200";
+      case "COMPLETED": return "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";
+      case "PENDING": return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
+      case "FAILED": return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800";
+      case "REFUNDED": return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800";
+      default: return "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600";
     }
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Payments & Fees</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Payments & Fees</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           {selectedChild?.full_name || "Student"} &middot; {selectedChild?.class_name || ""}
         </p>
       </div>
@@ -96,7 +96,7 @@ export default function PaymentsPage() {
             className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
               activeTab === tab.key
                 ? "bg-emerald-600 text-white"
-                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
             }`}
           >
             {tab.label}
@@ -109,32 +109,32 @@ export default function PaymentsPage() {
         <div className="space-y-4">
           {/* Balance Summary */}
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm text-center">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Fees</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">{fees.totalFees?.toLocaleString()}</p>
-              <p className="text-sm text-slate-500">{fees.currency}</p>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm text-center">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Fees</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{fees.totalFees?.toLocaleString()}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{fees.currency}</p>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm text-center">
-              <p className="text-xs font-medium text-emerald-600 uppercase tracking-wider">Paid</p>
-              <p className="text-3xl font-bold text-emerald-700 mt-2">{fees.totalPaid?.toLocaleString()}</p>
-              <p className="text-sm text-slate-500">{fees.currency}</p>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm text-center">
+              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Paid</p>
+              <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300 mt-2">{fees.totalPaid?.toLocaleString()}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{fees.currency}</p>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm text-center">
-              <p className="text-xs font-medium text-red-600 uppercase tracking-wider">Balance Due</p>
-              <p className="text-3xl font-bold text-red-700 mt-2">{fees.balance?.toLocaleString()}</p>
-              <p className="text-sm text-slate-500">{fees.currency}</p>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm text-center">
+              <p className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wider">Balance Due</p>
+              <p className="text-3xl font-bold text-red-700 dark:text-red-300 mt-2">{fees.balance?.toLocaleString()}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{fees.currency}</p>
             </div>
           </div>
 
           {/* Progress Bar */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-slate-700">Payment Progress</p>
-              <p className="text-sm font-bold text-slate-900">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Payment Progress</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
                 {fees.totalFees ? Math.round((fees.totalPaid / fees.totalFees) * 100) : 0}%
               </p>
             </div>
-            <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500"
                 style={{ width: `${fees.totalFees ? (fees.totalPaid / fees.totalFees) * 100 : 0}%` }}
@@ -143,16 +143,16 @@ export default function PaymentsPage() {
           </div>
 
           {/* Fee Breakdown */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Fee Breakdown</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Fee Breakdown</h2>
             <div className="space-y-3">
               {fees.fees?.map((fee: any) => (
-                <div key={fee.fee_id} className="flex items-center justify-between py-3 border-b border-slate-50 last:border-0">
+                <div key={fee.fee_id} className="flex items-center justify-between py-3 border-b border-slate-50 dark:border-slate-700 last:border-0">
                   <div>
-                    <p className="font-medium text-slate-900">{fee.name}</p>
-                    <p className="text-xs text-slate-500">{fee.term}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">{fee.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{fee.term}</p>
                   </div>
-                  <p className="font-semibold text-slate-900">{fee.amount?.toLocaleString()} {fee.currency}</p>
+                  <p className="font-semibold text-slate-900 dark:text-white">{fee.amount?.toLocaleString()} {fee.currency}</p>
                 </div>
               ))}
             </div>
@@ -163,12 +163,12 @@ export default function PaymentsPage() {
       {/* FR-P36: Make Payment */}
       {activeTab === "pay" && (
         <div className="max-w-lg">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 mb-6">Make a Payment</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">Make a Payment</h2>
 
             {fees?.balance > 0 && (
-              <div className="rounded-xl bg-red-50 border border-red-100 p-4 mb-6">
-                <p className="text-sm text-red-700">
+              <div className="rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 p-4 mb-6">
+                <p className="text-sm text-red-700 dark:text-red-300">
                   Outstanding balance: <span className="font-bold">{fees.balance?.toLocaleString()} {fees.currency}</span>
                 </p>
               </div>
@@ -176,20 +176,20 @@ export default function PaymentsPage() {
 
             <form onSubmit={handlePayment} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Amount ({fees?.currency || "ETB"})</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Amount ({fees?.currency || "ETB"})</label>
                 <input
                   type="number"
                   value={payAmount}
                   onChange={(e) => setPayAmount(e.target.value)}
                   placeholder="Enter amount"
                   min="1"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Payment Method</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Payment Method</label>
                 <div className="grid grid-cols-2 gap-3">
                   {["Chapa", "Telebirr", "CBE Birr", "Bank Transfer"].map((method) => (
                     <button
@@ -198,8 +198,8 @@ export default function PaymentsPage() {
                       onClick={() => setPayMethod(method)}
                       className={`rounded-xl px-4 py-3 text-sm font-semibold border transition ${
                         payMethod === method
-                          ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                          ? "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300"
+                          : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                       }`}
                     >
                       {method}
@@ -209,7 +209,7 @@ export default function PaymentsPage() {
               </div>
 
               {payFeedback && (
-                <p className={`text-sm ${payFeedback.includes("success") ? "text-emerald-600" : "text-red-600"}`}>
+                <p className={`text-sm ${payFeedback.includes("success") ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                   {payFeedback}
                 </p>
               )}
@@ -223,7 +223,7 @@ export default function PaymentsPage() {
               </button>
             </form>
 
-            <p className="text-xs text-slate-400 mt-4 text-center">
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-4 text-center">
               Payments are processed securely through the selected payment gateway.
             </p>
           </div>
@@ -235,18 +235,18 @@ export default function PaymentsPage() {
         <div className="space-y-4">
           {paymentHistory.length > 0 ? (
             paymentHistory.map((payment) => (
-              <div key={payment.payment_id} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <div key={payment.payment_id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-3">
-                      <p className="font-semibold text-slate-900">
+                      <p className="font-semibold text-slate-900 dark:text-white">
                         {payment.amount?.toLocaleString()} {payment.currency}
                       </p>
                       <span className={`rounded-lg px-2 py-0.5 text-xs font-bold border ${getStatusStyle(payment.status)}`}>
                         {payment.status}
                       </span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-500">
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-500 dark:text-slate-400">
                       {payment.payment_method && <span>Via {payment.payment_method}</span>}
                       {payment.transaction_id && <span>TXN: {payment.transaction_id}</span>}
                       <span>{new Date(payment.created_at).toLocaleString()}</span>
@@ -257,7 +257,7 @@ export default function PaymentsPage() {
                     <a
                       href={payment.receipt_url}
                       download
-                      className="flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition"
+                      className="flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-700 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -269,11 +269,11 @@ export default function PaymentsPage() {
               </div>
             ))
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center">
-              <svg className="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm text-center">
+              <svg className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
-              <p className="text-slate-500">No payment history available.</p>
+              <p className="text-slate-500 dark:text-slate-400">No payment history available.</p>
             </div>
           )}
         </div>

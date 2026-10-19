@@ -57,16 +57,24 @@ export default function GrievancesPage() {
     }
   }
 
-  const filteredGrievances = selectedStatus === "all" 
-    ? grievances 
-    : grievances.filter(g => g.status === selectedStatus);
+  const filteredGrievances = selectedStatus === "all"
+    ? grievances
+    : grievances.filter(g => {
+        const statusMap: Record<string, string[]> = {
+          "Pending": ["Pending", "PENDING"],
+          "In_Progress": ["In Progress", "UNDER_REVIEW"],
+          "Resolved": ["Resolved", "RESOLVED"],
+          "Escalated": ["Escalated", "ESCALATED"]
+        };
+        return statusMap[selectedStatus]?.includes(g.status) || g.status === selectedStatus;
+      });
 
   const statusCounts = {
     all: grievances.length,
-    Pending: grievances.filter(g => g.status === "Pending").length,
-    In_Progress: grievances.filter(g => g.status === "In Progress").length,
-    Resolved: grievances.filter(g => g.status === "Resolved").length,
-    Escalated: grievances.filter(g => g.status === "Escalated").length,
+    Pending: grievances.filter(g => g.status === "Pending" || g.status === "PENDING").length,
+    In_Progress: grievances.filter(g => g.status === "In Progress" || g.status === "UNDER_REVIEW").length,
+    Resolved: grievances.filter(g => g.status === "Resolved" || g.status === "RESOLVED").length,
+    Escalated: grievances.filter(g => g.status === "Escalated" || g.status === "ESCALATED").length,
   };
 
   return (
@@ -129,12 +137,16 @@ export default function GrievancesPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          grievance.status === "Pending" ? "bg-amber-50 text-amber-700" :
-                          grievance.status === "In Progress" ? "bg-blue-50 text-blue-700" :
-                          grievance.status === "Resolved" ? "bg-emerald-50 text-emerald-700" :
+                          grievance.status === "Pending" || grievance.status === "PENDING" ? "bg-amber-50 text-amber-700" :
+                          grievance.status === "In Progress" || grievance.status === "UNDER_REVIEW" ? "bg-blue-50 text-blue-700" :
+                          grievance.status === "Resolved" || grievance.status === "RESOLVED" ? "bg-emerald-50 text-emerald-700" :
                           "bg-rose-50 text-rose-700"
                         }`}>
-                          {grievance.status}
+                          {grievance.status === "PENDING" ? "Pending" :
+                           grievance.status === "UNDER_REVIEW" ? "In Progress" :
+                           grievance.status === "RESOLVED" ? "Resolved" :
+                           grievance.status === "ESCALATED" ? "Escalated" :
+                           grievance.status}
                         </span>
                         <span className="text-xs text-slate-500">{grievance.category}</span>
                         {grievance.anonymous && (
@@ -161,7 +173,7 @@ export default function GrievancesPage() {
                       )}
                     </div>
                     
-                    {(grievance.status === "Pending" || grievance.status === "In Progress") && (
+                    {(grievance.status === "Pending" || grievance.status === "PENDING" || grievance.status === "In Progress" || grievance.status === "UNDER_REVIEW") && (
                       <button
                         onClick={() => escalateGrievance(grievance.grievance_id)}
                         className="shrink-0 rounded-lg bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100 transition"

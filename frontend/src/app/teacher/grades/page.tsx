@@ -30,30 +30,30 @@ export default function GradesPage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">Loading...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-6">Grades</h1>
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">Grades</h1>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
           <table className="w-full">
             <thead>
-              <tr className="text-left border-b">
-                <th className="pb-3">Student</th>
-                <th className="pb-3">Subject</th>
-                <th className="pb-3">Score</th>
-                <th className="pb-3">Grade</th>
+              <tr className="text-left border-b border-slate-200 dark:border-slate-700">
+                <th className="pb-3 text-slate-700 dark:text-slate-300">Student</th>
+                <th className="pb-3 text-slate-700 dark:text-slate-300">Subject</th>
+                <th className="pb-3 text-slate-700 dark:text-slate-300">Score</th>
+                <th className="pb-3 text-slate-700 dark:text-slate-300">Grade</th>
               </tr>
             </thead>
             <tbody>
               {grades.map((grade: any) => (
-                <tr key={grade.id} className="border-b">
-                  <td className="py-3">{grade.student_name}</td>
-                  <td className="py-3">{grade.subject?.subject_name || grade.subject}</td>
-                  <td className="py-3">{grade.score}/{grade.max_score}</td>
-                  <td className="py-3 font-semibold">{grade.grade}</td>
+                <tr key={grade.id} className="border-b border-slate-100 dark:border-slate-700">
+                  <td className="py-3 text-slate-900 dark:text-white">{grade.student_name}</td>
+                  <td className="py-3 text-slate-600 dark:text-slate-300">{grade.subject?.subject_name || grade.subject}</td>
+                  <td className="py-3 text-slate-600 dark:text-slate-300">{grade.score}/{grade.max_score}</td>
+                  <td className="py-3 font-semibold text-slate-900 dark:text-white">{grade.grade}</td>
                 </tr>
               ))}
             </tbody>

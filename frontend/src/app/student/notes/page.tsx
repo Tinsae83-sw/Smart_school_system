@@ -139,12 +139,12 @@ export default function StudentNotes() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Notes & Learning Tools</h1>
-        <p className="text-sm text-slate-500 mt-1">Take notes and access recommended books.</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Notes & Learning Tools</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Take notes and access recommended books.</p>
       </div>
 
       {feedback && (
-        <div className={`rounded-2xl p-4 text-sm ${feedback.includes("success") || feedback.includes("deleted") ? "bg-emerald-50 border border-emerald-200 text-emerald-800" : "bg-amber-50 border border-amber-200 text-amber-800"}`}>
+        <div className={`rounded-2xl p-4 text-sm ${feedback.includes("success") || feedback.includes("deleted") ? "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300"}`}>
           {feedback}
         </div>
       )}
@@ -156,7 +156,7 @@ export default function StudentNotes() {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-              activeTab === tab ? "bg-sky-600 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+              activeTab === tab ? "bg-sky-600 text-white" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             }`}
           >
             {tab === "materials" ? "Materials" : tab === "notes" ? "My Notes" : tab === "books" ? "AI Books" : "Access Log"}
@@ -168,27 +168,27 @@ export default function StudentNotes() {
         <div className="space-y-3">
           {materials.length > 0 ? (
             materials.map((material: any) => (
-              <div key={material.material_id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <div key={material.material_id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-slate-100 rounded-lg">
+                      <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
                         {getFileIcon(material.file_type)}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-slate-900">{material.title}</h3>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">{material.title}</h3>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="rounded-full bg-sky-50 text-sky-700 px-2 py-0.5 text-xs font-medium border border-sky-100">
+                          <span className="rounded-full bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400 px-2 py-0.5 text-xs font-medium border border-sky-100 dark:border-sky-800">
                             {material.subject_name}
                           </span>
-                          <span className="text-xs text-slate-500">{material.class_name}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">{material.class_name}</span>
                         </div>
                       </div>
                     </div>
                     {material.description && (
-                      <p className="text-sm text-slate-600 mt-2">{material.description}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">{material.description}</p>
                     )}
-                    <div className="flex items-center gap-4 mt-3 text-xs text-slate-400">
+                    <div className="flex items-center gap-4 mt-3 text-xs text-slate-400 dark:text-slate-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {new Date(material.uploaded_at).toLocaleDateString()}
@@ -210,9 +210,9 @@ export default function StudentNotes() {
               </div>
             ))
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-              <FolderOpen className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-              <p className="text-slate-500">No materials have been uploaded by your teachers yet.</p>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+              <FolderOpen className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+              <p className="text-slate-500 dark:text-slate-400">No materials have been uploaded by your teachers yet.</p>
             </div>
           )}
         </div>
@@ -221,27 +221,27 @@ export default function StudentNotes() {
       {activeTab === "notes" && (
         <div className="space-y-6">
           {/* FR-S35, S36: Note Editor */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
               {editingNoteId ? "Edit Note" : "New Note"}
             </h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
                 <input
                   value={noteTitle}
                   onChange={(e) => setNoteTitle(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white"
                   placeholder="Note title..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Content</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Content</label>
                 <textarea
                   value={noteContent}
                   onChange={(e) => setNoteContent(e.target.value)}
                   rows={6}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 resize-y"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white resize-y"
                   placeholder="Write your study notes..."
                 />
               </div>
@@ -255,7 +255,7 @@ export default function StudentNotes() {
                 {editingNoteId && (
                   <button
                     onClick={() => { setEditingNoteId(null); setNoteTitle(""); setNoteContent(""); }}
-                    className="rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                    className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                   >
                     Cancel
                   </button>
@@ -268,25 +268,25 @@ export default function StudentNotes() {
           <div className="space-y-3">
             {notes.length > 0 ? (
               notes.map((note) => (
-                <div key={note.note_id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <div key={note.note_id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold text-slate-900">{note.title}</h3>
-                      <p className="mt-2 text-sm text-slate-600 whitespace-pre-wrap">{note.content}</p>
-                      <p className="mt-3 text-xs text-slate-400">
+                      <h3 className="font-semibold text-slate-900 dark:text-white">{note.title}</h3>
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{note.content}</p>
+                      <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
                         {new Date(note.updated_at || note.created_at).toLocaleString()}
                       </p>
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
                       <button
                         onClick={() => handleEditNote(note)}
-                        className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200 transition"
+                        className="rounded-lg bg-slate-100 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDeleteNote(note.note_id)}
-                        className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition"
+                        className="rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition"
                       >
                         Delete
                       </button>
@@ -295,8 +295,8 @@ export default function StudentNotes() {
                 </div>
               ))
             ) : (
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-                <p className="text-slate-500">No notes yet. Start writing your first note above!</p>
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+                <p className="text-slate-500 dark:text-slate-400">No notes yet. Start writing your first note above!</p>
               </div>
             )}
           </div>
@@ -309,10 +309,10 @@ export default function StudentNotes() {
           {books.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {books.map((book) => (
-                <div key={book.book_id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition">
+                <div key={book.book_id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm hover:shadow-md transition">
                   <div className="flex flex-col h-full">
                     {book.cover_image_url && (
-                      <div className="w-full h-32 bg-slate-100 rounded-lg mb-4 overflow-hidden">
+                      <div className="w-full h-32 bg-slate-100 dark:bg-slate-700 rounded-lg mb-4 overflow-hidden">
                         <img
                           src={book.cover_image_url}
                           alt={book.title}
@@ -323,15 +323,15 @@ export default function StudentNotes() {
                     )}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="rounded-full bg-sky-50 text-sky-700 px-2 py-0.5 text-xs font-medium border border-sky-100">
+                        <span className="rounded-full bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400 px-2 py-0.5 text-xs font-medium border border-sky-100 dark:border-sky-800">
                           {book.subject_name}
                         </span>
                       </div>
-                      <h3 className="font-semibold text-slate-900 text-lg mb-1">{book.title}</h3>
-                      <p className="text-xs text-slate-500 mb-3">by {book.author}</p>
-                      <p className="text-sm text-slate-600 line-clamp-3">{book.description}</p>
+                      <h3 className="font-semibold text-slate-900 dark:text-white text-lg mb-1">{book.title}</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">by {book.author}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3">{book.description}</p>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
+                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2">
                       <button
                         onClick={() => handleAccessBook(book)}
                         className="flex-1 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 transition"
@@ -343,7 +343,7 @@ export default function StudentNotes() {
                           href={book.preview_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-200 transition"
+                          className="rounded-xl bg-slate-100 dark:bg-slate-700 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
                         >
                           Preview
                         </a>
@@ -354,9 +354,9 @@ export default function StudentNotes() {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-              <FolderOpen className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-              <p className="text-slate-500">No recommended books available at this time.</p>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center">
+              <FolderOpen className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+              <p className="text-slate-500 dark:text-slate-400">No recommended books available at this time.</p>
             </div>
           )}
         </div>
@@ -367,21 +367,21 @@ export default function StudentNotes() {
         <div className="space-y-3">
           {accessLog.length > 0 ? (
             accessLog.map((entry) => (
-              <div key={entry.access_id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+              <div key={entry.access_id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-slate-900 text-sm">{entry.book?.title || "Unknown Book"}</p>
-                    <p className="text-xs text-slate-500">{entry.book?.subject_name || ""}</p>
+                    <p className="font-semibold text-slate-900 dark:text-white text-sm">{entry.book?.title || "Unknown Book"}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{entry.book?.subject_name || ""}</p>
                   </div>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
                     {new Date(entry.accessed_at).toLocaleString()}
                   </span>
                 </div>
               </div>
             ))
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-              <p className="text-slate-500">No books accessed yet.</p>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+              <p className="text-slate-500 dark:text-slate-400">No books accessed yet.</p>
             </div>
           )}
         </div>

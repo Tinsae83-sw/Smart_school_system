@@ -187,21 +187,21 @@ export default function TeachersPage() {
     <div>
       <div className="mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Available Teachers</h1>
-          <p className="mt-1 text-sm text-slate-500">View all active teaching staff</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Available Teachers</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">View all active teaching staff</p>
         </div>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 dark:border-emerald-400 border-t-transparent" />
         </div>
       ) : (
-        <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+        <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <th className="px-6 py-4">Employee ID</th>
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">Email</th>
@@ -216,36 +216,36 @@ export default function TeachersPage() {
                   <th className="px-6 py-4">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {teachers.filter(t => t.user.is_active).map((teacher) => (
-                  <tr key={teacher.teacher_id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{teacher.employee_id}</td>
-                    <td className="px-6 py-4 text-sm text-slate-900">{teacher.user.full_name}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{teacher.user.email}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{teacher.user.phone_number || "N/A"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{teacher.department || "Unassigned"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{teacher.degree_level || "N/A"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{teacher.gender || "N/A"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{teacher.age || "N/A"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{teacher.experience_years ? `${teacher.experience_years} years` : "N/A"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
+                  <tr key={teacher.teacher_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{teacher.employee_id}</td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{teacher.user.full_name}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{teacher.user.email}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{teacher.user.phone_number || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{teacher.department || "Unassigned"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{teacher.degree_level || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{teacher.gender || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{teacher.age || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{teacher.experience_years ? `${teacher.experience_years} years` : "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                       {teacher.subjects.slice(0, 3).join(", ")}
                       {teacher.subjects.length > 3 && "..."}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                       {teacher.grade_levels.join(", ") || "N/A"}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleEdit(teacher)}
-                          className="text-sm text-indigo-600 hover:text-indigo-700"
+                          className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(teacher.teacher_id)}
-                          className="text-sm text-rose-600 hover:text-rose-700"
+                          className="text-sm text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300"
                         >
                           Delete
                         </button>
@@ -255,7 +255,7 @@ export default function TeachersPage() {
                 ))}
                 {teachers.filter(t => t.user.is_active).length === 0 && (
                   <tr>
-                    <td colSpan={12} className="px-6 py-12 text-center text-sm text-slate-400">
+                    <td colSpan={12} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
                       No active teachers found.
                     </td>
                   </tr>
@@ -269,15 +269,15 @@ export default function TeachersPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">Edit Teacher</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit Teacher</h2>
               <button
                 onClick={() => {
                   setShowModal(false);
                   setEditingTeacher(null);
                 }}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 ✕
               </button>
@@ -286,55 +286,55 @@ export default function TeachersPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
                   <input
                     type="text"
                     required
                     value={formData.full_name}
                     onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Employee ID</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Employee ID</label>
                   <input
                     type="text"
                     required
                     value={formData.employee_id}
                     onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
                   <input
                     type="text"
                     value={formData.phone_number}
                     onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
                   <select
                     required
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Select Department</option>
                     {departments.map((dept) => (
@@ -346,11 +346,11 @@ export default function TeachersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Degree Level</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Degree Level</label>
                   <select
                     value={formData.degree_level}
                     onChange={(e) => setFormData({ ...formData, degree_level: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     {degreeLevels.map((level) => (
                       <option key={level} value={level}>
@@ -361,11 +361,11 @@ export default function TeachersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Gender</label>
                   <select
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     {genders.map((gender) => (
                       <option key={gender} value={gender}>
@@ -376,31 +376,31 @@ export default function TeachersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Age</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Age</label>
                   <input
                     type="number"
                     min="18"
                     max="100"
                     value={formData.age}
                     onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Years of Experience</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Years of Experience</label>
                   <input
                     type="number"
                     min="0"
                     value={formData.experience_years}
                     onChange={(e) => setFormData({ ...formData, experience_years: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Grade Levels</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Grade Levels</label>
                 <div className="flex flex-wrap gap-2">
                   {availableGrades.map((grade) => (
                     <button
@@ -410,7 +410,7 @@ export default function TeachersPage() {
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                         formData.grade_levels.includes(grade)
                           ? "bg-indigo-600 text-white"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
                       }`}
                     >
                       Grade {grade}
@@ -420,7 +420,7 @@ export default function TeachersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Subjects</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Subjects</label>
                 <div className="flex flex-wrap gap-2">
                   {availableSubjects.map((subject) => (
                     <button
@@ -430,7 +430,7 @@ export default function TeachersPage() {
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                         formData.subjects.includes(subject)
                           ? "bg-indigo-600 text-white"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
                       }`}
                     >
                       {subject}
@@ -446,7 +446,7 @@ export default function TeachersPage() {
                     setShowModal(false);
                     setEditingTeacher(null);
                   }}
-                  className="w-full sm:w-auto rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="w-full sm:w-auto rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>

@@ -30,32 +30,32 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">Loading...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-6">Settings</h1>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">Settings</h1>
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-xl font-semibold mb-4">Account Preferences</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Account Preferences</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-700">Email Notifications</label>
-                <select 
+                <label className="block text-sm text-slate-700 dark:text-slate-300">Email Notifications</label>
+                <select
                   value={settings?.email_notifications ?? true}
-                  className="mt-1 w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="mt-1 w-full rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white"
                 >
                   <option value="true">Enabled</option>
                   <option value="false">Disabled</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-slate-700">Language</label>
-                <select 
+                <label className="block text-sm text-slate-700 dark:text-slate-300">Language</label>
+                <select
                   value={settings?.language ?? "en"}
-                  className="mt-1 w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="mt-1 w-full rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white"
                 >
                   <option value="en">English</option>
                   <option value="es">Spanish</option>

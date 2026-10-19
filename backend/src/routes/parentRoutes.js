@@ -1,479 +1,202 @@
-const express = require("express");
-const { requireParent } = require("../middleware/authMiddleware");
-const {
-  users,
-  classes,
-  rosters,
-  assignments,
-  submissions,
-  attendanceRecords,
-  messages,
-  notifications,
-  conductRecords,
-  peerEvaluations,
-  performancePredictions,
-  announcements,
-  parentChildren,
-  feeStructures,
-  payments,
-} = require("../data/mockData");
-
+const express = require('express');
 const router = express.Router();
-router.use(requireParent);
+const parentController = require('../controllers/parentController');
 
-function getStudent(studentId) {
-  return users.find((item) => item.user_id === Number(studentId) && item.role === "STUDENT");
-}
+// TEMPORARILY DISABLE ALL AUTHENTICATION FOR DEBUGGING
+// Apply authentication and authorization to all routes
+// const parentAuth = require('../middleware/parentAuth');
+// const { authorize } = require('../middleware/roleMiddleware');
+// router.use(parentAuth);
+// router.use(authorize(['PARENT']));
 
-function getChildLink(parentId, studentId) {
-  return parentChildren.find(
-    (link) => link.parent_user_id === Number(parentId) && link.student_user_id === Number(studentId)
-  );
-}
+// ============================================
+// 1. DASHBOARD & OVERVIEW
+// ============================================
+router.get('/dashboard', parentController.getParentDashboard);
+router.get('/children/:childId/dashboard', parentController.getChildDashboard);
+router.get('/children/:childId/quick-stats', parentController.getQuickStats);
+router.get('/children/:childId/activity-feed', parentController.getActivityFeed);
 
-function getParentChildren(parentId) {
-  return parentChildren
-    .filter((link) => link.parent_user_id === Number(parentId))
-    .map((link) => {
-      const student = getStudent(link.student_user_id);
-      const studentClass = student ? classes.find((cls) => cls.class_id === student.current_class_id) : null;
-      return student
-        ? {
-            student_id: student.user_id,
-            full_name: student.full_name,
-            student_number: student.student_number,
-            relationship: link.relationship,
-            class_name: studentClass?.class_name || "Unknown Class",
-            school_name: studentClass ? "Smart Valley Academy" : "Smart School Connect",
-            current_class_id: student.current_class_id,
-          }
-        : null;
-    })
-    .filter(Boolean);
-}
+// ============================================
+// 2. VIEW CHILD'S ACADEMIC PERFORMANCE (READ-ONLY)
+// ============================================
+router.get('/children/:childId/grades', parentController.getCurrentGrades);
+router.get('/children/:childId/grade-distribution', parentController.getGradeDistribution);
+router.get('/children/:childId/subjects/:subjectId/performance', parentController.getSubjectPerformance);
+router.get('/children/:childId/term-reports', parentController.getTermReports);
+router.get('/children/:childId/grade-history', parentController.getGradeHistory);
+router.get('/children/:childId/class-comparison', parentController.getClassComparison);
+router.get('/children/:childId/subject-ranks', parentController.getSubjectRanks);
+router.get('/children/:childId/progress-chart', parentController.getProgressChart);
 
-function getStudentAttendanceEntries(studentId) {
-  const records = [];
-  attendanceRecords.forEach((record) => {
-    const matches = record.entries.filter((entry) => entry.student_id === Number(studentId));
-    matches.forEach((entry) => {
-      records.push({
-        attendance_id: record.attendance_id,
-        class_id: record.class_id,
-        date: record.date,
-        status: entry.status,
-        remark: entry.remark,
-      });
-    });
-  });
-  return records;
-}
+// ============================================
+// 3. VIEW CHILD'S ATTENDANCE (READ-ONLY)
+// ============================================
+router.get('/children/:childId/attendance', parentController.getDailyAttendance);
+router.get('/children/:childId/attendance/summary', parentController.getAttendanceSummary);
+router.get('/children/:childId/attendance/daily', parentController.getDailyAttendance);
+router.get('/children/:childId/attendance/monthly', parentController.getMonthlyAttendance);
+router.get('/children/:childId/attendance/trends', parentController.getAttendanceTrends);
+router.get('/children/:childId/attendance/absences', parentController.getAbsenceReasons);
+router.get('/children/:childId/attendance/alerts', parentController.getAttendanceAlerts);
+router.get('/children/:childId/attendance/export', parentController.exportAttendanceReport);
 
-function getStudentAssignments(studentId) {
-  const student = getStudent(studentId);
-  if (!student) return [];
-  return assignments.filter((assignment) => assignment.class_id === student.current_class_id);
-}
+// ============================================
+// 4. VIEW CHILD'S CONDUCT (READ-ONLY)
+// ============================================
+router.get('/children/:childId/conduct/summary', parentController.getConductSummary);
+router.get('/children/:childId/conduct/history', parentController.getConductHistory);
+router.get('/children/:childId/conduct/comments', parentController.getConductComments);
+router.get('/children/:childId/conduct/incidents', parentController.getConductIncidents);
+router.get('/children/:childId/conduct/trends', parentController.getConductTrends);
 
-function getStudentSubmission(studentId, assignmentId) {
-  return submissions.find(
-    (submission) => submission.student_id === Number(studentId) && submission.assignment_id === Number(assignmentId)
-  );
-}
+// ============================================
+// 5. VIEW CHILD'S TRANSCRIPT (READ-ONLY)
+// ============================================
+router.get('/children/:childId/transcript', parentController.getOfficialTranscript);
+router.get('/children/:childId/transcript/cumulative', parentController.getCumulativeTranscript);
+router.get('/children/:childId/transcript/download', parentController.downloadTranscript);
+router.post('/children/:childId/transcript/print', parentController.printTranscript);
+router.get('/children/:childId/transcript/verify', parentController.verifyTranscript);
 
-function getStudentGrades(studentId) {
-  return submissions
-    .filter((submission) => submission.student_id === Number(studentId))
-    .map((submission) => {
-      const assignment = assignments.find((item) => item.assignment_id === submission.assignment_id);
-      return {
-        ...submission,
-        assignment_title: assignment?.title || "Unknown Assignment",
-        class_id: assignment?.class_id || null,
-      };
-    });
-}
+// ============================================
+// 6. VIEW CHILD'S ASSIGNMENTS & SUBMISSIONS (READ-ONLY)
+// ============================================
+router.get('/children/:childId/assignments', parentController.getCurrentAssignments);
+router.get('/children/:childId/assignments/deadlines', parentController.getAssignmentDeadlines);
+router.get('/children/:childId/assignments/submitted', parentController.getSubmittedAssignments);
+router.get('/children/:childId/assignments/scores', parentController.getAssignmentScores);
+router.get('/children/:childId/assignments/missing', parentController.getMissingAssignments);
+router.get('/children/:childId/assignments/:assignmentId/files', parentController.downloadAssignmentFiles);
 
-function getStudentClass(studentId) {
-  const student = getStudent(studentId);
-  return student ? classes.find((cls) => cls.class_id === student.current_class_id) : null;
-}
+// ============================================
+// 7. VIEW CHILD'S EXAM RESULTS (READ-ONLY)
+// ============================================
+router.get('/children/:childId/exams/schedule', parentController.getExamSchedule);
+router.get('/children/:childId/exams/results', parentController.getExamResults);
+router.get('/children/:childId/exams/national', parentController.getNationalExamResults);
+router.get('/children/:childId/exams/analysis', parentController.getExamPerformanceAnalysis);
+router.get('/children/:childId/exams/report/download', parentController.downloadExamReport);
 
-function getAnnouncementsForParent() {
-  return announcements.filter((announcement) =>
-    !announcement.target_roles ||
-    announcement.target_roles.includes("ALL") ||
-    announcement.target_roles.includes("PARENT")
-  );
-}
+// ============================================
+// 8. COMMUNICATION WITH TEACHERS (WRITE)
+// ============================================
+router.post('/messages/send', parentController.sendMessageToTeacher);
+router.post('/messages/send-vp-academic', parentController.sendMessageToVPAcademic);
+router.get('/messages/history', parentController.getMessageHistory);
+router.get('/messages/:threadId', parentController.getMessageThread);
+router.post('/messages/:messageId/reply', parentController.replyToMessage);
+router.put('/messages/:messageId/read', parentController.markMessageAsRead);
+router.put('/messages/read-all', parentController.markAllMessagesAsRead);
 
-function buildPerformanceTrend(studentId) {
-  const prediction = performancePredictions.find((item) => item.student_id === Number(studentId));
-  if (!prediction) {
-    return [
-      { month: "Aug", score: 72 },
-      { month: "Sep", score: 78 },
-      { month: "Oct", score: 82 },
-    ];
-  }
+// ============================================
+// 9. COMMUNICATION WITH SCHOOL ADMINISTRATION (WRITE)
+// ============================================
+router.post('/messages/principal', parentController.sendMessageToPrincipal);
+router.post('/messages/vp-admin', parentController.sendMessageToVPAdmin);
+router.post('/grievances', parentController.submitGrievance);
+router.post('/feedback', parentController.submitFeedback);
+router.get('/grievances', parentController.trackGrievanceStatus);
+router.get('/grievances/:grievanceId', parentController.getGrievanceDetails);
 
-  return [
-    { month: "Aug", score: Math.max(50, Math.min(100, (prediction.predicted_grade === "A-" ? 88 : 76))) },
-    { month: "Sep", score: Math.max(50, Math.min(100, (prediction.predicted_grade === "A-" ? 85 : 72))) },
-    { month: "Oct", score: Math.max(50, Math.min(100, (prediction.predicted_grade === "A-" ? 90 : 78))) },
-  ];
-}
+// ============================================
+// 10. VIEW ANNOUNCEMENTS & NOTICES (READ-ONLY)
+// ============================================
+router.get('/announcements', parentController.getSchoolAnnouncements);
+router.get('/announcements/parent-specific', parentController.getParentSpecificAnnouncements);
+router.get('/announcements/ptsa', parentController.getPTSAAnnouncements);
+router.get('/announcements/urgent', parentController.getUrgentNotices);
+router.get('/events/calendar', parentController.getEventCalendar);
 
-function buildAlerts(studentId) {
-  const attendanceEntries = getStudentAttendanceEntries(studentId);
-  const lowGrade = submissions.some(
-    (submission) => submission.student_id === Number(studentId) && submission.score != null && submission.score < 65
-  );
-  const alerts = [];
+// ============================================
+// 11. CHILD'S PEER EVALUATION RESULTS (READ-ONLY)
+// ============================================
+router.get('/children/:childId/peer-evaluations', parentController.getPeerEvaluationSummary);
+router.get('/children/:childId/peer-evaluations/:evaluationId/comments', parentController.getPeerEvaluationComments);
+router.get('/children/:childId/peer-evaluations/:evaluationId/rating', parentController.getPeerRating);
+router.get('/children/:childId/peer-evaluations/:evaluationId/comparison', parentController.getPeerComparison);
 
-  if (attendanceEntries.some((entry) => entry.status === "ABSENT")) {
-    alerts.push({ type: "ABSENCE", message: "Recent absence recorded for your child." });
-  }
-  if (lowGrade) {
-    alerts.push({ type: "LOW_GRADE", message: "A recent score is below the expected grade range." });
-  }
-  const nextDeadline = getStudentAssignments(studentId)
-    .filter((assignment) => new Date(assignment.due_date) > new Date())
-    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
-  if (nextDeadline) {
-    alerts.push({ type: "DEADLINE", message: `Upcoming deadline: ${nextDeadline.title}.` });
-  }
+// ============================================
+// 12. SCHOOL FEE & PAYMENT MANAGEMENT (MOCK / READ-ONLY)
+// ============================================
+router.get('/children/:childId/fees', parentController.getFeeStructure);
+router.get('/children/:childId/payments', parentController.getPaymentHistory);
+router.post('/children/:childId/payments', parentController.processPayment);
+router.get('/children/:childId/payments/balance', parentController.getOutstandingBalance);
+router.get('/children/:childId/payments/:paymentId/receipt', parentController.generateFeeReceipt);
+router.post('/messages/fee-inquiry', parentController.requestFeeClarification);
 
-  return alerts.slice(0, 3);
-}
+// ============================================
+// 13. PARENT PROFILE & SETTINGS
+// ============================================
+router.get('/profile', parentController.getParentProfile);
+router.put('/profile', parentController.updateParentProfile);
+router.get('/notifications/preferences', parentController.getNotificationPreferences);
+router.put('/notifications/preferences', parentController.updateNotificationPreferences);
+router.post('/change-password', parentController.changePassword);
+router.get('/children', parentController.getAssociatedChildren);
+router.post('/children/request', parentController.requestChildAssociation);
+router.get('/login-history', parentController.getLoginHistory);
+router.post('/account/deactivate', parentController.requestAccountDeactivation);
 
-router.get("/profile", (req, res) => {
-  const user = req.user;
-  res.json({
-    user_id: user.user_id,
-    full_name: user.full_name,
-    email: user.email,
-    phone_number: user.phone_number,
-    relationship: user.relationship,
-    preferred_language: user.preferred_language,
-    profile_picture_url: user.profile_picture_url,
-  });
-});
+// ============================================
+// 14. PARENT-TEACHER CONFERENCE SCHEDULING
+// ============================================
+router.get('/conferences/schedule', parentController.getConferenceSchedule);
+router.post('/conferences/book', parentController.bookConferenceSlot);
+router.get('/conferences/history', parentController.getConferenceHistory);
+router.delete('/conferences/:bookingId', parentController.cancelConferenceBooking);
+router.put('/conferences/:bookingId/reschedule', parentController.rescheduleConferenceBooking);
 
-router.put("/profile", (req, res) => {
-  const { full_name, phone_number, preferred_language, relationship } = req.body;
-  req.user.full_name = full_name || req.user.full_name;
-  req.user.phone_number = phone_number || req.user.phone_number;
-  req.user.preferred_language = preferred_language || req.user.preferred_language;
-  req.user.relationship = relationship || req.user.relationship;
-  res.json({ success: true, profile: req.user });
-});
+// ============================================
+// 15. PTSA ENGAGEMENT (ADVISORY/PARTICIPATORY)
+// ============================================
+router.get('/ptsa/dashboard', parentController.getPTSADashboard);
+router.get('/ptsa/meetings/schedule', parentController.getPTSAMeetingSchedule);
+router.get('/ptsa/meetings/:meetingId/minutes', parentController.getPTSAMeetingMinutes);
+router.post('/ptsa/feedback', parentController.submitPTSAFeedback);
+router.get('/ptsa/announcements', parentController.getPTSAAnnouncementsRoute);
+router.get('/ptsa/elections', parentController.getPTSAElectionInformation);
+router.post('/ptsa/elections/:electionId/vote', parentController.submitPTSAElectionVote);
 
-router.post("/change-password", (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ error: "Both current and new passwords are required." });
-  }
-  if (req.user.password_hash !== currentPassword) {
-    return res.status(401).json({ error: "Current password is incorrect." });
-  }
-  req.user.password_hash = newPassword;
-  res.json({ success: true, message: "Password updated successfully." });
-});
+// ============================================
+// 16. MOBILE & ACCESSIBILITY
+// ============================================
+router.get('/mobile/settings', parentController.getMobileSettings);
+router.put('/mobile/settings', parentController.updateMobileSettings);
+router.get('/accessibility/settings', parentController.getAccessibilitySettings);
+router.put('/accessibility/settings', parentController.updateAccessibilitySettings);
 
-router.get("/children", (req, res) => {
-  res.json(getParentChildren(req.user.user_id));
-});
+// ============================================
+// 17. REPORTS & EXPORT
+// ============================================
+router.post('/children/:childId/reports/academic', parentController.generateAcademicReport);
+router.post('/children/:childId/reports/attendance', parentController.generateAttendanceReport);
+router.post('/children/:childId/reports/conduct', parentController.generateConductReport);
+router.post('/children/:childId/reports/combined', parentController.generateCombinedReport);
+router.get('/children/:childId/export/csv', parentController.exportDataToCSV);
+router.get('/reports/:reportId/download', parentController.downloadGeneratedReport);
 
-router.get("/children/:studentId/dashboard", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  const link = getChildLink(req.user.user_id, studentId);
-  if (!link) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
+// ============================================
+// 18. SUPPORT & HELP
+// ============================================
+router.get('/support/user-guide', parentController.getUserGuide);
+router.post('/support/help-request', parentController.submitHelpRequest);
+router.get('/support/troubleshooting', parentController.getTroubleshootingTips);
+router.get('/support/contact', parentController.getSupportContact);
 
-  const student = getStudent(studentId);
-  if (!student) {
-    return res.status(404).json({ error: "Child not found." });
-  }
+// ============================================
+// NOTIFICATIONS
+// ============================================
+router.get('/notifications', parentController.getNotifications);
+router.post('/notifications/read', parentController.markNotificationRead);
 
-  const classInfo = getStudentClass(studentId);
-  const assignmentsList = getStudentAssignments(studentId);
-  const submissionsForChild = submissions.filter((item) => item.student_id === studentId);
-  const gradedSubmissions = submissionsForChild.filter((item) => item.score != null);
-  const attendanceEntries = getStudentAttendanceEntries(studentId);
-  const averageGrade = gradedSubmissions.length
-    ? Math.round(gradedSubmissions.reduce((sum, item) => sum + Number(item.score), 0) / gradedSubmissions.length)
-    : 0;
-  const attendanceRate = attendanceEntries.length
-    ? Math.round((attendanceEntries.filter((entry) => entry.status === "PRESENT").length / attendanceEntries.length) * 100)
-    : 0;
-  const assignmentsSubmitted = assignmentsList.filter((assignment) =>
-    submissionsForChild.some((submission) => submission.assignment_id === assignment.assignment_id)
-  ).length;
-  const alerts = buildAlerts(studentId);
-
-  res.json({
-    child: {
-      student_id: student.user_id,
-      full_name: student.full_name,
-      student_number: student.student_number,
-      class_name: classInfo?.class_name || "Unknown Class",
-      school_name: classInfo ? "Smart Valley Academy" : "Smart School Connect",
-    },
-    summary: {
-      average_grade: averageGrade,
-      attendance_rate: attendanceRate,
-      assignments_submitted: assignmentsSubmitted,
-      total_assignments: assignmentsList.length,
-    },
-    alerts,
-    performance_trend: buildPerformanceTrend(studentId),
-    announcements: getAnnouncementsForParent().slice(0, 5),
-  });
-});
-
-router.get("/children/:studentId/grades", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-  res.json(getStudentGrades(studentId));
-});
-
-router.get("/children/:studentId/attendance", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-  res.json(getStudentAttendanceEntries(studentId));
-});
-
-router.get("/children/:studentId/attendance/summary", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-
-  const entries = getStudentAttendanceEntries(studentId);
-  const byMonth = entries.reduce((summary, entry) => {
-    const month = entry.date.slice(0, 7);
-    summary[month] = summary[month] || { present: 0, absent: 0, late: 0, total: 0 };
-    summary[month].total += 1;
-    summary[month][entry.status.toLowerCase()] += 1;
-    return summary;
-  }, {});
-
-  const summary = Object.entries(byMonth).map(([month, stats]) => ({
-    month,
-    ...stats,
-    percentage: stats.total ? Math.round((stats.present / stats.total) * 100) : 0,
-  }));
-
-  res.json(summary);
-});
-
-router.get("/children/:studentId/assignments", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-
-  const assignmentList = getStudentAssignments(studentId);
-  const enriched = assignmentList.map((assignment) => {
-    const submission = getStudentSubmission(studentId, assignment.assignment_id);
-    const isOpen = new Date(assignment.due_date) > new Date();
-    const status = submission
-      ? submission.score == null
-        ? "SUBMITTED"
-        : "GRADED"
-      : isOpen
-      ? "OPEN"
-      : "CLOSED";
-    return {
-      ...assignment,
-      status,
-      submission: submission || null,
-    };
-  });
-
-  res.json(enriched);
-});
-
-router.get("/children/:studentId/conduct", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-  res.json(conductRecords.filter((record) => record.student_id === studentId));
-});
-
-router.get("/children/:studentId/peer-evaluations", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-
-  const student = getStudent(studentId);
-  if (!student) {
-    return res.status(404).json({ error: "Child not found." });
-  }
-
-  const classIds = [student.current_class_id];
-  res.json(peerEvaluations.filter((evaluation) => classIds.includes(evaluation.class_id)));
-});
-
-router.get("/children/:studentId/performance", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-
-  const prediction = performancePredictions.find((item) => item.student_id === studentId);
-  if (!prediction) {
-    return res.status(404).json({ error: "Performance prediction not found." });
-  }
-  res.json(prediction);
-});
-
-router.get("/children/:studentId/transcript", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-  res.json({ pdf_url: `/transcripts/student-${studentId}.pdf` });
-});
-
-router.get("/children/:studentId/messages", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-  const parentMessages = messages.filter(
-    (thread) => thread.recipient_role === "Parent" && thread.student_id === studentId
-  );
-  res.json(parentMessages);
-});
-
-router.post("/children/:studentId/messages", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  const { thread_id, body } = req.body;
-  if (!body) {
-    return res.status(400).json({ error: "Message body is required." });
-  }
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-
-  let thread = messages.find(
-    (item) => item.thread_id === Number(thread_id) && item.recipient_role === "Parent" && item.student_id === studentId
-  );
-
-  if (!thread) {
-    thread = {
-      thread_id: messages.length + 1,
-      recipient_name: req.user.full_name,
-      recipient_role: "Parent",
-      student_id: studentId,
-      last_message: body,
-      unread: 0,
-      messages: [],
-    };
-    messages.push(thread);
-  }
-
-  const message = { sender: "parent", body, created_at: new Date().toISOString() };
-  thread.messages.push(message);
-  thread.last_message = body;
-  thread.unread = 0;
-
-  res.json({ success: true, thread });
-});
-
-router.get("/notifications", (req, res) => {
-  res.json(
-    notifications.filter((notification) =>
-      !notification.target_roles ||
-      notification.target_roles.includes("ALL") ||
-      notification.target_roles.includes("PARENT")
-    )
-  );
-});
-
-router.post("/notifications/read", (req, res) => {
-  const { notificationId } = req.body;
-  const notification = notifications.find((item) => item.id === notificationId);
-  if (!notification) {
-    return res.status(404).json({ error: "Notification not found." });
-  }
-
-  notification.read = true;
-  res.json({ success: true, notification });
-});
-
-// FR-P35: View school fee balance for each child
-router.get("/children/:studentId/fees", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-
-  const parentEntry = parentChildren.find((link) => link.student_user_id === studentId);
-  const parentId = parentEntry ? users.find((u) => u.user_id === parentEntry.parent_user_id)?.user_id : null;
-
-  const studentFees = feeStructures.filter((fee) => fee.student_id === studentId);
-  const totalFees = studentFees.reduce((sum, fee) => sum + fee.amount, 0);
-  const studentPayments = payments.filter((p) => p.student_id === studentId && p.status === "COMPLETED");
-  const totalPaid = studentPayments.reduce((sum, p) => sum + p.amount, 0);
-  const balance = totalFees - totalPaid;
-
-  res.json({
-    fees: studentFees,
-    totalFees,
-    totalPaid,
-    balance,
-    currency: "ETB",
-  });
-});
-
-// FR-P36: Initiate online fee payment
-router.post("/children/:studentId/payments", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  const { amount, payment_method } = req.body;
-  if (!amount || !payment_method) {
-    return res.status(400).json({ error: "Amount and payment method are required." });
-  }
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-
-  const parentEntry = parentChildren.find((link) => link.student_user_id === studentId);
-
-  const newPayment = {
-    payment_id: payments.length + 1,
-    parent_id: req.user.user_id,
-    student_id: studentId,
-    amount: Number(amount),
-    currency: "ETB",
-    status: "COMPLETED",
-    payment_method,
-    transaction_id: `${payment_method.toUpperCase().slice(0, 3)}-2025-${String(payments.length + 1).padStart(3, "0")}`,
-    receipt_url: `/receipts/receipt-${String(payments.length + 1).padStart(3, "0")}.pdf`,
-    created_at: new Date().toISOString(),
-  };
-
-  payments.push(newPayment);
-  res.json({ success: true, payment: newPayment });
-});
-
-// FR-P37: View payment history
-router.get("/children/:studentId/payments", (req, res) => {
-  const studentId = Number(req.params.studentId);
-  if (!getChildLink(req.user.user_id, studentId)) {
-    return res.status(403).json({ error: "Child not linked to this parent." });
-  }
-
-  res.json(payments.filter((p) => p.student_id === studentId));
-});
+// ============================================
+// COMMUNICATION
+// ============================================
+router.get('/contacts', parentController.getParentContacts);
+router.get('/messages', parentController.getParentMessages);
+router.post('/messages', parentController.sendParentMessage);
+router.put('/messages/:messageId/read', parentController.markParentMessageRead);
 
 module.exports = router;

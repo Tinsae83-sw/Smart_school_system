@@ -136,16 +136,16 @@ export default function DepartmentsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Department Management</h1>
-        <p className="mt-1 text-sm text-slate-500">Manage school departments and their heads</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Department Management</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage school departments and their heads</p>
       </div>
 
       {statusMessage && (
         <div
           className={`mb-6 rounded-xl px-4 py-3 text-sm ${
             statusMessage.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-              : "bg-rose-50 text-rose-800 border border-rose-200"
+              ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+              : "bg-rose-50 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
           }`}
         >
           {statusMessage.message}
@@ -170,15 +170,15 @@ export default function DepartmentsPage() {
         </button>
       </div>
 
-      <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+      <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-sm text-slate-500">Loading...</div>
+          <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading...</div>
         ) : departments.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">No departments found.</div>
+          <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No departments found.</div>
         ) : (
           <table className="min-w-full">
-            <thead className="bg-slate-50">
-              <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-700">
+              <tr className="text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="px-6 py-3">Name</th>
                 <th className="px-6 py-3">Code</th>
                 <th className="px-6 py-3">Description</th>
@@ -187,21 +187,21 @@ export default function DepartmentsPage() {
                 <th className="px-6 py-3">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {departments.map((department) => (
-                <tr key={department.department_id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 text-sm font-medium text-slate-900">{department.name}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{department.code || "N/A"}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{department.description || "N/A"}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">
+                <tr key={department.department_id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
+                  <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{department.name}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{department.code || "N/A"}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{department.description || "N/A"}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                     {department.head_of_department?.user.full_name || "Not Assigned"}
                   </td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                         department.is_active
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-rose-50 text-rose-700"
+                          ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                          : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300"
                       }`}
                     >
                       <span
@@ -216,13 +216,13 @@ export default function DepartmentsPage() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEdit(department)}
-                        className="text-sm text-indigo-600 hover:text-indigo-700"
+                        className="text-sm text-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(department.department_id)}
-                        className="text-sm text-rose-600 hover:text-rose-700"
+                        className="text-sm text-rose-600 hover:text-rose-700 dark:hover:text-rose-400"
                       >
                         Delete
                       </button>
@@ -238,9 +238,9 @@ export default function DepartmentsPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                 {editingDepartment ? "Edit Department" : "Add New Department"}
               </h2>
               <button
@@ -248,7 +248,7 @@ export default function DepartmentsPage() {
                   setShowModal(false);
                   setEditingDepartment(null);
                 }}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 ✕
               </button>
@@ -256,33 +256,33 @@ export default function DepartmentsPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Department Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department Name</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Department Code</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department Code</label>
                 <input
                   type="text"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
 
@@ -294,7 +294,7 @@ export default function DepartmentsPage() {
                     setShowModal(false);
                     setEditingDepartment(null);
                   }}
-                  className="w-full sm:w-auto rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="w-full sm:w-auto rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>

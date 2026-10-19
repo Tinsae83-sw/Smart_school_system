@@ -335,14 +335,14 @@ export default function StudentsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Students Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage student enrollment and assignments</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Students Management</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage student enrollment and assignments</p>
         </div>
         <div className="flex gap-3">
           <select
             value={gradeFilter}
             onChange={(e) => setGradeFilter(e.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition focus:border-emerald-500 focus:outline-none"
+            className="rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition focus:border-emerald-500 focus:outline-none"
           >
             <option value="">All Grades</option>
             <option value="9">Grade 9</option>
@@ -403,14 +403,14 @@ export default function StudentsPage() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="mb-6 border-b border-slate-200">
+      <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
         <nav className="flex gap-8">
           <button
             onClick={() => setActiveTab('students')}
             className={`pb-4 px-1 text-sm font-semibold transition-colors ${
               activeTab === 'students'
-                ? 'text-emerald-600 border-b-2 border-emerald-600'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
             Students
@@ -419,8 +419,8 @@ export default function StudentsPage() {
             onClick={() => setActiveTab('parents')}
             className={`pb-4 px-1 text-sm font-semibold transition-colors ${
               activeTab === 'parents'
-                ? 'text-emerald-600 border-b-2 border-emerald-600'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
             Parent-Student Relationships
@@ -432,25 +432,25 @@ export default function StudentsPage() {
         <>
           {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 dark:border-emerald-400 border-t-transparent" />
         </div>
       ) : (
         <div className="space-y-6">
           {Object.keys(groupedStudents).length === 0 ? (
-            <div className="rounded-2xl bg-white shadow-sm border border-slate-200 p-12 text-center">
-              <div className="text-sm text-slate-400">No students found. Add your first student to get started.</div>
+            <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 p-12 text-center">
+              <div className="text-sm text-slate-400 dark:text-slate-500">No students found. Add your first student to get started.</div>
             </div>
           ) : (
             Object.entries(groupedStudents).map(([className, classStudents]) => (
-              <div key={className} className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-gradient-to-r from-emerald-50 to-blue-50 px-6 py-4 border-b border-slate-200">
-                  <h3 className="text-lg font-semibold text-slate-900">{className}</h3>
-                  <p className="text-sm text-slate-600">{classStudents.length} {classStudents.length === 1 ? 'student' : 'students'}</p>
+              <div key={className} className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="bg-gradient-to-r from-emerald-50 dark:from-emerald-900/30 to-blue-50 dark:to-blue-900/30 px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{className}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">{classStudents.length} {classStudents.length === 1 ? 'student' : 'students'}</p>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+                      <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th className="px-6 py-4">Student Number</th>
                         <th className="px-6 py-4">Name</th>
                         <th className="px-6 py-4">Email</th>
@@ -460,22 +460,22 @@ export default function StudentsPage() {
                         <th className="px-6 py-4">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                       {classStudents.map((student) => (
-                        <tr key={student.student_id} className="hover:bg-slate-50">
-                          <td className="px-6 py-4 text-sm font-medium text-slate-900">{student.student_number}</td>
-                          <td className="px-6 py-4 text-sm text-slate-900">{student.user.full_name}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{student.user.email}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{student.gender || "N/A"}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">
+                        <tr key={student.student_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                          <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{student.student_number}</td>
+                          <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{student.user.full_name}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{student.user.email}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{student.gender || "N/A"}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                             {new Date(student.enrollment_date).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4">
                             <span
                               className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
                                 student.user.is_active
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-rose-50 text-rose-700"
+                                  ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                                  : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300"
                               }`}
                             >
                               <span
@@ -490,19 +490,19 @@ export default function StudentsPage() {
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => handleEdit(student)}
-                                className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100 transition"
+                                className="rounded-lg bg-sky-50 dark:bg-sky-900/30 px-3 py-1.5 text-xs font-medium text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleDelete(student.student_id)}
-                                className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition"
+                                className="rounded-lg bg-rose-50 dark:bg-rose-900/30 px-3 py-1.5 text-xs font-medium text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition"
                               >
                                 Delete
                               </button>
                               <button
                                 onClick={() => handleArchive(student.student_id)}
-                                className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100 transition"
+                                className="rounded-lg bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition"
                               >
                                 Archive
                               </button>
@@ -524,69 +524,69 @@ export default function StudentsPage() {
           {/* Parent-Student Relationships Tab */}
           {loadingParents ? (
             <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 dark:border-emerald-400 border-t-transparent" />
             </div>
           ) : (
             <div className="space-y-6">
               {/* Statistics */}
               <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
-                  <div className="text-2xl font-bold text-emerald-600">{parentRelationships.length}</div>
-                  <div className="text-sm text-slate-600">Total Parents</div>
+                <div className="rounded-xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{parentRelationships.length}</div>
+                  <div className="text-sm text-slate-600 dark:text-slate-400">Total Parents</div>
                 </div>
-                <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
-                  <div className="text-2xl font-bold text-blue-600">
+                <div className="rounded-xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {parentRelationships.reduce((acc: number, parent: any) => acc + parent.students.length, 0)}
                   </div>
-                  <div className="text-sm text-slate-600">Total Students</div>
+                  <div className="text-sm text-slate-600 dark:text-slate-400">Total Students</div>
                 </div>
-                <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
-                  <div className="text-2xl font-bold text-purple-600">
+                <div className="rounded-xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                     {parentRelationships.filter((p: any) => p.students.length > 1).length}
                   </div>
-                  <div className="text-sm text-slate-600">Parents with Multiple Students</div>
+                  <div className="text-sm text-slate-600 dark:text-slate-400">Parents with Multiple Students</div>
                 </div>
               </div>
 
               {/* Parent Cards */}
               <div className="space-y-6">
                 {parentRelationships.length === 0 ? (
-                  <div className="rounded-xl bg-white p-12 text-center shadow-sm border border-slate-200">
-                    <div className="text-slate-400">No parent-student relationships found</div>
+                  <div className="rounded-xl bg-white dark:bg-slate-800 p-12 text-center shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div className="text-slate-400 dark:text-slate-500">No parent-student relationships found</div>
                   </div>
                 ) : (
                   parentRelationships.map((parent: any) => (
                     <div
                       key={parent.parent_id}
-                      className="rounded-xl bg-white shadow-sm border border-slate-200 overflow-hidden"
+                      className="rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden"
                     >
                       {/* Parent Information */}
-                      <div className="bg-gradient-to-r from-emerald-50 to-blue-50 px-6 py-4 border-b border-slate-200">
+                      <div className="bg-gradient-to-r from-emerald-50 dark:from-emerald-900/30 to-blue-50 dark:to-blue-900/30 px-6 py-4 border-b border-slate-200 dark:border-slate-700">
                         <div className="flex items-start justify-between">
                           <div>
-                            <h3 className="text-lg font-semibold text-slate-900">{parent.parent_name}</h3>
-                            <div className="mt-1 space-y-1 text-sm text-slate-600">
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{parent.parent_name}</h3>
+                            <div className="mt-1 space-y-1 text-sm text-slate-600 dark:text-slate-400">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium">Email:</span>
-                                <span>{parent.parent_email}</span>
+                                <span className="font-medium text-slate-700 dark:text-slate-300">Email:</span>
+                                <span className="text-slate-900 dark:text-white">{parent.parent_email}</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium">Phone:</span>
-                                <span>{parent.parent_phone || 'Not provided'}</span>
+                                <span className="font-medium text-slate-700 dark:text-slate-300">Phone:</span>
+                                <span className="text-slate-900 dark:text-white">{parent.parent_phone || 'Not provided'}</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium">Relationship:</span>
-                                <span className="capitalize">{parent.relationship.toLowerCase()}</span>
+                                <span className="font-medium text-slate-700 dark:text-slate-300">Relationship:</span>
+                                <span className="capitalize text-slate-900 dark:text-white">{parent.relationship.toLowerCase()}</span>
                               </div>
                               {parent.address && (
                                 <div className="flex items-center gap-2">
-                                  <span className="font-medium">Address:</span>
-                                  <span>{parent.address}</span>
+                                  <span className="font-medium text-slate-700 dark:text-slate-300">Address:</span>
+                                  <span className="text-slate-900 dark:text-white">{parent.address}</span>
                                 </div>
                               )}
                             </div>
                           </div>
-                          <div className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">
+                          <div className="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 px-3 py-1 rounded-full text-sm font-medium">
                             {parent.students.length} {parent.students.length === 1 ? 'Student' : 'Students'}
                           </div>
                         </div>
@@ -594,48 +594,48 @@ export default function StudentsPage() {
 
                       {/* Students List */}
                       <div className="p-6">
-                        <h4 className="text-sm font-semibold text-slate-700 mb-4">Linked Students</h4>
+                        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Linked Students</h4>
                         {parent.students.length === 0 ? (
-                          <div className="text-slate-400 text-sm">No students linked to this parent</div>
+                          <div className="text-slate-400 dark:text-slate-500 text-sm">No students linked to this parent</div>
                         ) : (
                           <div className="overflow-x-auto">
                             <table className="w-full">
                               <thead>
-                                <tr className="border-b border-slate-200">
-                                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                <tr className="border-b border-slate-200 dark:border-slate-700">
+                                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                     Student Name
                                   </th>
-                                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                     Student Number
                                   </th>
-                                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                     Grade
                                   </th>
-                                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                     Relationship
                                   </th>
-                                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                     Linked Date
                                   </th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {parent.students.map((student: any) => (
-                                  <tr key={student.student_id} className="border-b border-slate-100 hover:bg-slate-50">
+                                  <tr key={student.student_id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                     <td className="py-3 px-4">
-                                      <div className="font-medium text-slate-900">{student.student_name}</div>
-                                      <div className="text-xs text-slate-500">{student.student_email}</div>
+                                      <div className="font-medium text-slate-900 dark:text-white">{student.student_name}</div>
+                                      <div className="text-xs text-slate-500 dark:text-slate-400">{student.student_email}</div>
                                     </td>
-                                    <td className="py-3 px-4 text-slate-600">{student.student_number}</td>
+                                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{student.student_number}</td>
                                     <td className="py-3 px-4">
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                                         {student.grade}
                                       </span>
                                     </td>
-                                    <td className="py-3 px-4 text-slate-600 capitalize">
+                                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 capitalize">
                                       {student.relationship_to_parent.toLowerCase()}
                                     </td>
-                                    <td className="py-3 px-4 text-slate-600 text-sm">
+                                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm">
                                       {new Date(student.linked_at).toLocaleDateString()}
                                     </td>
                                   </tr>
@@ -657,14 +657,14 @@ export default function StudentsPage() {
       {/* Add/Edit Student Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 {editingStudent ? "Edit Student" : "Register New Student"}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -675,58 +675,58 @@ export default function StudentsPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Section 1: Personal Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Personal Information</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Personal Information</h3>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">First Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">First Name *</label>
                     <input
                       type="text"
                       required
                       minLength={2}
                       value={formData.first_name}
                       onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Middle Name</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Middle Name</label>
                     <input
                       type="text"
                       value={formData.middle_name}
                       onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Last Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Last Name *</label>
                     <input
                       type="text"
                       required
                       minLength={2}
                       value={formData.last_name}
                       onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Date of Birth *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date of Birth *</label>
                     <input
                       type="date"
                       required
                       value={formData.date_of_birth}
                       onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Gender *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Gender *</label>
                     <select
                       required
                       value={formData.gender}
                       onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     >
                       <option value="MALE">Male</option>
                       <option value="FEMALE">Female</option>
@@ -734,22 +734,22 @@ export default function StudentsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Nationality</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nationality</label>
                     <input
                       type="text"
                       value={formData.nationality}
                       onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Religion</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Religion</label>
                     <select
                       value={formData.religion}
                       onChange={(e) => setFormData({ ...formData, religion: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     >
                       <option value="">Select Religion</option>
                       <option value="Orthodox">Orthodox</option>
@@ -760,13 +760,13 @@ export default function StudentsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Home Address</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Home Address</label>
                     <textarea
                       rows={2}
                       maxLength={200}
                       value={formData.home_address}
                       onChange={(e) => setFormData({ ...formData, home_address: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                 </div>
@@ -774,20 +774,20 @@ export default function StudentsPage() {
 
               {/* Section 2: Contact Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Contact Information</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Contact Information</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Email Address *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address *</label>
                     <input
                       type="email"
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number *</label>
                     <input
                       type="tel"
                       required
@@ -795,25 +795,25 @@ export default function StudentsPage() {
                       pattern="09[0-9]{8}"
                       value={formData.phone_number}
                       onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
-                    <p className="text-xs text-slate-500 mt-1">Ethiopian format: 09XXXXXXXX</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Ethiopian format: 09XXXXXXXX</p>
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Emergency Contact Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Emergency Contact Name *</label>
                     <input
                       type="text"
                       required
                       minLength={2}
                       value={formData.emergency_contact_name}
                       onChange={(e) => setFormData({ ...formData, emergency_contact_name: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Emergency Contact Phone *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Emergency Contact Phone *</label>
                     <input
                       type="tel"
                       required
@@ -821,7 +821,7 @@ export default function StudentsPage() {
                       pattern="09[0-9]{8}"
                       value={formData.emergency_contact_phone}
                       onChange={(e) => setFormData({ ...formData, emergency_contact_phone: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                 </div>
@@ -829,15 +829,15 @@ export default function StudentsPage() {
 
               {/* Section 3: Academic Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Academic Information</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Academic Information</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Grade Level *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Grade Level *</label>
                     <select
                       required
                       value={formData.grade_level}
                       onChange={(e) => setFormData({ ...formData, grade_level: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     >
                       {academicOptions?.grade_levels && academicOptions.grade_levels.length > 0 ? (
                         academicOptions.grade_levels.map((grade) => (
@@ -854,12 +854,12 @@ export default function StudentsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Department *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department *</label>
                     <select
                       required
                       value={formData.department_id}
                       onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     >
                       <option value="">Select a department</option>
                       {academicOptions?.departments && academicOptions.departments.map((dept) => (
@@ -871,39 +871,39 @@ export default function StudentsPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Admission Date *</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Admission Date *</label>
                   <input
                     type="date"
                     required
                     value={formData.admission_date}
                     onChange={(e) => setFormData({ ...formData, admission_date: e.target.value })}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
               </div>
 
               {/* Section 4: Guardian/Parent Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Guardian/Parent Information</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Guardian/Parent Information</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Parent/Guardian Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Parent/Guardian Name *</label>
                     <input
                       type="text"
                       required
                       minLength={2}
                       value={formData.guardian_name}
                       onChange={(e) => setFormData({ ...formData, guardian_name: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Relationship *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Relationship *</label>
                     <select
                       required
                       value={formData.relationship}
                       onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     >
                       <option value="FATHER">Father</option>
                       <option value="MOTHER">Mother</option>
@@ -913,7 +913,7 @@ export default function StudentsPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Parent Phone *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Parent Phone *</label>
                     <input
                       type="tel"
                       required
@@ -921,60 +921,60 @@ export default function StudentsPage() {
                       pattern="09[0-9]{8}"
                       value={formData.guardian_phone}
                       onChange={(e) => setFormData({ ...formData, guardian_phone: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Parent Email *</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Parent Email *</label>
                     <input
                       type="email"
                       required
                       value={formData.guardian_email}
                       onChange={(e) => setFormData({ ...formData, guardian_email: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Parent Password *</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Parent Password *</label>
                   <input
                     type="password"
                     required
                     value={formData.guardian_password}
                     onChange={(e) => setFormData({ ...formData, guardian_password: e.target.value })}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     placeholder="Leave blank for default password"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Default password will be used if left blank</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Default password will be used if left blank</p>
                 </div>
               </div>
 
               {/* Section 5: System Settings */}
               {!editingStudent && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">System Settings</h3>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">System Settings</h3>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
                       <input
                         type="text"
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                        className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         placeholder="Auto-generated if blank"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Student Password *</label>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Student Password *</label>
                       <input
                         type="password"
                         required
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                        className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         placeholder="Auto-generated if blank"
                       />
-                      <p className="text-xs text-slate-500 mt-1">Default password will be used if left blank</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Default password will be used if left blank</p>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -983,9 +983,9 @@ export default function StudentsPage() {
                         type="checkbox"
                         checked={formData.send_credentials}
                         onChange={(e) => setFormData({ ...formData, send_credentials: e.target.checked })}
-                        className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        className="rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
                       />
-                      <span className="text-sm text-slate-700">Send credentials via email</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">Send credentials via email</span>
                     </label>
                     <label className="flex items-center gap-2">
                       <input
@@ -993,19 +993,19 @@ export default function StudentsPage() {
                         required
                         checked={formData.terms_agreed}
                         onChange={(e) => setFormData({ ...formData, terms_agreed: e.target.checked })}
-                        className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        className="rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
                       />
-                      <span className="text-sm text-slate-700">I agree to the terms and conditions *</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">I agree to the terms and conditions *</span>
                     </label>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                 >
                   Cancel
                 </button>

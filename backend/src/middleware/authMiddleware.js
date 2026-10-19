@@ -1,81 +1,140 @@
-const { sessions, users, teachers } = require("../data/mockData");
+const prisma = require('../config/prisma');
+const jwt = require('jsonwebtoken');
 
-function requireAuth(req, res, next) {
-  const authorization = req.headers.authorization;
-  let user;
-  let teacher;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-  if (!authorization || !authorization.startsWith("Bearer ")) {
-    user = users.find((item) => item.role === "TEACHER");
-  } else {
-    const token = authorization.replace("Bearer ", "");
-    const session = sessions[token];
-    if (session && session.user_id) {
-      user = users.find((item) => item.user_id === session.user_id);
-    } else {
-      user = users.find((item) => item.role === "TEACHER");
+/**
+ * General Authentication Middleware
+ * Verifies the user's token and attaches user info to request
+ * Role-based authorization is handled separately by roleMiddleware
+ */
+async function authenticate(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    console.log('[AuthMiddleware] Request to:', req.path);
+    console.log('[AuthMiddleware] Auth header present:', !!authHeader);
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('[AuthMiddleware] No token provided');
+      return res.status(401).json({ error: 'No token provided' });
     }
-  }
 
-  if (user) {
-    teacher = teachers.find((item) => item.user_id === user.user_id);
-  }
+    const token = authHeader.substring(7);
+    console.log('[AuthMiddleware] Token (first 20 chars):', token.substring(0, 20) + '...');
 
-  if (!user || user.role !== "TEACHER" || !teacher) {
-    return res.status(403).json({ error: "Access denied. Teacher authentication required." });
-  }
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('[AuthMiddleware] Token decoded successfully, userId:', decoded.userId);
+    
+    const user = await prisma.user.findUnique({
+      where: { user_id: decoded.userId }
+    });
 
-  req.user = user;
-  req.teacher = teacher;
-  next();
+    console.log('[AuthMiddleware] User found:', !!user);
+    console.log('[AuthMiddleware] User active:', user?.is_active);
+
+    if (!user || !user.is_active) {
+      return res.status(401).json({ error: 'Invalid token or user not active' });
+    }
+
+    req.user = {
+      user_id: user.user_id,
+      full_name: user.full_name,
+      email: user.email,
+      role: user.role,
+      profile_picture_url: user.profile_picture_url
+    };
+
+    console.log('[AuthMiddleware] Authentication successful for:', user.email);
+    next();
+  } catch (error) {
+    console.log('[AuthMiddleware] Error:', error.name, error.message);
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired' });
+    }
+    console.error('Authentication error:', error);
+    res.status(500).json({ error: 'Authentication failed' });
+  }
 }
 
-function requireStudent(req, res, next) {
-  const authorization = req.headers.authorization;
+/**
+ * Authentication Middleware for Department Head
+ * Verifies that the user is a Department Head and attaches user info to request
+ */
+async function authenticateDepartmentHead(req, res, next) {
+  try {
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
 
-  if (!authorization || !authorization.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Missing authorization token." });
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // For simplicity, we'll use a basic token validation
+    // In production, use JWT or similar
+    const session = await prisma.userSession.findUnique({
+      where: { token },
+      include: { user: true }
+    });
+
+    if (!session || !session.user) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    // Check if user is a Department Head
+    if (session.user.role !== 'DEPARTMENT_HEAD') {
+      return res.status(403).json({ error: 'Access denied. Department Head role required.' });
+    }
+
+    // Attach user info to request
+    req.user = {
+      user_id: session.user.user_id,
+      full_name: session.user.full_name,
+      email: session.user.email,
+      role: session.user.role
+    };
+
+    // Update last activity
+    await prisma.userSession.update({
+      where: { session_id: session.session_id },
+      data: { last_activity: new Date() }
+    });
+
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(500).json({ error: 'Authentication failed' });
   }
-
-  const token = authorization.replace("Bearer ", "");
-  const session = sessions[token];
-  if (!session || !session.user_id) {
-    return res.status(401).json({ error: "Invalid or expired token." });
-  }
-
-  const user = users.find((item) => item.user_id === session.user_id);
-  if (!user || user.role !== "STUDENT") {
-    return res.status(403).json({ error: "Access denied. Student authentication required." });
-  }
-
-  req.user = user;
-  next();
 }
 
-function requireParent(req, res, next) {
-  const authorization = req.headers.authorization;
+/**
+ * Role-based Authorization Middleware
+ * Checks if the authenticated user has one of the allowed roles
+ * @param {string[]} allowedRoles - Array of roles that are allowed to access the route
+ */
+function authorizeRoles(...allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
-  if (!authorization || !authorization.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Missing authorization token." });
-  }
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        error: 'Access denied. Required roles: ' + allowedRoles.join(', ') 
+      });
+    }
 
-  const token = authorization.replace("Bearer ", "");
-  const session = sessions[token];
-  if (!session || !session.user_id) {
-    return res.status(401).json({ error: "Invalid or expired token." });
-  }
-
-  const user = users.find((item) => item.user_id === session.user_id);
-  if (!user || user.role !== "PARENT") {
-    return res.status(403).json({ error: "Access denied. Parent authentication required." });
-  }
-
-  req.user = user;
-  next();
+    next();
+  };
 }
 
 module.exports = {
-  requireAuth,
-  requireStudent,
-  requireParent,
+  authenticate,
+  authenticateDepartmentHead,
+  authorizeRoles
 };

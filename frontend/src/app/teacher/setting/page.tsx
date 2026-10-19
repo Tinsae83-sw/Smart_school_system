@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/auth";
 import { authFetch } from "../shared";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type TabType = "account" | "notifications" | "security" | "appearance";
 
 export default function SettingPage() {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
   const [token, setToken] = useState("");
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -64,31 +66,52 @@ export default function SettingPage() {
 
       if (profileData) {
         setAccountForm({
-          full_name: profileData.user?.full_name || "",
-          email: profileData.user?.email || "",
-          phone_number: profileData.user?.phone_number || ""
+          full_name: profileData.full_name || "",
+          email: profileData.email || "",
+          phone_number: profileData.phone_number || ""
         });
       }
 
       // Load settings data for other tabs
-      const settingsData = await authFetch("/api/teacher/settings", {}, token);
+      try {
+        const settingsData = await authFetch("/api/teacher/settings", {}, token);
 
-      if (settingsData) {
-        // Parse notification preferences if they're stored as JSON
-        const notificationPrefs = typeof settingsData.notification_preferences === 'string'
-          ? JSON.parse(settingsData.notification_preferences)
-          : settingsData.notification_preferences || {};
+        if (settingsData) {
+          // Parse notification preferences if they're stored as JSON
+          const notificationPrefs = typeof settingsData.notification_preferences === 'string'
+            ? JSON.parse(settingsData.notification_preferences)
+            : settingsData.notification_preferences || {};
 
+          setNotificationForm({
+            email_notifications: notificationPrefs.email_notifications ?? true,
+            assignment_reminders: notificationPrefs.assignment_reminders ?? true,
+            grade_notifications: notificationPrefs.grade_notifications ?? true,
+            attendance_alerts: notificationPrefs.attendance_alerts ?? false
+          });
+          setAppearanceForm({
+            timezone: settingsData.timezone || "UTC",
+            language: settingsData.language || "en",
+            theme: settingsData.theme || "light"
+          });
+          
+          // Sync with theme context
+          if (settingsData.theme) {
+            setTheme(settingsData.theme as 'light' | 'dark' | 'system');
+          }
+        }
+      } catch (settingsError) {
+        console.error("Failed to load settings, using defaults:", settingsError);
+        // Use default values if settings endpoint fails
         setNotificationForm({
-          email_notifications: notificationPrefs.email_notifications ?? true,
-          assignment_reminders: notificationPrefs.assignment_reminders ?? true,
-          grade_notifications: notificationPrefs.grade_notifications ?? true,
-          attendance_alerts: notificationPrefs.attendance_alerts ?? false
+          email_notifications: true,
+          assignment_reminders: true,
+          grade_notifications: true,
+          attendance_alerts: false
         });
         setAppearanceForm({
-          timezone: settingsData.timezone || "UTC",
-          language: settingsData.language || "en",
-          theme: settingsData.theme || "light"
+          timezone: "UTC",
+          language: "en",
+          theme: "light"
         });
       }
     } catch (e) { console.error(e); }
@@ -132,7 +155,7 @@ export default function SettingPage() {
       setMessageType("success");
       loadSettings(token);
     } catch (e) {
-      setMessage("Failed to update notifications");
+      setMessage("Failed to update notifications. Settings may not be available yet.");
       setMessageType("error");
       console.error(e);
     } finally {
@@ -153,11 +176,15 @@ export default function SettingPage() {
           theme: appearanceForm.theme
         })
       }, token);
+      
+      // Sync with theme context
+      setTheme(appearanceForm.theme as 'light' | 'dark' | 'system');
+      
       setMessage("Appearance settings saved!");
       setMessageType("success");
       loadSettings(token);
     } catch (e) {
-      setMessage("Failed to update appearance");
+      setMessage("Failed to update appearance. Settings may not be available yet.");
       setMessageType("error");
       console.error(e);
     } finally {
@@ -223,18 +250,18 @@ export default function SettingPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-6 md:p-8">
+    <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
             Settings
           </h1>
-          <p className="text-slate-600 mt-2">Manage your account preferences and security</p>
+          <p className="text-slate-600 dark:text-slate-400 mt-2">Manage your account preferences and security</p>
         </div>
 
         {message && (
-          <div className={`mb-6 rounded-xl p-4 ${messageType === "success" ? "bg-emerald-50 border border-emerald-200 text-emerald-800" : "bg-red-50 border border-red-200 text-red-800"}`}>
+          <div className={`mb-6 rounded-xl p-4 ${messageType === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300" : "bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-300"}`}>
             <p className="text-sm font-medium">{message}</p>
           </div>
         )}
@@ -242,15 +269,15 @@ export default function SettingPage() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Navigation */}
           <div className="lg:w-64 flex-shrink-0">
-            <nav className="bg-white rounded-2xl shadow-lg border border-slate-100 p-4 sticky top-8">
+            <nav className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 p-4 sticky top-8">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all mb-2 ${
                     activeTab === tab.id
-                      ? "bg-emerald-50 text-emerald-700 font-semibold"
-                      : "text-slate-600 hover:bg-slate-50"
+                      ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-semibold"
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                   }`}
                 >
                   <span className="text-xl">{tab.icon}</span>
@@ -264,38 +291,38 @@ export default function SettingPage() {
           <div className="flex-1">
             {/* Account Tab */}
             {activeTab === "account" && (
-              <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-8">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-slate-900">Account Information</h2>
-                  <p className="text-slate-500 mt-1">Update your personal details</p>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Account Information</h2>
+                  <p className="text-slate-500 dark:text-slate-400 mt-1">Update your personal details</p>
                 </div>
                 <form onSubmit={handleSaveAccount} className="space-y-6">
                   <div className="grid gap-6 md:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Full Name</label>
                       <input
                         type="text"
                         value={accountForm.full_name}
                         onChange={(e) => setAccountForm({ ...accountForm, full_name: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
                       <input
                         type="email"
                         value={accountForm.email}
                         onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Phone Number</label>
                       <input
                         type="tel"
                         value={accountForm.phone_number}
                         onChange={(e) => setAccountForm({ ...accountForm, phone_number: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                       />
                     </div>
                   </div>
@@ -303,7 +330,7 @@ export default function SettingPage() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="rounded-xl bg-emerald-600 px-8 py-3 text-white font-semibold hover:bg-emerald-700 transition disabled:bg-slate-300 shadow-lg shadow-emerald-200"
+                      className="rounded-xl bg-emerald-600 px-8 py-3 text-white font-semibold hover:bg-emerald-700 transition disabled:bg-slate-300 dark:disabled:bg-slate-600 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/50"
                     >
                       {saving ? "Saving..." : "Save Changes"}
                     </button>
@@ -314,17 +341,17 @@ export default function SettingPage() {
 
             {/* Notifications Tab */}
             {activeTab === "notifications" && (
-              <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-8">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-slate-900">Notification Preferences</h2>
-                  <p className="text-slate-500 mt-1">Choose how you want to be notified</p>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Notification Preferences</h2>
+                  <p className="text-slate-500 dark:text-slate-400 mt-1">Choose how you want to be notified</p>
                 </div>
                 <form onSubmit={handleSaveNotifications} className="space-y-6">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700 rounded-xl">
                       <div>
-                        <h3 className="font-semibold text-slate-900">Email Notifications</h3>
-                        <p className="text-sm text-slate-500">Receive notifications via email</p>
+                        <h3 className="font-semibold text-slate-900 dark:text-slate-100">Email Notifications</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Receive notifications via email</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -337,10 +364,10 @@ export default function SettingPage() {
                       </label>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700 rounded-xl">
                       <div>
-                        <h3 className="font-semibold text-slate-900">Assignment Reminders</h3>
-                        <p className="text-sm text-slate-500">Get reminded about upcoming deadlines</p>
+                        <h3 className="font-semibold text-slate-900 dark:text-slate-100">Assignment Reminders</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Get reminded about upcoming deadlines</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -353,10 +380,10 @@ export default function SettingPage() {
                       </label>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700 rounded-xl">
                       <div>
-                        <h3 className="font-semibold text-slate-900">Grade Notifications</h3>
-                        <p className="text-sm text-slate-500">Notify when grades are posted</p>
+                        <h3 className="font-semibold text-slate-900 dark:text-slate-100">Grade Notifications</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Notify when grades are posted</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -369,10 +396,10 @@ export default function SettingPage() {
                       </label>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700 rounded-xl">
                       <div>
-                        <h3 className="font-semibold text-slate-900">Attendance Alerts</h3>
-                        <p className="text-sm text-slate-500">Alerts for attendance issues</p>
+                        <h3 className="font-semibold text-slate-900 dark:text-slate-100">Attendance Alerts</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Alerts for attendance issues</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -398,42 +425,42 @@ export default function SettingPage() {
 
             {/* Security Tab */}
             {activeTab === "security" && (
-              <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-8">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-slate-900">Security Settings</h2>
-                  <p className="text-slate-500 mt-1">Manage your password and security</p>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Security Settings</h2>
+                  <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your password and security</p>
                 </div>
                 <form onSubmit={handleChangePassword} className="space-y-6">
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Current Password</label>
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Current Password</label>
                       <input
                         type="password"
                         value={passwordForm.current_password}
                         onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
                         required
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                       />
                     </div>
                     <div className="grid gap-6 md:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">New Password</label>
                         <input
                           type="password"
                           value={passwordForm.new_password}
                           onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
                           required
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                          className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Password</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Confirm New Password</label>
                         <input
                           type="password"
                           value={passwordForm.confirm_password}
                           onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
                           required
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                          className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                         />
                       </div>
                     </div>
@@ -447,9 +474,9 @@ export default function SettingPage() {
                   </button>
                 </form>
 
-                <div className="mt-8 pt-8 border-t border-slate-200">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Security Tips</h3>
-                  <ul className="space-y-3 text-slate-600">
+                <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-700">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Security Tips</h3>
+                  <ul className="space-y-3 text-slate-600 dark:text-slate-400">
                     <li className="flex items-start gap-3">
                       <span className="text-emerald-600 mt-1">✓</span>
                       <span>Use a strong password with at least 8 characters, including numbers and symbols</span>
@@ -469,19 +496,19 @@ export default function SettingPage() {
 
             {/* Appearance Tab */}
             {activeTab === "appearance" && (
-              <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-8">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-slate-900">Appearance Settings</h2>
-                  <p className="text-slate-500 mt-1">Customize your interface</p>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Appearance Settings</h2>
+                  <p className="text-slate-500 dark:text-slate-400 mt-1">Customize your interface</p>
                 </div>
                 <form onSubmit={handleSaveAppearance} className="space-y-6">
                   <div className="grid gap-6 md:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Timezone</label>
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Timezone</label>
                       <select
                         value={appearanceForm.timezone}
                         onChange={(e) => setAppearanceForm({ ...appearanceForm, timezone: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                       >
                         <option value="UTC">UTC (Coordinated Universal Time)</option>
                         <option value="Africa/Addis_Ababa">Africa/Addis_Ababa (EAT)</option>
@@ -492,11 +519,11 @@ export default function SettingPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Language</label>
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Language</label>
                       <select
                         value={appearanceForm.language}
                         onChange={(e) => setAppearanceForm({ ...appearanceForm, language: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                       >
                         <option value="en">English</option>
                         <option value="am">አማርኛ (Amharic)</option>
@@ -505,11 +532,11 @@ export default function SettingPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Theme</label>
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Theme</label>
                       <select
                         value={appearanceForm.theme}
                         onChange={(e) => setAppearanceForm({ ...appearanceForm, theme: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                       >
                         <option value="light">Light</option>
                         <option value="dark">Dark</option>

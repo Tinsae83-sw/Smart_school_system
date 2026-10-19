@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { isAuthenticated, getUser, clearAuth } from "@/lib/auth";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
 
@@ -120,28 +121,28 @@ export default function SICMemberLayout({ children }: { children: React.ReactNod
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-rose-200 border-t-rose-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading...</p>
+          <p className="text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform transition-transform duration-200 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-5">
+          <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-700 px-6 py-5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-600 text-white">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
@@ -149,11 +150,11 @@ export default function SICMemberLayout({ children }: { children: React.ReactNod
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-900">Smart School</p>
-              <p className="text-xs text-slate-500">SIC Panel</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Smart School</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">SIC Panel</p>
             </div>
             <button className="ml-auto lg:hidden" onClick={() => setSidebarOpen(false)}>
-              <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -169,27 +170,27 @@ export default function SICMemberLayout({ children }: { children: React.ReactNod
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-rose-50 text-rose-700"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      ? "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300"
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
-                  <span className={isActive ? "text-rose-600" : "text-slate-400"}>{item.icon}</span>
+                  <span className={isActive ? "text-rose-600 dark:text-rose-400" : "text-slate-400 dark:text-slate-500"}>{item.icon}</span>
                   {item.label}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="border-t border-slate-200 px-4 py-4">
-            <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-rose-700 text-sm font-bold">
+          <div className="border-t border-slate-200 dark:border-slate-700 px-4 py-4">
+            <div className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-700 px-3 py-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300 text-sm font-bold">
                 {sicUser?.full_name?.charAt(0)?.toUpperCase() || "S"}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 truncate">{sicUser?.full_name || "SIC Member"}</p>
-                <p className="text-xs text-slate-500">{sicUser?.sic_role || "Member"}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{sicUser?.full_name || "SIC Member"}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{sicUser?.sic_role || "Member"}</p>
               </div>
-              <button onClick={handleLogout} title="Sign out" className="text-slate-400 hover:text-rose-500 transition">
+              <button onClick={handleLogout} title="Sign out" className="text-slate-400 dark:text-slate-500 hover:text-rose-500 transition">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                 </svg>
@@ -200,15 +201,16 @@ export default function SICMemberLayout({ children }: { children: React.ReactNod
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 bg-white/80 backdrop-blur-md px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-6">
           <button className="lg:hidden" onClick={() => setSidebarOpen(true)}>
-            <svg className="w-6 h-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-6 h-6 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
-            <span className="hidden sm:inline text-xs text-slate-500">{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
+            <ThemeToggle />
+            <span className="hidden sm:inline text-xs text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
           </div>
         </header>
 

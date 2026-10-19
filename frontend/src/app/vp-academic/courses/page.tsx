@@ -319,8 +319,8 @@ export default function CoursesPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Courses Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage subject assignments to classes and teachers</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Courses Management</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Manage subject assignments to classes and teachers</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -328,7 +328,7 @@ export default function CoursesPage() {
               setSubjectFormData({ subject_name: "", subject_code: "", credit_hour: "3", department: "", grade_levels: [] });
               setShowSubjectModal(true);
             }}
-            className="rounded-xl border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 transition"
+            className="rounded-xl border border-emerald-600 dark:border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition"
           >
             Register Subject
           </button>
@@ -346,30 +346,30 @@ export default function CoursesPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 dark:border-emerald-500 border-t-transparent" />
         </div>
       ) : (
         <div className="space-y-6">
           {/* Subjects List */}
-          <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">Registered Subjects</h2>
+          <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Registered Subjects</h2>
             </div>
             <div className="p-6 space-y-6">
               {Object.keys(subjectsByDepartment).length === 0 ? (
-                <div className="text-center text-sm text-slate-400 py-12">
+                <div className="text-center text-sm text-slate-400 dark:text-slate-500 py-12">
                   No subjects registered yet. Register your first subject to get started.
                 </div>
               ) : (
                 Object.entries(subjectsByDepartment).map(([department, deptSubjects]) => (
-                  <div key={department} className="rounded-xl border border-slate-200 overflow-hidden">
-                    <div className="bg-emerald-50 px-4 py-3 border-b border-emerald-100">
-                      <h3 className="text-sm font-semibold text-emerald-900">{department}</h3>
+                  <div key={department} className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 border-b border-emerald-100 dark:border-emerald-800">
+                      <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-300">{department}</h3>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="min-w-full">
                         <thead>
-                          <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+                          <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-300">
                             <th className="px-4 py-3">Subject Name</th>
                             <th className="px-4 py-3">Subject Code</th>
                             <th className="px-4 py-3">Credit Hour</th>
@@ -378,17 +378,17 @@ export default function CoursesPage() {
                             <th className="px-4 py-3">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                           {deptSubjects.map((subject) => (
-                            <tr key={subject.subject_id} className="hover:bg-slate-50">
-                              <td className="px-4 py-3 text-sm font-medium text-slate-900">{subject.subject_name}</td>
-                              <td className="px-4 py-3 text-sm text-slate-500">{subject.subject_code}</td>
-                              <td className="px-4 py-3 text-sm text-slate-900">{subject.credit_hour}</td>
-                              <td className="px-4 py-3 text-sm text-slate-900">
+                            <tr key={subject.subject_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                              <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">{subject.subject_name}</td>
+                              <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-300">{subject.subject_code}</td>
+                              <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">{subject.credit_hour}</td>
+                              <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
                                 {subject.grade_levels && subject.grade_levels.length > 0 ? (
                                   <div className="flex flex-wrap gap-1">
                                     {subject.grade_levels.map((grade) => (
-                                      <span key={grade} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+                                      <span key={grade} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
                                         Grade {grade}
                                       </span>
                                     ))}
@@ -397,7 +397,7 @@ export default function CoursesPage() {
                                   '-'
                                 )}
                               </td>
-                              <td className="px-4 py-3 text-sm text-slate-600">{subject.department || getDepartmentFromSubject(subject.subject_name)}</td>
+                              <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{subject.department || getDepartmentFromSubject(subject.subject_name)}</td>
                               <td className="px-4 py-3">
                                 <div className="flex gap-2">
                                   <button
@@ -412,7 +412,7 @@ export default function CoursesPage() {
                                       });
                                       setShowEditSubjectModal(true);
                                     }}
-                                    className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+                                    className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition"
                                   >
                                     Edit
                                   </button>
@@ -436,26 +436,26 @@ export default function CoursesPage() {
           </div>
 
           {/* Course Assignments */}
-          <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Course Assignments</h2>
+          <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Course Assignments</h2>
               <button
                 onClick={() => setCourseFilter({ class_id: "", subject_id: "", teacher_id: "", department: "" })}
-                className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
               >
                 Clear Filters
               </button>
             </div>
-            
+
             {/* Filter Bar */}
-            <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
+            <div className="px-6 py-4 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Class</label>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-300 mb-1">Class</label>
                   <select
                     value={courseFilter.class_id}
                     onChange={(e) => setCourseFilter({ ...courseFilter, class_id: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   >
                     <option value="">All Classes</option>
                     {classes.map((cls) => (
@@ -466,11 +466,11 @@ export default function CoursesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Subject</label>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-300 mb-1">Subject</label>
                   <select
                     value={courseFilter.subject_id}
                     onChange={(e) => setCourseFilter({ ...courseFilter, subject_id: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   >
                     <option value="">All Subjects</option>
                     {subjects.map((subject) => (
@@ -481,11 +481,11 @@ export default function CoursesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Teacher</label>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-300 mb-1">Teacher</label>
                   <select
                     value={courseFilter.teacher_id}
                     onChange={(e) => setCourseFilter({ ...courseFilter, teacher_id: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   >
                     <option value="">All Teachers</option>
                     {teachers.map((teacher) => (
@@ -496,11 +496,11 @@ export default function CoursesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Department</label>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-300 mb-1">Department</label>
                   <select
                     value={courseFilter.department}
                     onChange={(e) => setCourseFilter({ ...courseFilter, department: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   >
                     <option value="">All Departments</option>
                     <option value="Natural">Natural</option>
@@ -510,11 +510,11 @@ export default function CoursesPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+                  <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-300">
                     <th className="px-6 py-4">Class</th>
                     <th className="px-6 py-4">Subject</th>
                     <th className="px-6 py-4">Subject Code</th>
@@ -523,18 +523,18 @@ export default function CoursesPage() {
                     <th className="px-6 py-4">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {filteredClassSubjects.map((cs) => (
-                    <tr key={cs.class_subject_id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{cs.school_class.class_name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-900">{cs.subject.subject_name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{cs.subject.subject_code}</td>
-                      <td className="px-6 py-4 text-sm text-slate-900">{cs.teacher?.user?.full_name || "Unassigned"}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{cs.school_class.academic_year}</td>
+                    <tr key={cs.class_subject_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{cs.school_class.class_name}</td>
+                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{cs.subject.subject_name}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{cs.subject.subject_code}</td>
+                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{cs.teacher?.user?.full_name || "Unassigned"}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{cs.school_class.academic_year}</td>
                       <td className="px-6 py-4">
                         <button
                           onClick={() => handleDelete(cs.class_subject_id)}
-                          className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition"
+                          className="rounded-lg bg-rose-50 dark:bg-rose-900/30 px-3 py-1.5 text-xs font-medium text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition"
                         >
                           Remove
                         </button>
@@ -543,7 +543,7 @@ export default function CoursesPage() {
                   ))}
                   {filteredClassSubjects.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">
+                      <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
                         No courses found matching the selected filters.
                       </td>
                     </tr>
@@ -558,12 +558,12 @@ export default function CoursesPage() {
       {/* Assign Course Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Assign Course</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Assign Course</h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -573,12 +573,12 @@ export default function CoursesPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Class</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Class</label>
                 <select
                   required
                   value={formData.class_id}
                   onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 >
                   <option value="">Select Class</option>
                   {classes.map((cls) => (
@@ -590,12 +590,12 @@ export default function CoursesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject</label>
                 <select
                   required
                   value={formData.subject_id}
                   onChange={(e) => setFormData({ ...formData, subject_id: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 >
                   <option value="">Select Subject</option>
                   {subjects.map((subject) => (
@@ -607,12 +607,12 @@ export default function CoursesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Teacher</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Teacher</label>
                 <select
                   required
                   value={formData.teacher_id}
                   onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 >
                   <option value="">Select Teacher</option>
                   {teachers.map((teacher) => (
@@ -624,7 +624,7 @@ export default function CoursesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Credit Hour</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Credit Hour</label>
                 <input
                   type="number"
                   required
@@ -632,15 +632,15 @@ export default function CoursesPage() {
                   max="10"
                   value={formData.credit_hour}
                   onChange={(e) => setFormData({ ...formData, credit_hour: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition"
                 >
                   Cancel
                 </button>
@@ -659,12 +659,12 @@ export default function CoursesPage() {
       {/* Register Subject Modal */}
       {showSubjectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Register Subject</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Register Subject</h2>
               <button
                 onClick={() => setShowSubjectModal(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -674,33 +674,33 @@ export default function CoursesPage() {
 
             <form onSubmit={handleSubjectSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Subject Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject Name</label>
                 <input
                   type="text"
                   required
                   minLength={2}
                   value={subjectFormData.subject_name}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   placeholder="e.g., Mathematics"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Subject Code</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject Code</label>
                 <input
                   type="text"
                   required
                   minLength={2}
                   value={subjectFormData.subject_code}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_code: e.target.value.toUpperCase() })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   placeholder="e.g., MATH101"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Credit Hour</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Credit Hour</label>
                 <input
                   type="number"
                   required
@@ -708,23 +708,23 @@ export default function CoursesPage() {
                   max="10"
                   value={subjectFormData.credit_hour}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, credit_hour: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
                 <input
                   type="text"
                   value={subjectFormData.department}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, department: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   placeholder="e.g., Natural Science, Social Science"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Grade Levels</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Grade Levels</label>
                 <div className="grid grid-cols-4 gap-2">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => (
                     <label key={grade} className="flex items-center gap-2 cursor-pointer">
@@ -744,19 +744,19 @@ export default function CoursesPage() {
                             });
                           }
                         }}
-                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
                       />
-                      <span className="text-sm text-slate-700">Grade {grade}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">Grade {grade}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setShowSubjectModal(false)}
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition"
                 >
                   Cancel
                 </button>
@@ -775,15 +775,15 @@ export default function CoursesPage() {
       {/* Edit Subject Modal */}
       {showEditSubjectModal && selectedSubject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Edit Subject</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Subject</h2>
               <button
                 onClick={() => {
                   setShowEditSubjectModal(false);
                   setSelectedSubject(null);
                 }}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -793,33 +793,33 @@ export default function CoursesPage() {
 
             <form onSubmit={handleEditSubjectSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Subject Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject Name</label>
                 <input
                   type="text"
                   required
                   minLength={2}
                   value={subjectFormData.subject_name}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   placeholder="e.g., Mathematics"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Subject Code</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject Code</label>
                 <input
                   type="text"
                   required
                   minLength={2}
                   value={subjectFormData.subject_code}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_code: e.target.value.toUpperCase() })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   placeholder="e.g., MATH101"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Credit Hour</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Credit Hour</label>
                 <input
                   type="number"
                   required
@@ -827,23 +827,23 @@ export default function CoursesPage() {
                   max="10"
                   value={subjectFormData.credit_hour}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, credit_hour: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
                 <input
                   type="text"
                   value={subjectFormData.department}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, department: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   placeholder="e.g., Natural Science, Social Science"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Grade Levels</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Grade Levels</label>
                 <div className="grid grid-cols-4 gap-2">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => (
                     <label key={grade} className="flex items-center gap-2 cursor-pointer">
@@ -863,22 +863,22 @@ export default function CoursesPage() {
                             });
                           }
                         }}
-                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
                       />
-                      <span className="text-sm text-slate-700">Grade {grade}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">Grade {grade}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => {
                     setShowEditSubjectModal(false);
                     setSelectedSubject(null);
                   }}
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition"
                 >
                   Cancel
                 </button>

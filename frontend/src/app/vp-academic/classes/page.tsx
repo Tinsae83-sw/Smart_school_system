@@ -199,10 +199,10 @@ export default function ClassesPage() {
 
   function getStatusColor(status: string) {
     switch (status) {
-      case "ACTIVE": return "bg-emerald-50 text-emerald-700";
-      case "INACTIVE": return "bg-slate-50 text-slate-700";
-      case "ARCHIVED": return "bg-amber-50 text-amber-700";
-      default: return "bg-gray-50 text-gray-700";
+      case "ACTIVE": return "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300";
+      case "INACTIVE": return "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300";
+      case "ARCHIVED": return "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300";
+      default: return "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300";
     }
   }
 
@@ -282,7 +282,7 @@ export default function ClassesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="mb-8">
@@ -291,48 +291,48 @@ export default function ClassesPage() {
               <span className="text-2xl">📚</span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Classes Management</h1>
-              <p className="text-sm text-slate-500 mt-0.5">Manage school classes and sections</p>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Classes Management</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage school classes and sections</p>
             </div>
           </div>
         </div>
 
         {/* Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-emerald-600">📊</span>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Classes</span>
+              <span className="text-emerald-600 dark:text-emerald-400">📊</span>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Classes</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{classes.length}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{classes.length}</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-blue-600">✅</span>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Active</span>
+              <span className="text-blue-600 dark:text-blue-400">✅</span>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{classes.filter(c => c.status === 'ACTIVE').length}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{classes.filter(c => c.status === 'ACTIVE').length}</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-purple-600">👥</span>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Students</span>
+              <span className="text-purple-600 dark:text-purple-400">👥</span>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Students</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{classes.reduce((acc, c) => acc + (c.student_count || 0), 0)}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{classes.reduce((acc, c) => acc + (c.student_count || 0), 0)}</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-orange-600">👨‍🏫</span>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Teachers</span>
+              <span className="text-orange-600 dark:text-orange-400">👨‍🏫</span>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Teachers</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{classes.filter(c => c.homeroom_teacher).length}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{classes.filter(c => c.homeroom_teacher).length}</p>
           </div>
         </div>
 
         {/* Action Bar */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex gap-3">
-            <select className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition focus:border-emerald-500 focus:outline-none">
+            <select className="rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition focus:border-emerald-500 focus:outline-none">
               <option value="">All Status</option>
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
@@ -352,110 +352,110 @@ export default function ClassesPage() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : (
-          <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+          <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
-                    <th 
-                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition"
+                  <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th
+                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 transition"
                       onClick={() => handleSort("class_name")}
                     >
                       <div className="flex items-center gap-1">
                         Class Name
                         {sortColumn === "class_name" && (
-                          <span className="text-emerald-600">
+                          <span className="text-emerald-600 dark:text-emerald-400">
                             {sortDirection === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </div>
                     </th>
-                    <th 
-                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition"
+                    <th
+                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 transition"
                       onClick={() => handleSort("grade_level")}
                     >
                       <div className="flex items-center gap-1">
                         Grade
                         {sortColumn === "grade_level" && (
-                          <span className="text-emerald-600">
+                          <span className="text-emerald-600 dark:text-emerald-400">
                             {sortDirection === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </div>
                     </th>
-                    <th 
-                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition"
+                    <th
+                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 transition"
                       onClick={() => handleSort("section")}
                     >
                       <div className="flex items-center gap-1">
                         Section
                         {sortColumn === "section" && (
-                          <span className="text-emerald-600">
+                          <span className="text-emerald-600 dark:text-emerald-400">
                             {sortDirection === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </div>
                     </th>
-                    <th 
-                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition"
+                    <th
+                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 transition"
                       onClick={() => handleSort("academic_year")}
                     >
                       <div className="flex items-center gap-1">
                         Academic Year
                         {sortColumn === "academic_year" && (
-                          <span className="text-emerald-600">
+                          <span className="text-emerald-600 dark:text-emerald-400">
                             {sortDirection === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </div>
                     </th>
-                    <th 
-                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition"
+                    <th
+                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 transition"
                       onClick={() => handleSort("homeroom_teacher")}
                     >
                       <div className="flex items-center gap-1">
                         Homeroom Teacher
                         {sortColumn === "homeroom_teacher" && (
-                          <span className="text-emerald-600">
+                          <span className="text-emerald-600 dark:text-emerald-400">
                             {sortDirection === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </div>
                     </th>
-                    <th 
-                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition"
+                    <th
+                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 transition"
                       onClick={() => handleSort("student_count")}
                     >
                       <div className="flex items-center gap-1">
                         Students
                         {sortColumn === "student_count" && (
-                          <span className="text-emerald-600">
+                          <span className="text-emerald-600 dark:text-emerald-400">
                             {sortDirection === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </div>
                     </th>
-                    <th 
-                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition"
+                    <th
+                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 transition"
                       onClick={() => handleSort("capacity")}
                     >
                       <div className="flex items-center gap-1">
                         Capacity
                         {sortColumn === "capacity" && (
-                          <span className="text-emerald-600">
+                          <span className="text-emerald-600 dark:text-emerald-400">
                             {sortDirection === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </div>
                     </th>
-                    <th 
-                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition"
+                    <th
+                      className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 transition"
                       onClick={() => handleSort("status")}
                     >
                       <div className="flex items-center gap-1">
                         Status
                         {sortColumn === "status" && (
-                          <span className="text-emerald-600">
+                          <span className="text-emerald-600 dark:text-emerald-400">
                             {sortDirection === "asc" ? "↑" : "↓"}
                           </span>
                         )}
@@ -464,25 +464,25 @@ export default function ClassesPage() {
                     <th className="px-6 py-4">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {getSortedClasses().map((classData) => (
-                    <tr key={classData.class_id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{classData.class_name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">Grade {classData.grade_level}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{classData.section}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{classData.academic_year}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
+                    <tr key={classData.class_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{classData.class_name}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">Grade {classData.grade_level}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{classData.section}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{classData.academic_year}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
                         {classData.homeroom_teacher?.full_name || "Not assigned"}
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
-                        <span className={(classData.student_count || 0) >= 40 ? 'font-semibold text-red-600' : ''}>
+                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                        <span className={(classData.student_count || 0) >= 40 ? 'font-semibold text-red-600 dark:text-red-400' : ''}>
                           {classData.student_count || 0}
                         </span>
                         {(classData.student_count || 0) >= 40 && (
-                          <span className="ml-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Full</span>
+                          <span className="ml-1 text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">Full</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{classData.capacity || 40}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{classData.capacity || 40}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(classData.status)}`}>
                           {classData.status}
@@ -492,13 +492,13 @@ export default function ClassesPage() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleEdit(classData)}
-                            className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100 transition"
+                            className="rounded-lg bg-sky-50 dark:bg-sky-900/30 px-3 py-1.5 text-xs font-medium text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(classData.class_id)}
-                            className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition"
+                            className="rounded-lg bg-rose-50 dark:bg-rose-900/30 px-3 py-1.5 text-xs font-medium text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition"
                           >
                             Delete
                           </button>
@@ -508,7 +508,7 @@ export default function ClassesPage() {
                   ))}
                   {classes.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-sm text-slate-400">
+                      <td colSpan={9} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
                         No classes found. Add your first class to get started.
                       </td>
                     </tr>
@@ -522,12 +522,12 @@ export default function ClassesPage() {
         {/* Edit Class Modal */}
         {showModal && editingClass && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6">
+            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white dark:bg-slate-800 p-6">
               <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-slate-900">Edit Class</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Class</h2>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -537,27 +537,27 @@ export default function ClassesPage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Class Name *</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Class Name *</label>
                   <input
                     type="text"
                     required
                     value={formData.class_name}
                     onChange={(e) => setFormData({ ...formData, class_name: e.target.value })}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year *</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Academic Year *</label>
                   <input
                     type="text"
                     required
                     value={formData.academic_year}
                     onChange={(e) => setFormData({ ...formData, academic_year: e.target.value })}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Homeroom Teacher</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Homeroom Teacher</label>
                   {loadingTeachers ? (
                     <div className="flex items-center justify-center py-4">
                       <div className="h-6 w-6 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
@@ -566,7 +566,7 @@ export default function ClassesPage() {
                     <select
                       value={formData.homeroom_teacher_id}
                       onChange={(e) => setFormData({ ...formData, homeroom_teacher_id: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     >
                       <option value="">No homeroom teacher assigned</option>
                       {getFilteredTeachers().map((teacher) => (
@@ -584,22 +584,22 @@ export default function ClassesPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Capacity</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Capacity</label>
                     <input
                       type="number"
                       value={formData.capacity}
                       onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                       min="1"
                       max="100"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     >
                       <option value="ACTIVE">Active</option>
                       <option value="INACTIVE">Inactive</option>
@@ -608,11 +608,11 @@ export default function ClassesPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                    className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                   >
                     Cancel
                   </button>

@@ -100,13 +100,13 @@ export default function CommunicationsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Communications</h1>
-        <p className="mt-1 text-sm text-slate-500">Send announcements and manage school communications</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Communications</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Send announcements and manage school communications</p>
       </div>
 
       {statusMessage && (
         <div className={`mb-6 rounded-xl px-4 py-3 text-sm ${
-          statusMessage.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-rose-50 text-rose-800 border border-rose-200"
+          statusMessage.type === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-rose-50 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
         }`}>
           {statusMessage.message}
         </div>
@@ -118,9 +118,9 @@ export default function CommunicationsPage() {
           <input
             type="text"
             placeholder="Search announcements..."
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
           />
-          <select className="rounded-lg border border-slate-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
             <option value="">All Audiences</option>
             <option value="ALL">All</option>
             <option value="STUDENTS">Students</option>
@@ -138,15 +138,15 @@ export default function CommunicationsPage() {
       </div>
 
       {/* Announcements List */}
-      <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+      <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-sm text-slate-500">Loading...</div>
+          <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading...</div>
         ) : announcements.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">No announcements found.</div>
+          <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No announcements found.</div>
         ) : (
           <table className="min-w-full">
-            <thead className="bg-slate-50">
-              <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-700">
+              <tr className="text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="px-6 py-3">Title</th>
                 <th className="px-6 py-3">Message</th>
                 <th className="px-6 py-3">Target Audience</th>
@@ -156,17 +156,17 @@ export default function CommunicationsPage() {
                 <th className="px-6 py-3">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {announcements.map((announcement) => (
-                <tr key={announcement.announcement_id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 text-sm font-medium text-slate-900">{announcement.title}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500 max-w-md truncate">{announcement.content}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{announcement.target_audience}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{announcement.created_by}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{new Date(announcement.created_at).toLocaleDateString()}</td>
+                <tr key={announcement.announcement_id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
+                  <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{announcement.title}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 max-w-md truncate">{announcement.content}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{announcement.target_audience}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{announcement.created_by}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{new Date(announcement.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      announcement.status === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                      announcement.status === "PUBLISHED" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
                     }`}>
                       {announcement.status}
                     </span>
@@ -174,7 +174,7 @@ export default function CommunicationsPage() {
                   <td className="px-6 py-4">
                     <button
                       onClick={() => handleDelete(announcement.announcement_id)}
-                      className="text-sm text-rose-600 hover:text-rose-700"
+                      className="text-sm text-rose-600 hover:text-rose-700 dark:hover:text-rose-400"
                     >
                       Delete
                     </button>
@@ -189,12 +189,12 @@ export default function CommunicationsPage() {
       {/* Create Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">Create Announcement</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Create Announcement</h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 ✕
               </button>
@@ -202,34 +202,34 @@ export default function CommunicationsPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Message</label>
                 <textarea
                   rows={4}
                   required
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Target Audience</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Target Audience</label>
                 <select
                   required
                   value={formData.target_audience}
                   onChange={(e) => setFormData({ ...formData, target_audience: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 >
                   <option value="ALL">All</option>
                   <option value="STUDENTS">Students</option>
@@ -243,7 +243,7 @@ export default function CommunicationsPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>

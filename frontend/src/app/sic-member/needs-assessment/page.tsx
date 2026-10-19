@@ -146,7 +146,7 @@ export default function NeedsAssessmentPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-slate-500">Loading needs assessment data...</div>
+        <div className="text-slate-500 dark:text-slate-400">Loading needs assessment data...</div>
       </div>
     );
   }
@@ -155,8 +155,8 @@ export default function NeedsAssessmentPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Needs Assessment</h1>
-          <p className="mt-1 text-sm text-slate-500">Create and manage school needs assessments</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Needs Assessment</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Create and manage school needs assessments</p>
         </div>
         {activeTab === "assessments" && (
           <button
@@ -170,23 +170,23 @@ export default function NeedsAssessmentPage() {
 
       {statusMessage && (
         <div className={`mb-6 rounded-xl border px-4 py-3 text-sm ${
-          statusMessage.includes("success") 
-            ? "border-emerald-200 bg-emerald-50 text-emerald-800" 
-            : "border-amber-200 bg-amber-50 text-amber-800"
+          statusMessage.includes("success")
+            ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300"
+            : "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300"
         }`}>
           {statusMessage}
         </div>
       )}
 
       {/* Tab Navigation */}
-      <div className="mb-6 border-b border-slate-200">
+      <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
         <nav className="flex gap-6">
           <button
             onClick={() => setActiveTab("assessments")}
             className={`pb-3 text-sm font-medium transition-colors ${
               activeTab === "assessments"
-                ? "text-rose-600 border-b-2 border-rose-600"
-                : "text-slate-500 hover:text-slate-700"
+                ? "text-rose-600 dark:text-rose-400 border-b-2 border-rose-600"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Needs Assessments
@@ -195,8 +195,8 @@ export default function NeedsAssessmentPage() {
             onClick={() => setActiveTab("self")}
             className={`pb-3 text-sm font-medium transition-colors ${
               activeTab === "self"
-                ? "text-rose-600 border-b-2 border-rose-600"
-                : "text-slate-500 hover:text-slate-700"
+                ? "text-rose-600 dark:text-rose-400 border-b-2 border-rose-600"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Self Assessment
@@ -207,35 +207,35 @@ export default function NeedsAssessmentPage() {
       {activeTab === "assessments" && (
         <div>
           {showForm && (
-            <form onSubmit={handleSubmit} className="mb-8 rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">Create New Needs Assessment</h2>
+            <form onSubmit={handleSubmit} className="mb-8 rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Create New Needs Assessment</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Assessment Name</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Assessment Name</label>
                   <input
                     type="text"
                     value={newAssessment.assessment_name}
                     onChange={(e) => setNewAssessment(prev => ({ ...prev, assessment_name: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                     required
                   />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Academic Year</label>
                     <input
                       type="text"
                       value={newAssessment.academic_year}
                       onChange={(e) => setNewAssessment(prev => ({ ...prev, academic_year: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Assessment Type</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Assessment Type</label>
                     <select
                       value={newAssessment.assessment_type}
                       onChange={(e) => setNewAssessment(prev => ({ ...prev, assessment_type: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                     >
                       <option value="GENERAL">General</option>
                       <option value="ACADEMIC">Academic</option>
@@ -246,11 +246,11 @@ export default function NeedsAssessmentPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Target Audience</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Target Audience</label>
                   <select
                     value={newAssessment.target_audience}
                     onChange={(e) => setNewAssessment(prev => ({ ...prev, target_audience: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                   >
                     <option value="ALL">All</option>
                     <option value="STUDENTS">Students</option>
@@ -262,29 +262,29 @@ export default function NeedsAssessmentPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-slate-700">Questions</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Questions</label>
                     <button
                       type="button"
                       onClick={addQuestion}
-                      className="text-sm text-rose-600 hover:text-rose-700 font-medium"
+                      className="text-sm text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 font-medium"
                     >
                       + Add Question
                     </button>
                   </div>
                   {newAssessment.questions.map((q, index) => (
-                    <div key={index} className="mb-3 rounded-lg bg-slate-50 p-3">
+                    <div key={index} className="mb-3 rounded-lg bg-slate-50 dark:bg-slate-700/50 p-3">
                       <div className="flex gap-2 mb-2">
                         <input
                           type="text"
                           placeholder="Question text"
                           value={q.question}
                           onChange={(e) => updateQuestion(index, "question", e.target.value)}
-                          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                          className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                         />
                         <button
                           type="button"
                           onClick={() => removeQuestion(index)}
-                          className="rounded-lg border border-rose-300 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
+                          className="rounded-lg border border-rose-300 dark:border-rose-600 px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30"
                         >
                           Remove
                         </button>
@@ -292,7 +292,7 @@ export default function NeedsAssessmentPage() {
                       <select
                         value={q.question_type}
                         onChange={(e) => updateQuestion(index, "question_type", e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                        className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
                       >
                         <option value="TEXT">Text Answer</option>
                         <option value="RATING">Rating Scale</option>
@@ -310,7 +310,7 @@ export default function NeedsAssessmentPage() {
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                    className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                   >
                     Cancel
                   </button>
@@ -321,31 +321,31 @@ export default function NeedsAssessmentPage() {
 
           <div className="space-y-4">
             {assessments.length === 0 ? (
-              <div className="rounded-2xl bg-white p-8 shadow-sm border border-slate-200 text-center">
-                <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="rounded-2xl bg-white dark:bg-slate-800 p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+                <svg className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
                 </svg>
-                <h3 className="text-lg font-medium text-slate-900 mb-2">No Needs Assessments</h3>
-                <p className="text-sm text-slate-500">Create a needs assessment to gather feedback from the school community.</p>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No Needs Assessments</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Create a needs assessment to gather feedback from the school community.</p>
               </div>
             ) : (
               assessments.map((assessment) => (
-                <div key={assessment.assessment_id} className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+                <div key={assessment.assessment_id} className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-slate-900">{assessment.assessment_name}</h3>
-                      <p className="text-sm text-slate-500 mt-1">{assessment.assessment_type} • {assessment.target_audience}</p>
-                      <p className="text-xs text-slate-400 mt-1">Academic Year: {assessment.academic_year}</p>
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{assessment.assessment_name}</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{assessment.assessment_type} • {assessment.target_audience}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Academic Year: {assessment.academic_year}</p>
                     </div>
                     <span className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium ${
-                      assessment.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' :
-                      assessment.status === 'DRAFT' ? 'bg-amber-50 text-amber-700' :
-                      'bg-slate-50 text-slate-700'
+                      assessment.status === 'ACTIVE' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' :
+                      assessment.status === 'DRAFT' ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+                      'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                     }`}>
                       {assessment.status}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-slate-600">
+                  <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
                     <span>{assessment.questions?.length || 0} questions</span>
                     <span>{assessment.responses?.length || 0} responses</span>
                     <span>Created: {new Date(assessment.created_at).toLocaleDateString()}</span>
@@ -360,47 +360,47 @@ export default function NeedsAssessmentPage() {
       {activeTab === "self" && (
         <div>
           {!selfAssessment ? (
-            <div className="rounded-2xl bg-white p-8 shadow-sm border border-slate-200 text-center">
-              <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="rounded-2xl bg-white dark:bg-slate-800 p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+              <svg className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No Self Assessment</h3>
-              <p className="text-sm text-slate-500">No self-assessment has been completed for the current academic year.</p>
+              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No Self Assessment</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No self-assessment has been completed for the current academic year.</p>
             </div>
           ) : (
-            <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">School Self Assessment</h2>
+            <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">School Self Assessment</h2>
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Overall Rating</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Overall Rating</p>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                       <div className="h-full bg-rose-500 rounded-full" style={{ width: `${selfAssessment.overall_rating}%` }} />
                     </div>
-                    <span className="text-sm font-semibold text-slate-900">{selfAssessment.overall_rating}%</span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">{selfAssessment.overall_rating}%</span>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Strengths</p>
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{selfAssessment.strengths}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Strengths</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{selfAssessment.strengths}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Weaknesses</p>
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{selfAssessment.weaknesses}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Weaknesses</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{selfAssessment.weaknesses}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Opportunities</p>
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{selfAssessment.opportunities}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Opportunities</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{selfAssessment.opportunities}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Threats</p>
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{selfAssessment.threats}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Threats</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{selfAssessment.threats}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Action Plan</p>
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{selfAssessment.action_plan}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Action Plan</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{selfAssessment.action_plan}</p>
                 </div>
-                <p className="text-xs text-slate-400">Submitted: {new Date(selfAssessment.submitted_at).toLocaleString()}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Submitted: {new Date(selfAssessment.submitted_at).toLocaleString()}</p>
               </div>
             </div>
           )}

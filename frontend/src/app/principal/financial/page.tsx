@@ -90,27 +90,27 @@ export default function FinancialOversightPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Financial Oversight</h1>
-        <p className="mt-1 text-sm text-slate-500">Monitor budget, allocations, and expenses</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Financial Oversight</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Monitor budget, allocations, and expenses</p>
       </div>
 
       {statusMessage && (
         <div className={`mb-6 rounded-xl px-4 py-3 text-sm ${
-          statusMessage.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-rose-50 text-rose-800 border border-rose-200"
+          statusMessage.type === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-rose-50 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
         }`}>
           {statusMessage.message}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-slate-200">
+      <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
         <nav className="flex gap-8">
           <button
             onClick={() => setActiveTab("overview")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "overview"
                 ? "border-b-2 border-indigo-600 text-indigo-600"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Overview
@@ -120,7 +120,7 @@ export default function FinancialOversightPage() {
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "allocations"
                 ? "border-b-2 border-indigo-600 text-indigo-600"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Budget Allocations
@@ -130,7 +130,7 @@ export default function FinancialOversightPage() {
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "expenses"
                 ? "border-b-2 border-indigo-600 text-indigo-600"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
             Expenses
@@ -139,7 +139,7 @@ export default function FinancialOversightPage() {
       </div>
 
       {loading ? (
-        <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm border border-slate-200">
+        <div className="rounded-2xl bg-white dark:bg-slate-800 p-8 text-center text-sm text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-700">
           Loading...
         </div>
       ) : (
@@ -148,38 +148,38 @@ export default function FinancialOversightPage() {
             <div className="space-y-6">
               {/* Summary Cards */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-                  <p className="text-sm text-slate-500 mb-1">Total Budget</p>
-                  <p className="text-2xl font-bold text-slate-900">{formatCurrency(summary.total_budget)}</p>
-                  <p className="text-xs text-slate-400 mt-1">Fiscal Year: {summary.fiscal_year}</p>
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Total Budget</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(summary.total_budget)}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Fiscal Year: {summary.fiscal_year}</p>
                 </div>
-                <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-                  <p className="text-sm text-slate-500 mb-1">Spent</p>
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Spent</p>
                   <p className="text-2xl font-bold text-rose-600">{formatCurrency(summary.spent)}</p>
-                  <p className="text-xs text-slate-400 mt-1">{summary.utilization_rate} utilized</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{summary.utilization_rate} utilized</p>
                 </div>
-                <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-                  <p className="text-sm text-slate-500 mb-1">Remaining</p>
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Remaining</p>
                   <p className="text-2xl font-bold text-emerald-600">{formatCurrency(summary.remaining)}</p>
-                  <p className="text-xs text-slate-400 mt-1">Available balance</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Available balance</p>
                 </div>
-                <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-                  <p className="text-sm text-slate-500 mb-1">Utilization Rate</p>
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Utilization Rate</p>
                   <p className="text-2xl font-bold text-indigo-600">{summary.utilization_rate}</p>
-                  <p className="text-xs text-slate-400 mt-1">Budget efficiency</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Budget efficiency</p>
                 </div>
               </div>
 
               {/* Budget Progress */}
-              <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-                <h2 className="text-lg font-bold text-slate-900 mb-4">Budget Utilization</h2>
+              <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Budget Utilization</h2>
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-slate-600">Overall Budget</span>
-                      <span className="text-sm font-medium text-slate-900">{summary.utilization_rate}</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-400">Overall Budget</span>
+                      <span className="text-sm font-medium text-slate-900 dark:text-white">{summary.utilization_rate}</span>
                     </div>
-                    <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-indigo-600 rounded-full transition-all"
                         style={{ width: summary.utilization_rate }}
@@ -193,16 +193,16 @@ export default function FinancialOversightPage() {
 
           {activeTab === "allocations" && (
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-200">
-                  <h2 className="text-lg font-bold text-slate-900">Budget Allocations</h2>
+              <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Budget Allocations</h2>
                 </div>
                 {allocations.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-slate-500">No budget allocations found.</div>
+                  <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No budget allocations found.</div>
                 ) : (
                   <table className="min-w-full">
-                    <thead className="bg-slate-50">
-                      <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
+                    <thead className="bg-slate-50 dark:bg-slate-700">
+                      <tr className="text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th className="px-6 py-3">Category</th>
                         <th className="px-6 py-3">Allocated</th>
                         <th className="px-6 py-3">Spent</th>
@@ -211,18 +211,18 @@ export default function FinancialOversightPage() {
                         <th className="px-6 py-3">Fiscal Year</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                       {allocations.map((allocation) => {
                         const utilization = ((allocation.spent_amount / allocation.allocated_amount) * 100).toFixed(1);
                         return (
-                          <tr key={allocation.allocation_id} className="hover:bg-slate-50">
-                            <td className="px-6 py-4 text-sm font-medium text-slate-900">{allocation.category}</td>
-                            <td className="px-6 py-4 text-sm text-slate-500">{formatCurrency(allocation.allocated_amount)}</td>
-                            <td className="px-6 py-4 text-sm text-slate-500">{formatCurrency(allocation.spent_amount)}</td>
+                          <tr key={allocation.allocation_id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
+                            <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{allocation.category}</td>
+                            <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{formatCurrency(allocation.allocated_amount)}</td>
+                            <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{formatCurrency(allocation.spent_amount)}</td>
                             <td className="px-6 py-4 text-sm text-emerald-600">{formatCurrency(allocation.remaining_amount)}</td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2">
-                                <div className="h-2 w-24 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-2 w-24 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                                   <div
                                     className={`h-full rounded-full ${
                                       parseFloat(utilization) > 90 ? "bg-rose-500" :
@@ -232,10 +232,10 @@ export default function FinancialOversightPage() {
                                     style={{ width: `${utilization}%` }}
                                   />
                                 </div>
-                                <span className="text-sm text-slate-600">{utilization}%</span>
+                                <span className="text-sm text-slate-600 dark:text-slate-400">{utilization}%</span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-sm text-slate-500">{allocation.fiscal_year}</td>
+                            <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{allocation.fiscal_year}</td>
                           </tr>
                         );
                       })}
@@ -248,16 +248,16 @@ export default function FinancialOversightPage() {
 
           {activeTab === "expenses" && (
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-200">
-                  <h2 className="text-lg font-bold text-slate-900">Recent Expenses</h2>
+              <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Recent Expenses</h2>
                 </div>
                 {expenses.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-slate-500">No expenses found.</div>
+                  <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No expenses found.</div>
                 ) : (
                   <table className="min-w-full">
-                    <thead className="bg-slate-50">
-                      <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
+                    <thead className="bg-slate-50 dark:bg-slate-700">
+                      <tr className="text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th className="px-6 py-3">Description</th>
                         <th className="px-6 py-3">Category</th>
                         <th className="px-6 py-3">Amount</th>
@@ -266,23 +266,23 @@ export default function FinancialOversightPage() {
                         <th className="px-6 py-3">Approved By</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                       {expenses.map((expense) => (
-                        <tr key={expense.expense_id} className="hover:bg-slate-50">
-                          <td className="px-6 py-4 text-sm font-medium text-slate-900">{expense.description}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{expense.category}</td>
-                          <td className="px-6 py-4 text-sm text-slate-900 font-medium">{formatCurrency(expense.amount)}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{new Date(expense.date).toLocaleDateString()}</td>
+                        <tr key={expense.expense_id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
+                          <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{expense.description}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{expense.category}</td>
+                          <td className="px-6 py-4 text-sm text-slate-900 dark:text-white font-medium">{formatCurrency(expense.amount)}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{new Date(expense.date).toLocaleDateString()}</td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                              expense.status === "APPROVED" ? "bg-emerald-50 text-emerald-700" :
-                              expense.status === "PENDING" ? "bg-amber-50 text-amber-700" :
-                              "bg-rose-50 text-rose-700"
+                              expense.status === "APPROVED" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" :
+                              expense.status === "PENDING" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" :
+                              "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300"
                             }`}>
                               {expense.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{expense.approved_by || "N/A"}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{expense.approved_by || "N/A"}</td>
                         </tr>
                       ))}
                     </tbody>

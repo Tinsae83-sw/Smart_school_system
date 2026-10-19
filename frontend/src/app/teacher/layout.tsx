@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { isAuthenticated, getUser, clearAuth, getToken } from "@/lib/auth";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6", href: "/teacher/dashboard" },
@@ -82,30 +83,31 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading...</p>
+          <div className="w-12 h-12 border-4 border-indigo-200 dark:border-indigo-800 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Top Bar */}
-      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
+      <header className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-[1440px] mx-auto flex items-center justify-between px-4 py-3 md:px-6">
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden rounded-xl p-2 hover:bg-slate-100">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden rounded-xl p-2 hover:bg-slate-100 dark:hover:bg-slate-700">
+              <svg className="w-6 h-6 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
             <div>
-              <p className="text-xs text-slate-500">Smart School Connect</p>
-              <h1 className="text-lg font-bold text-slate-900 leading-tight">{profile?.full_name || "Teacher"}</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Smart School Connect</p>
+              <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-tight">{profile?.full_name || "Teacher"}</h1>
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <button onClick={handleLogout} className="rounded-xl bg-indigo-600 px-4 py-2 text-white text-sm font-semibold hover:bg-indigo-700 transition">Logout</button>
           </div>
         </div>
@@ -116,15 +118,15 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
         {/* Sidebar */}
-        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform transition-transform lg:translate-x-0 lg:static lg:inset-0 overflow-y-auto ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-          <div className="p-4 border-b border-slate-100">
+        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform transition-transform lg:translate-x-0 lg:static lg:inset-0 overflow-y-auto ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <div className="p-4 border-b border-slate-100 dark:border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl font-bold text-emerald-600">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                 {profile?.full_name?.charAt(0) || "T"}
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">{profile?.full_name}</p>
-                <p className="text-xs text-slate-500">{profile?.department}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile?.full_name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{profile?.department}</p>
               </div>
             </div>
           </div>
@@ -135,10 +137,10 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
                 className={`w-full flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium transition ${
-                  pathname === item.href ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                  pathname === item.href ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 }`}
               >
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} /></svg>
+                <svg className="w-5 h-5 flex-shrink-0 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} /></svg>
                 {item.label}
               </Link>
             ))}

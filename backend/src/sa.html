@@ -1,0 +1,272 @@
+[8/21/2026 10:25 PM] 1sew: <!DOCTYPE html>
+<html>
+<head>
+<style>
+body { background: #1e1e1e; display: flex; justify-content: center; padding: 20px; }
+canvas { background: white; border: 4px solid #222; box-shadow: 0 0 20px rgba(0,0,0,0.7); }
+</style>
+</head>
+<body>
+<canvas id="plan" width="900" height="900"></canvas>
+<script>
+const c = document.getElementById('plan').getContext('2d');
+const s = 75; // 1m = 75px scale
+const ox = 70, oy = 70;
+
+function wall(x, y, w, h, label, labelX, labelY) {
+  c.fillStyle = '#f0ece4';
+  c.fillRect(ox + x*s, oy + y*s, w*s, h*s);
+  c.strokeStyle = '#2c2c2c';
+  c.lineWidth = 3;
+  c.strokeRect(ox + x*s, oy + y*s, w*s, h*s);
+  if (label) {
+    c.fillStyle = '#111';
+    c.font = 'bold 14px Arial';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText(label, ox + x*s + (w*s)/2, oy + y*s + (h*s)/2 - 4);
+    if (labelX && labelY) {
+      c.font = '12px Arial';
+      c.fillStyle = '#444';
+      c.fillText(labelX + 'm x ' + labelY + 'm', ox + x*s + (w*s)/2, oy + y*s + (h*s)/2 + 18);
+    }
+  }
+}
+
+function door(x, y, w, h, open) {
+  c.strokeStyle = '#0055aa';
+  c.lineWidth = 3;
+  const cx = ox + x*s, cy = oy + y*s;
+  c.beginPath();
+  if (open === 'right') { c.moveTo(cx, cy); c.lineTo(cx + w*s, cy); c.lineTo(cx + w*s, cy + h*s); }
+  else if (open === 'down') { c.moveTo(cx, cy); c.lineTo(cx, cy + h*s); c.lineTo(cx + w*s, cy + h*s); }
+  else if (open === 'left') { c.moveTo(cx + w*s, cy); c.lineTo(cx, cy); c.lineTo(cx, cy + h*s); }
+  else { c.moveTo(cx + w*s, cy + h*s); c.lineTo(cx, cy + h*s); c.lineTo(cx, cy); }
+  c.stroke();
+  c.fillStyle = '#0055aa33';
+  c.fill();
+}
+
+function window(x, y, w) {
+  c.fillStyle = '#88ccff';
+  c.fillRect(ox + x*s - 2, oy + y*s - 6, w*s + 4, 12);
+  c.fillStyle = '#88ccff44';
+  c.fillRect(ox + x*s - 2, oy + y*s - 6, w*s + 4, 12);
+}
+
+// --- WALLS & ROOMS (each grid = 1m x 1m) ---
+
+// MASTER BEDROOM (4x4) at (0,0)
+wall(0, 0, 4, 4, 'MASTER BEDROOM', 4, 4);
+window(0.5, 0, 1.5);
+window(2.5, 0, 1.5);
+door(4, 1.8, 1, 0.8, 'right');
+
+// PRIVATE BATH (2 x 1.8) inside master at (0.5, 2.2)
+wall(0.5, 2.2, 2, 1.8, 'PRIVATE BATH', 2, 1.8);
+door(0.5, 2.2, 1, 0.7, 'down');
+
+// BEDROOM 2 (3.5x3.5) at (4.5,0)
+wall(4.5, 0, 3.5, 3.5, 'BEDROOM 2', 3.5, 3.5);
+window(5, 0, 1.5);
+window(6.5, 0, 1.5);
+door(4.5, 1.8, 1, 0.8, 'left');
+
+// BEDROOM 3 (3.5x3.5) at (0,4.5)
+wall(0, 4.5, 3.5, 3.5, 'BEDROOM 3', 3.5, 3.5);
+window(0.5, 4.5, 1.5);
+window(2, 4.5, 1.5);
+door(3.5, 5.3, 1, 0.8, 'right');
+
+// COMMON BATH (2x2.5) at (4.5,4.5)
+wall(4.5, 4.5, 2, 2.5, 'COMMON BATH', 2, 2.5);
+door(4.5, 4.5, 1, 0.7, 'down');
+
+// CORRIDOR / HALLWAY (1.5 wide between rooms)
+// It's the open space – just label it
+c.fillStyle = '#e8e4dc';
+c.fillRect(ox + 3.5*s, oy + 3.5*s, 1.5*s, 1.5*s);
+c.strokeStyle = '#aaa';
+c.lineWidth = 1;
+c.strokeRect(ox + 3.5*s, oy + 3.5*s, 1.5*s, 1.5*s);
+c.fillStyle = '#666';
+c.font = 'bold 13px Arial';
+c.textAlign = 'center';
+c.textBaseline = 'middle';
+c.fillText('HALL', ox + 3.5*s + 0.75*s, oy + 3.5*s + 0.75*s);
+
+// DINING (3x3) at (0,8)
+wall(0, 8, 3, 3, 'DINING', 3, 3);
+window(1, 8, 1.5);
+door(3, 8.5, 1, 0.8, 'right');
+
+// KITCHEN (3x3) at (4.5,8)
+wall(4.5, 8, 3, 3, 'KITCHEN', 3, 3);
+window(5.5, 8, 1.5);
+door(4.5, 8.5, 1, 0.8, 'left');
+
+// LIVING ROOM (5x4) at (4.5,4.5) but wait – adjust to fill bottom right
+// Actually living room is at (0,0) – let's do it properly:
+// LIVING ROOM from (0,0) to (5,4) but we already have rooms there – recalc.
+// Better: clear and redraw correctly.
+
+// Let's re-draw cleanly with correct positions.
+
+// I'll redraw from scratch properly aligned:
+
+// Clear canvas and draw grid
+c.clearRect(0, 0, 900, 900);
+c.fillStyle = '#f5f2eb';
+c.fillRect(0, 0, 900, 900);
+
+// Draw the full floor outline (10m x 10m)
+c.strokeStyle = '#111';
+c.lineWidth = 4;
+c.strokeRect(ox, oy, 10*s, 10*s);
+
+// Helper
+[8/21/2026 10:25 PM] 1sew: function room(x, y, w, h, label, lx, ly) {
+  c.fillStyle = '#faf8f4';
+  c.fillRect(ox + x*s, oy + y*s, w*s, h*s);
+  c.strokeStyle = '#1a1a1a';
+  c.lineWidth = 2.5;
+  c.strokeRect(ox + x*s, oy + y*s, w*s, h*s);
+  c.fillStyle = '#111';
+  c.font = 'bold 15px Arial';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText(label, ox + x*s + (w*s)/2, oy + y*s + (h*s)/2 - 6);
+  if (lx && ly) {
+    c.font = '12px Arial';
+    c.fillStyle = '#555';
+    c.fillText(lx + '×' + ly + 'm', ox + x*s + (w*s)/2, oy + y*s + (h*s)/2 + 18);
+  }
+}
+
+// Draw all rooms
+room(0, 0, 4, 4, 'MASTER BEDROOM', 4, 4);
+room(0.5, 2.2, 2, 1.8, 'PRIVATE BATH', 2, 1.8);
+room(4.5, 0, 3.5, 3.5, 'BEDROOM 2', 3.5, 3.5);
+room(0, 4.5, 3.5, 3.5, 'BEDROOM 3', 3.5, 3.5);
+room(4.5, 4.5, 2, 2.5, 'COMMON BATH', 2, 2.5);
+room(0, 8, 3, 3, 'DINING', 3, 3);
+room(4.5, 8, 3, 3, 'KITCHEN', 3, 3);
+room(0, 11.5, 5, 4, 'LIVING ROOM', 5, 4); // Wait, y=11.5 is outside 10m. Let's fix:
+
+// I'll re-do with correct placement within 10x10:
+// Top row: 0-4 master, 4.5-8 bed2, 8-10 corridor/space
+// Better: let's use exact 10x10 grid.
+
+// CORRECTED LAYOUT (all within 0-10 x 0-10):
+
+// Master (0,0 to 4,4)
+room(0, 0, 4, 4, 'MASTER BEDROOM', 4, 4);
+// Private bath inside master (0.5,2.5 to 2.5,4.3)
+room(0.5, 2.5, 2, 1.5, 'PRIVATE BATH', 2, 1.5);
+// Bedroom 2 (4.5,0 to 8,3.5)
+room(4.5, 0, 3.5, 3.5, 'BEDROOM 2', 3.5, 3.5);
+// Bedroom 3 (0,4.5 to 3.5,8)
+room(0, 4.5, 3.5, 3.5, 'BEDROOM 3', 3.5, 3.5);
+// Common bath (4.5,4.5 to 6.5,7)
+room(4.5, 4.5, 2, 2.5, 'COMMON BATH', 2, 2.5);
+// Dining (0,8 to 3,11) – but 11 exceeds 10, so shrink to (0,8 to 3,10)
+room(0, 8, 3, 2, 'DINING', 3, 2);
+// Kitchen (4.5,8 to 7.5,10)
+room(4.5, 8, 3, 2, 'KITCHEN', 3, 2);
+// Living Room (7.5,4.5 to 10,10) – but we need it bigger: (3.5,4.5 to 10,10) but then overlaps corridor.
+// Let's use the standard plan: Living room at (0,0) to (5,4) – but we already have master there.
+// I'll re-arrange to match a real 100m² plan.
+
+// ---- FINAL PROFESSIONAL LAYOUT (within 10x10) ----
+
+// Clear and redraw final:
+c.clearRect(0, 0, 900, 900);
+c.fillStyle = '#f5f2eb';
+c.fillRect(0, 0, 900, 900);
+c.strokeStyle = '#111';
+c.lineWidth = 4;
+c.strokeRect(ox, oy, 10*s, 10*s);
+
+// Master Bedroom (top-left)
+room(0, 0, 4, 4, 'MASTER BEDROOM', 4, 4);
+room(0.5, 2.5, 2, 1.5, 'PRIVATE BATH', 2, 1.5);
+// Bedroom 2 (top-right)
+room(4.5, 0, 3.5, 3.5, 'BEDROOM 2', 3.5, 3.5);
+// Bedroom 3 (middle-left)
+room(0, 4.5, 3.5, 3.5, 'BEDROOM 3', 3.5, 3.5);
+// Common Bath (middle)
+room(4.5, 4.5, 2, 2.5, 'COMMON BATH', 2, 2.5);
+// Living Room (right-middle to bottom)
+room(7, 4.5, 3, 5.5, 'LIVING ROOM', 3, 5.5);
+// Dining (bottom-left)
+room(0, 8, 3, 2, 'DINING', 3, 2);
+// Kitchen (bottom-center)
+room(3.5, 8, 3, 2, 'KITCHEN', 3, 2);
+// Hallway/Corridor (center gap)
+c.fillStyle = '#e8e4dc';
+c.fillRect(ox + 3.5*s, oy + 3.5*s, 1.5*s, 1.5*s);
+c.strokeStyle = '#bbb';
+c.lineWidth = 1.5;
+c.strokeRect(ox + 3.5*s, oy + 3.5*s, 1.5*s, 1.5*s);
+c.fillStyle = '#666';
+c.font = 'bold 14px Arial';
+c.fillText('HALL', ox + 3.5*s + 0.75*s, oy + 3.5*s + 0.75*s);
+
+// Windows (blue) on outer walls
+function win(x, y, w) {
+  c.fillStyle = '#66bbff';
+  c.fillRect(ox + x*s - 2, oy + y*s - 6, w*s + 4, 12);
+  c.fillStyle = '#66bbff55';
+  c.fillRect(ox + x*s - 2, oy + y*s - 6, w*s + 4, 12);
+}
+win(0.5, 0, 1.5); win(2.5, 0, 1.5);
+win(5, 0, 1.5); win(6.5, 0, 1.5);
+win(0.5, 4.5, 1.5); win(2, 4.5, 1.5);
+win(7.5, 4.5, 1.5);
+win(0.5, 8, 1.5);
+win(4, 8, 1.5);
+
+// Doors (blue arcs)
+function dr(x, y, dir) {
+  c.strokeStyle = '#0055aa';
+  c.lineWidth = 3;
+  const cx = ox + x*s, cy = oy + y*s;
+  c.beginPath();
+  if (dir === 'r') { c.moveTo(cx, cy); c.lineTo(cx + s, cy); c.lineTo(cx + s, cy + 0.8*s); }
+  else if (dir === 'd') { c.moveTo(cx, cy); c.lineTo(cx, cy + s); c.lineTo(cx + s, cy + s); }
+  else if (dir === 'l') { c.moveTo(cx + s, cy); c.lineTo(cx, cy); c.lineTo(cx, cy + 0.8*s); }
+[8/21/2026 10:25 PM] 1sew: else { c.moveTo(cx + s, cy + s); c.lineTo(cx, cy + s); c.lineTo(cx, cy); }
+  c.stroke();
+  c.fillStyle = '#0055aa22';
+  c.fill();
+}
+dr(4, 1.8, 'r');    // Master entry
+dr(0.5, 2.5, 'd');  // Private bath
+dr(4.5, 1.8, 'l');  // Bedroom2 entry
+dr(3.5, 5.3, 'r');  // Bedroom3 entry
+dr(4.5, 4.5, 'd');  // Common bath
+dr(7, 5.8, 'l');    // Living room
+dr(3, 8.5, 'r');    // Dining
+dr(3.5, 8.5, 'l');  // Kitchen
+
+// Title
+c.fillStyle = '#000';
+c.font = 'bold 22px Arial';
+c.textAlign = 'center';
+c.fillText('G+2 APARTMENT FLOOR PLAN (100 m²)', 450, 30);
+c.font = '14px Arial';
+c.fillStyle = '#333';
+c.fillText('Scale: 1m = 75px | Each Floor: 10m × 10m', 450, 55);
+
+// Legend
+c.font = '12px Arial';
+c.fillStyle = '#222';
+c.fillText('🟦 Window', 750, 820);
+c.fillText('🚪 Door (blue arc)', 750, 840);
+c.fillStyle = '#66bbff';
+c.fillRect(720, 812, 12, 12);
+c.fillStyle = '#222';
+c.fillText('Total Built-up: 300 m² (G+2)', 750, 870);
+</script>
+</body>
+</html>

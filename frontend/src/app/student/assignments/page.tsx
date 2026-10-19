@@ -81,12 +81,12 @@ export default function StudentAssignments() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Assignments</h1>
-        <p className="text-sm text-slate-500 mt-1">View open work and submit before deadlines.</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Assignments</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">View open work and submit before deadlines.</p>
       </div>
 
       {feedback && (
-        <div className={`rounded-2xl p-4 text-sm ${feedback.includes("successful") ? "bg-emerald-50 border border-emerald-200 text-emerald-800" : "bg-amber-50 border border-amber-200 text-amber-800"}`}>
+        <div className={`rounded-2xl p-4 text-sm ${feedback.includes("successful") ? "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300"}`}>
           {feedback}
         </div>
       )}
@@ -100,7 +100,7 @@ export default function StudentAssignments() {
             className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
               filter === status
                 ? "bg-sky-600 text-white"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             }`}
           >
             {status} ({counts[status]})
@@ -119,37 +119,37 @@ export default function StudentAssignments() {
             const loading = submitLoading[assignment.assignment_id];
 
             return (
-              <div key={assignment.assignment_id} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <div key={assignment.assignment_id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm text-slate-500">{assignment.subject || `Class ${assignment.class_id}`}</p>
-                    <h3 className="text-lg font-semibold text-slate-900">{assignment.title}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{assignment.subject || `Class ${assignment.class_id}`}</p>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{assignment.title}</h3>
                   </div>
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    assignment.status === "OPEN" ? "bg-amber-50 text-amber-700 border border-amber-100" :
-                    assignment.status === "SUBMITTED" ? "bg-blue-50 text-blue-700 border border-blue-100" :
-                    assignment.status === "GRADED" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
-                    "bg-slate-50 text-slate-600 border border-slate-200"
+                    assignment.status === "OPEN" ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800" :
+                    assignment.status === "SUBMITTED" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800" :
+                    assignment.status === "GRADED" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800" :
+                    "bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600"
                   }`}>
                     {assignment.status}
                   </span>
                 </div>
 
                 {/* FR-S11: Assignment Details */}
-                <p className="mt-3 text-sm text-slate-600">{assignment.description}</p>
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{assignment.description}</p>
+                <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                   <span>Due {dueDate.toLocaleDateString()}</span>
                   <span>Max {assignment.max_score} pts</span>
-                  {isOverdue && <span className="text-red-600 font-medium">Overdue</span>}
+                  {isOverdue && <span className="text-red-600 dark:text-red-400 font-medium">Overdue</span>}
                 </div>
 
                 {/* FR-S11: Downloadable Attachments */}
                 {assignment.attachments?.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Resources</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Resources</p>
                     <div className="flex flex-wrap gap-2">
                       {assignment.attachments.map((attachment: string) => (
-                        <span key={attachment} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-200">
+                        <span key={attachment} className="rounded-lg bg-slate-100 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
                           {attachment}
                         </span>
                       ))}
@@ -159,13 +159,13 @@ export default function StudentAssignments() {
 
                 {/* FR-S12, S13, S14: File Upload & Submit */}
                 {(canSubmit || assignment.status === "SUBMITTED") && (
-                  <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                     <div className="flex flex-col sm:flex-row gap-3">
                       <input
                         type="file"
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                         onChange={(e) => handleFileChange(e, assignment.assignment_id)}
-                        className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900"
+                        className="flex-1 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white"
                       />
                       <button
                         onClick={() => handleSubmitAssignment(assignment.assignment_id)}
@@ -176,27 +176,27 @@ export default function StudentAssignments() {
                       </button>
                     </div>
                     {file && (
-                      <p className="mt-2 text-xs text-slate-500">Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)</p>
+                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)</p>
                     )}
                   </div>
                 )}
 
                 {/* FR-S16: Submitted Files & Timestamp */}
                 {assignment.submission && (
-                  <div className="mt-4 rounded-xl bg-slate-50 border border-slate-100 p-4">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Submission</p>
-                    <div className="space-y-1 text-sm text-slate-700">
+                  <div className="mt-4 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 p-4">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Submission</p>
+                    <div className="space-y-1 text-sm text-slate-700 dark:text-slate-300">
                       <p>File: <span className="font-medium">{assignment.submission.file_url}</span></p>
                       <p>Submitted: {new Date(assignment.submission.submitted_at).toLocaleString()}</p>
                       <p>Status: <span className="font-medium">{assignment.submission.is_late ? "Late" : "On time"}</span></p>
                     </div>
                     {/* FR-S18: Feedback for graded */}
                     {assignment.submission.score != null && (
-                      <div className="mt-3 pt-3 border-t border-slate-200 space-y-1 text-sm">
-                        <p>Score: <span className="font-bold text-slate-900">{assignment.submission.score}/{assignment.max_score}</span></p>
-                        <p>Grade: <span className="font-bold text-emerald-700">{assignment.submission.grade}</span></p>
+                      <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600 space-y-1 text-sm">
+                        <p>Score: <span className="font-bold text-slate-900 dark:text-white">{assignment.submission.score}/{assignment.max_score}</span></p>
+                        <p>Grade: <span className="font-bold text-emerald-700 dark:text-emerald-400">{assignment.submission.grade}</span></p>
                         {assignment.submission.feedback && (
-                          <p>Feedback: <span className="text-slate-600">{assignment.submission.feedback}</span></p>
+                          <p>Feedback: <span className="text-slate-600 dark:text-slate-300">{assignment.submission.feedback}</span></p>
                         )}
                       </div>
                     )}
@@ -206,8 +206,8 @@ export default function StudentAssignments() {
             );
           })
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-            <p className="text-slate-500">No assignments match the selected filter.</p>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+            <p className="text-slate-500 dark:text-slate-400">No assignments match the selected filter.</p>
           </div>
         )}
       </div>

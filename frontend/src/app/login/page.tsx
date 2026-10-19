@@ -176,9 +176,9 @@ export default function LoginPage() {
 
   return (
 
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center px-6 py-12">
+    <main className="min-h-screen bg-slate-100 dark:bg-slate-900 flex items-center justify-center px-6 py-12">
 
-      <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-8">
+      <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl p-8">
 
         <div className="text-center mb-8">
 
@@ -188,11 +188,11 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
             </svg>
           </div>
-          <p className="text-sm uppercase tracking-[0.3em] text-indigo-600 font-semibold">EduConnect Portal</p>
+          <p className="text-sm uppercase tracking-[0.3em] text-indigo-600 dark:text-indigo-400 font-semibold">EduConnect Portal</p>
 
-          <h1 className="mt-4 text-3xl font-bold text-slate-900">Sign in</h1>
+          <h1 className="mt-4 text-3xl font-bold text-slate-900 dark:text-slate-100">Sign in</h1>
 
-          <p className="mt-2 text-sm text-slate-500">Access your dashboard, grades, attendance, and more.</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Access your dashboard, grades, attendance, and more.</p>
 
         </div>
 
@@ -202,7 +202,7 @@ export default function LoginPage() {
 
           <div>
 
-            <label className="block text-sm font-medium text-slate-700">Email</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
 
             <input
 
@@ -212,7 +212,7 @@ export default function LoginPage() {
 
               onChange={(event) => setEmail(event.target.value)}
 
-              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="mt-2 w-full rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
 
               placeholder="your@email.com"
 
@@ -224,7 +224,7 @@ export default function LoginPage() {
 
           <div>
 
-            <label className="block text-sm font-medium text-slate-700">Password</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
 
             <input
 
@@ -234,7 +234,7 @@ export default function LoginPage() {
 
               onChange={(event) => setPassword(event.target.value)}
 
-              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="mt-2 w-full rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
 
               placeholder="Password123!"
 
@@ -246,7 +246,7 @@ export default function LoginPage() {
 
 
 
-          {error ? <div className="text-sm text-red-600">{error}</div> : null}
+          {error ? <div className="text-sm text-red-600 dark:text-red-400">{error}</div> : null}
 
 
 

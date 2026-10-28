@@ -62,13 +62,13 @@ export default function VPAcademicDashboardPage() {
       ]);
 
       setMetrics(dashboardData);
-      setTeachers(teachersData.map((t: any) => ({
+      setTeachers(Array.isArray(teachersData) ? teachersData.map((t: any) => ({
         teacher_id: t.teacher_id,
-        full_name: t.user.full_name,
+        full_name: t.user?.full_name || t.full_name || 'Unknown',
         department: t.department || "Unassigned",
         subjects: t.subjects || [],
-        status: t.user.is_active ? "Active" : "Inactive"
-      })));
+        status: t.user?.is_active !== false ? "Active" : "Inactive"
+      })) : []);
       setCourses([]);
     } catch (error) {
       console.error(error);

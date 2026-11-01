@@ -8,7 +8,7 @@ const allowedExtensions = ["pdf", "docx", "doc", "jpg", "jpeg", "png"];
 export default function StudentAssignments() {
   const { authFetch } = useStudent();
   const [assignments, setAssignments] = useState<any[]>([]);
-  const [filter, setFilter] = useState<"ALL" | "OPEN" | "SUBMITTED" | "GRADED">("ALL");
+  const [filter, setFilter] = useState<"ALL" | "OPEN" | "OVERDUE" | "SUBMITTED" | "GRADED">("ALL");
   const [selectedFiles, setSelectedFiles] = useState<Record<number, File | null>>({});
   const [submitLoading, setSubmitLoading] = useState<Record<number, boolean>>({});
   const [feedback, setFeedback] = useState("");
@@ -74,6 +74,7 @@ export default function StudentAssignments() {
   const counts = {
     ALL: assignments.length,
     OPEN: assignments.filter((a) => a.status === "OPEN").length,
+    OVERDUE: assignments.filter((a) => a.status === "OVERDUE").length,
     SUBMITTED: assignments.filter((a) => a.status === "SUBMITTED").length,
     GRADED: assignments.filter((a) => a.status === "GRADED").length,
   };
@@ -93,7 +94,7 @@ export default function StudentAssignments() {
 
       {/* FR-S10: Filter Tabs */}
       <div className="flex gap-2 flex-wrap">
-        {(["ALL", "OPEN", "SUBMITTED", "GRADED"] as const).map((status) => (
+        {(["ALL", "OPEN", "OVERDUE", "SUBMITTED", "GRADED"] as const).map((status) => (
           <button
             key={status}
             onClick={() => setFilter(status)}
@@ -122,11 +123,19 @@ export default function StudentAssignments() {
               <div key={assignment.assignment_id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{assignment.subject || `Class ${assignment.class_id}`}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{assignment.subject || `Class ${assignment.class_id}`}</p>
+                      {assignment.is_individual && (
+                        <span className="rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 px-2 py-0.5 text-xs font-semibold border border-purple-200 dark:border-purple-800">
+                          🎯 Individual Task
+                        </span>
+                      )}
+                    </div>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{assignment.title}</h3>
                   </div>
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                     assignment.status === "OPEN" ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800" :
+                    assignment.status === "OVERDUE" ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800" :
                     assignment.status === "SUBMITTED" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800" :
                     assignment.status === "GRADED" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800" :
                     "bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600"

@@ -309,7 +309,13 @@ export default function StudentDashboard() {
           </h2>
         </div>
         <div className="p-6">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <a href="/student/lesson-plans" className="group flex flex-col items-center gap-3 p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border border-indigo-100 dark:border-indigo-800 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-400">Lesson Plans</span>
+            </a>
             <a href="/student/assignments" className="group flex flex-col items-center gap-3 p-5 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-100 dark:border-amber-800 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <FileText className="w-6 h-6 text-white" />

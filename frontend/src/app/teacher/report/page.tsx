@@ -3,20 +3,46 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/auth";
-import { authFetch } from "../shared";
+import { authFetch, formatDisplayDate, Toast } from "../shared";
+
+interface ClassSubject {
+  class_subject_id: number;
+  class_id: number;
+  school_class?: { class_id?: number; class_name: string };
+  subject?: { subject_name: string };
+}
+
+interface Student {
+  student_id: number;
+  student_number: string;
+  user?: { full_name: string; email: string };
+  full_name?: string;
+}
 
 export default function ReportPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
-  const [classes, setClasses] = useState<any[]>([]);
-  const [selectedClass, setSelectedClass] = useState<number | null>(null);
-  const [reportType, setReportType] = useState<"class" | "student">("class");
-  const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
-  const [students, setStudents] = useState<any[]>([]);
-  const [report, setReport] = useState<any>(null);
+  const [classes, setClasses] = useState<ClassSubject[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
+
+  const [activeTab, setActiveTab] = useState<"class" | "student">("class");
+
+  // Student report selection
+  const [students, setStudents] = useState<Student[]>([]);
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+
+  // Loaded reports
+  const [classReport, setClassReport] = useState<any>(null);
+  const [studentReport, setStudentReport] = useState<any>(null);
+
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<Toast | null>(null);
+
+  const showToast = (text: string, type: Toast["type"]) => {
+    setToast({ text, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   useEffect(() => {
     const savedToken = getToken("TEACHER");
@@ -28,429 +54,426 @@ export default function ReportPage() {
     loadClasses(savedToken);
   }, [router]);
 
-  async function loadClasses(token: string) {
+  async function loadClasses(tok: string) {
     try {
-      const data = await authFetch("/api/teacher/classes", {}, token);
+      const data: ClassSubject[] = await authFetch("/api/teacher/classes", {}, tok);
       setClasses(data);
       if (data.length > 0) {
-        setSelectedClass(data[0].class_id);
+        const firstCid = data[0].class_id || data[0].school_class?.class_id || data[0].class_subject_id;
+        setSelectedClassId(firstCid);
       }
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  }
-
-  async function loadStudents() {
-    if (!selectedClass) return;
-    try {
-      const data = await authFetch(`/api/teacher/classes/${selectedClass}/roster`, {}, token);
-      setStudents(data || []);
-    } catch (e) { console.error(e); }
-  }
-
-  useEffect(() => {
-    if (selectedClass) {
-      loadStudents();
+    } catch (e: any) {
+      showToast(e.message || "Failed to load classes", "error");
+    } finally {
+      setLoading(false);
     }
-  }, [selectedClass]);
+  }
 
-  async function handleGenerateReport() {
-    setGenerating(true);
-    setMessage("");
+  // Load students when selectedClassId changes
+  useEffect(() => {
+    if (selectedClassId && token) {
+      loadStudents(selectedClassId);
+    }
+  }, [selectedClassId, token]);
+
+  async function loadStudents(classId: number) {
     try {
-      let url = "";
-      if (reportType === "class" && selectedClass) {
-        url = `/api/teacher/reports/class/${selectedClass}`;
-      } else if (reportType === "student" && selectedStudent) {
-        url = `/api/teacher/reports/student/${selectedStudent}`;
+      const rosterData = await authFetch(`/api/teacher/classes/${classId}/roster`, {}, token);
+      const studentList = rosterData.students || rosterData || [];
+      const list = Array.isArray(studentList) ? studentList : [];
+      setStudents(list);
+      if (list.length > 0) {
+        setSelectedStudentId(list[0].student_id);
       } else {
-        setMessage("Please select a class and student");
-        setGenerating(false);
-        return;
+        setSelectedStudentId(null);
       }
+    } catch {
+      setStudents([]);
+      setSelectedStudentId(null);
+    }
+  }
 
-      const data = await authFetch(url, {}, token);
-      setReport(data);
-      setMessage("Report generated successfully!");
-    } catch (e) {
-      setMessage("Failed to generate report");
-      console.error(e);
+  // Generate Report Handler
+  async function handleGenerateReport() {
+    if (!selectedClassId) {
+      showToast("Please select a class.", "error");
+      return;
+    }
+
+    if (activeTab === "student" && !selectedStudentId) {
+      showToast("Please select a student for the individual academic report.", "error");
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      if (activeTab === "class") {
+        const data = await authFetch(`/api/teacher/reports/class/${selectedClassId}`, {}, token);
+        setClassReport(data);
+        showToast("Class academic report generated!", "success");
+      } else {
+        const data = await authFetch(`/api/teacher/reports/student/${selectedStudentId}`, {}, token);
+        setStudentReport(data);
+        showToast("Student academic transcript report generated!", "success");
+      }
+    } catch (e: any) {
+      showToast(e.message || "Failed to generate report", "error");
     } finally {
       setGenerating(false);
     }
   }
 
+  function handlePrint() {
+    window.print();
+  }
+
+  const selectedClass = classes.find(
+    (c) => (c.class_id || c.school_class?.class_id || c.class_subject_id) === selectedClassId
+  );
+
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-emerald-200 dark:border-slate-600 border-t-emerald-600 dark:border-t-emerald-400 rounded-full animate-spin" />
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Preparing academic reporting engine...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
-              <svg className="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Reports</h1>
-              <p className="text-slate-600 dark:text-slate-300">Generate and view academic reports</p>
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed top-6 right-6 z-50 flex items-center gap-3 rounded-xl border px-5 py-4 shadow-lg max-w-sm animate-in slide-in-from-right-4 duration-300 print:hidden ${
+            toast.type === "success"
+              ? "bg-emerald-50 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300"
+              : "bg-red-50 dark:bg-red-900/40 border-red-200 dark:border-red-700 text-red-800 dark:text-red-300"
+          }`}
+        >
+          <span className="text-sm font-medium">{toast.text}</span>
         </div>
-        
-        {/* Report Type Selection Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-              <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300 dark:text-slate-300">Report Type</label>
-              <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-400">Choose the type of report to generate</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => setReportType("class")}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition ${
-                reportType === "class"
-                  ? "bg-emerald-600 text-white shadow-md"
-                  : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              Class Report
-            </button>
-            <button
-              onClick={() => setReportType("student")}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition ${
-                reportType === "student"
-                  ? "bg-emerald-600 text-white shadow-md"
-                  : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Student Report
-            </button>
-          </div>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Academic Reports
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
+            Generate printable class analytics, grade distributions, and student transcripts
+          </p>
         </div>
 
-        {/* Class Selection Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-              <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300 dark:text-slate-300">Select Class</label>
-              <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-400">Choose the class for the report</p>
-            </div>
-          </div>
-          <select
-            value={selectedClass || ''}
-            onChange={(e) => setSelectedClass(Number(e.target.value))}
-            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-          >
-            {classes.map((cls: any) => (
-              <option key={cls.class_subject_id} value={cls.class_id}>
-                {cls.school_class?.class_name || cls.class_name} - {cls.subject?.subject_name || cls.subject}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Student Selection Card (for student reports) */}
-        {reportType === "student" && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Select Student</label>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Choose the student for the report</p>
-              </div>
-            </div>
-            <select
-              value={selectedStudent || ''}
-              onChange={(e) => setSelectedStudent(Number(e.target.value))}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-            >
-              <option value="">Select a student...</option>
-              {students.map((student: any) => (
-                <option key={student.student_id} value={student.student_id}>
-                  {student.user?.full_name || student.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Generate Button */}
-        <div className="mb-6">
+        {(classReport || studentReport) && (
           <button
-            onClick={handleGenerateReport}
-            disabled={generating || (reportType === "student" && !selectedStudent)}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-3 text-white font-semibold hover:from-amber-700 hover:to-amber-800 transition shadow-lg shadow-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            onClick={handlePrint}
+            className="rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-5 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm flex items-center gap-2"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
-            {generating ? "Generating..." : "Generate Report"}
+            Print / Save PDF
+          </button>
+        )}
+      </div>
+
+      {/* Mode Selector Tabs */}
+      <div className="border-b border-slate-200 dark:border-slate-700 print:hidden">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("class")}
+            className={`px-5 py-3 text-sm font-semibold border-b-2 transition ${
+              activeTab === "class"
+                ? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
+                : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            }`}
+          >
+            Class Academic Report
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("student")}
+            className={`px-5 py-3 text-sm font-semibold border-b-2 transition ${
+              activeTab === "student"
+                ? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
+                : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            }`}
+          >
+            Individual Student Transcript Report
           </button>
         </div>
+      </div>
 
-        {message && (
-          <div className={`mb-6 rounded-xl p-4 ${message.includes("success") ? "bg-emerald-50 border border-emerald-200" : "bg-red-50 border border-red-200"}`}>
-            <div className="flex items-center gap-2">
-              {message.includes("success") ? (
-                <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              )}
-              <p className={`text-sm font-medium ${message.includes("success") ? "text-emerald-700" : "text-red-700"}`}>
-                {message}
+      {/* Filter / Generator Card */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm print:hidden">
+        <div className="grid gap-6 md:grid-cols-3 items-end">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              Select Class *
+            </label>
+            <select
+              value={selectedClassId || ""}
+              onChange={(e) => setSelectedClassId(Number(e.target.value))}
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            >
+              {classes.map((cls) => {
+                const cid = cls.class_id || cls.school_class?.class_id || cls.class_subject_id;
+                return (
+                  <option key={cid} value={cid}>
+                    {cls.school_class?.class_name || "Class"} — {cls.subject?.subject_name || "Subject"}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          {activeTab === "student" && (
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                Select Student *
+              </label>
+              <select
+                value={selectedStudentId || ""}
+                onChange={(e) => setSelectedStudentId(Number(e.target.value))}
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              >
+                {students.map((st) => (
+                  <option key={st.student_id} value={st.student_id}>
+                    {st.user?.full_name || st.full_name || "Student"} ({st.student_number || `ID: ${st.student_id}`})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div>
+            <button
+              type="button"
+              disabled={generating}
+              onClick={handleGenerateReport}
+              className="w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition shadow-md shadow-emerald-600/20 disabled:opacity-50"
+            >
+              {generating ? "Analyzing & Generating..." : "Generate Official Report"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── TAB 1 DISPLAY: CLASS REPORT ──────────────────────────────────── */}
+      {activeTab === "class" && classReport && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm space-y-8">
+          {/* Official Report Title Block */}
+          <div className="border-b border-slate-200 dark:border-slate-700 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                Official Academic Summary Report
+              </p>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                {classReport.class_name} — {classReport.subject_name}
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Generated on: {formatDisplayDate(classReport.generated_at || new Date())}
+              </p>
+            </div>
+
+            <div className="text-right">
+              <span className="inline-flex px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                Active Term Report
+              </span>
+            </div>
+          </div>
+
+          {/* Metric Overview Cards */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30 p-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Class Average</p>
+              <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-2">
+                {classReport.class_average}%
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30 p-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pass Rate</p>
+              <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2">
+                {classReport.pass_rate}%
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30 p-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Enrolled</p>
+              <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-2">
+                {classReport.total_students}
               </p>
             </div>
           </div>
-        )}
 
-        {/* Report Display */}
-        {report && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6 animate-in slide-in-from-top-4 duration-300">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                    {reportType === "class" ? "Class Academic Report" : "Student Academic Report"}
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Generated: {new Date(report.generated_at).toLocaleString()}</p>
-                </div>
+          {/* Top Performers Leaderboard */}
+          {classReport.top_performers && classReport.top_performers.length > 0 && (
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white text-base mb-3">
+                Top Performing Students
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {classReport.top_performers.map((tp: any, i: number) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm"
+                  >
+                    <span className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-bold text-xs flex items-center justify-center">
+                      #{i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                        {tp.name}
+                      </p>
+                      <p className="text-xs text-slate-400">Score: {tp.average}%</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
+          )}
 
-            {/* Class Report */}
-            {reportType === "class" && (
-              <div className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-4 border border-slate-100 dark:border-slate-600">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-emerald-100 rounded">
-                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Class Average</h3>
-                    </div>
-                    <p className="text-2xl font-bold text-emerald-600">{report.class_average || "N/A"}</p>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-4 border border-slate-100 dark:border-slate-600">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-blue-100 rounded">
-                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Total Students</h3>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-600">{report.total_students || 0}</p>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-4 border border-slate-100 dark:border-slate-600">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-amber-100 rounded">
-                        <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Pass Rate</h3>
-                    </div>
-                    <p className="text-2xl font-bold text-amber-600">{report.pass_rate || "N/A"}%</p>
-                  </div>
-                </div>
-
-                {report.subject_performance && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="p-1.5 bg-purple-100 rounded">
-                        <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Subject Performance</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-left border-b border-slate-200 dark:border-slate-600">
-                            <th className="pb-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Subject</th>
-                            <th className="pb-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Average</th>
-                            <th className="pb-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Highest</th>
-                            <th className="pb-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Lowest</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {report.subject_performance.map((subject: any, index: number) => (
-                            <tr key={index} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
-                              <td className="py-3 px-4 text-sm font-medium text-slate-900 dark:text-white">{subject.subject}</td>
-                              <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{subject.average}</td>
-                              <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{subject.highest}</td>
-                              <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{subject.lowest}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {report.top_performers && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="p-1.5 bg-emerald-100 rounded">
-                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Top Performers</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {report.top_performers.map((student: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between bg-slate-50 dark:bg-slate-700 rounded-xl p-3 border border-slate-100 dark:border-slate-600">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
-                              <span className="text-xs font-semibold text-emerald-600">{index + 1}</span>
-                            </div>
-                            <span className="text-sm font-medium text-slate-900 dark:text-white">{student.name}</span>
-                          </div>
-                          <span className="text-sm font-semibold text-emerald-600">{student.average}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+          {/* Subject Performance Breakdown Table */}
+          {classReport.subject_performance && classReport.subject_performance.length > 0 && (
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white text-base mb-3">
+                Subject Performance Distribution
+              </h3>
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-700/50 text-left border-b border-slate-200 dark:border-slate-700">
+                      <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Subject</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Average Score</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Highest Score</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Lowest Score</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
+                    {classReport.subject_performance.map((sp: any, i: number) => (
+                      <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                        <td className="px-5 py-3.5 font-semibold text-slate-900 dark:text-white">{sp.subject}</td>
+                        <td className="px-5 py-3.5 text-center font-bold text-emerald-600">{sp.average}%</td>
+                        <td className="px-5 py-3.5 text-center text-slate-700 dark:text-slate-300">{sp.highest}%</td>
+                        <td className="px-5 py-3.5 text-center text-slate-700 dark:text-slate-300">{sp.lowest}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
+            </div>
+          )}
+        </div>
+      )}
 
-            {/* Student Report */}
-            {reportType === "student" && (
-              <div className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-4 border border-slate-100 dark:border-slate-600">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-emerald-100 rounded">
-                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Overall Average</h3>
-                    </div>
-                    <p className="text-2xl font-bold text-emerald-600">{report.overall_average || "N/A"}</p>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-4 border border-slate-100 dark:border-slate-600">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-blue-100 rounded">
-                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
-                      </div>
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Class Rank</h3>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-600">{report.class_rank || "N/A"}</p>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-4 border border-slate-100 dark:border-slate-600">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-amber-100 rounded">
-                        <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Attendance Rate</h3>
-                    </div>
-                    <p className="text-2xl font-bold text-amber-600">{report.attendance_rate || "N/A"}%</p>
-                  </div>
-                </div>
+      {/* ── TAB 2 DISPLAY: STUDENT REPORT ────────────────────────────────── */}
+      {activeTab === "student" && studentReport && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm space-y-8">
+          {/* Transcript Header */}
+          <div className="border-b border-slate-200 dark:border-slate-700 pb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                Official Student Academic Transcript
+              </p>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                {studentReport.student_name}
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Student ID: <span className="font-mono font-bold">{studentReport.student_number}</span> · Class: {studentReport.class_name}
+              </p>
+            </div>
 
-                {report.subject_grades && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="p-1.5 bg-purple-100 rounded">
-                        <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Subject Grades</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-left border-b border-slate-200 dark:border-slate-600">
-                            <th className="pb-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Subject</th>
-                            <th className="pb-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Grade</th>
-                            <th className="pb-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Score</th>
-                            <th className="pb-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-300">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {report.subject_grades.map((grade: any, index: number) => (
-                            <tr key={index} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
-                              <td className="py-3 px-4 text-sm font-medium text-slate-900 dark:text-white">{grade.subject}</td>
-                              <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{grade.grade}</td>
-                              <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{grade.score}</td>
-                              <td className="py-3 px-4">
-                                <span className={`rounded-lg px-3 py-1 text-xs font-semibold ${
-                                  grade.status === "PASS" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
-                                }`}>
-                                  {grade.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {report.remarks && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="p-1.5 bg-indigo-100 rounded">
-                        <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Remarks</h3>
-                    </div>
-                    <p className="text-slate-600 bg-slate-50 dark:bg-slate-700 rounded-xl p-4 border border-slate-100 dark:border-slate-600">{report.remarks}</p>
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="text-left sm:text-right">
+              <span className="text-xs text-slate-400">Date Issued:</span>
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {formatDisplayDate(studentReport.generated_at || new Date())}
+              </p>
+            </div>
           </div>
-        )}
-      </div>
-    </main>
+
+          {/* Key Indicators */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30 p-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cumulative Average</p>
+              <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2">
+                {studentReport.overall_average}%
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30 p-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Attendance Standing</p>
+              <p className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">
+                {studentReport.attendance_rate?.percentage || "100"}%
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                {studentReport.attendance_rate?.present_days || 0} of {studentReport.attendance_rate?.total_days || 0} days present
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30 p-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Conduct Grade</p>
+              <p className="text-3xl font-extrabold text-amber-500 mt-2">
+                {studentReport.conduct?.grade || "A"}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Rating: {studentReport.conduct?.rating || 5}/5 Stars
+              </p>
+            </div>
+          </div>
+
+          {/* Subject Performance Table */}
+          {studentReport.subject_grades && studentReport.subject_grades.length > 0 && (
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white text-base mb-3">
+                Coursework & Subject Marks
+              </h3>
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-700/50 text-left border-b border-slate-200 dark:border-slate-700">
+                      <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Subject Course</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Score</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Letter Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
+                    {studentReport.subject_grades.map((g: any, i: number) => (
+                      <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                        <td className="px-5 py-3.5 font-semibold text-slate-900 dark:text-white">{g.subject}</td>
+                        <td className="px-5 py-3.5 text-center font-bold text-slate-900 dark:text-white">{g.score}</td>
+                        <td className="px-5 py-3.5 text-center">
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                            {g.letter_grade || "A"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Conduct Comments */}
+          {studentReport.conduct?.comments && (
+            <div className="bg-slate-50 dark:bg-slate-700/30 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-1">
+                Conduct & Behavioral Evaluation Comments
+              </h4>
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                {studentReport.conduct.comments}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

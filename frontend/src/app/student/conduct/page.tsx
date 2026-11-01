@@ -14,6 +14,7 @@ export default function StudentConduct() {
   const [reviewScore, setReviewScore] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [selectedRevieweeId, setSelectedRevieweeId] = useState<number | null>(null);
+  const [classmates, setClassmates] = useState<any[]>([]);
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(true);
 

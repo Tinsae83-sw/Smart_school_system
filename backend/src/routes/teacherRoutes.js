@@ -19,6 +19,9 @@ const {
   saveAttendance,
   updateAttendance,
   getAttendanceSummary,
+  toggleAttendanceSession,
+  getAttendanceByDay,
+  getRecordedAttendanceDates,
   
   // Assignments
   getAssignments,
@@ -91,6 +94,19 @@ const {
   getActivityLog
 } = require('../controllers/teacherController');
 
+const {
+  validateAssignmentCreation,
+  validateAssignmentUpdate,
+  validateGradeSubmission,
+  validateBulkGrade,
+  validateAttendance,
+  validateBulkMarks,
+  validateConduct,
+  validateLessonPlan,
+  validateCourseMaterial,
+  validateOnlineClass
+} = require('../middleware/teacherValidators');
+
 // ============================================================
 // PROFILE & DASHBOARD
 // ============================================================
@@ -141,13 +157,22 @@ router.get('/timetable', getTeacherTimetable);
 router.get('/attendance', getAttendance);
 
 // POST /api/teacher/attendance - Save attendance
-router.post('/attendance', saveAttendance);
+router.post('/attendance', validateAttendance, saveAttendance);
 
 // PUT /api/teacher/attendance/:attendanceId - Update attendance
 router.put('/attendance/:attendanceId', updateAttendance);
 
 // GET /api/teacher/attendance/summary/:classId - Get attendance summary
 router.get('/attendance/summary/:classId', getAttendanceSummary);
+
+// POST /api/teacher/attendance/session/toggle - Toggle student self-marking
+router.post('/attendance/session/toggle', toggleAttendanceSession);
+
+// GET /api/teacher/attendance/history-day - Search attendance of a specific day
+router.get('/attendance/history-day', getAttendanceByDay);
+
+// GET /api/teacher/attendance/recorded-dates/:classId - Get dates with attendance logged
+router.get('/attendance/recorded-dates/:classId', getRecordedAttendanceDates);
 
 // ============================================================
 // ASSIGNMENT MANAGEMENT
@@ -156,20 +181,20 @@ router.get('/attendance/summary/:classId', getAttendanceSummary);
 // GET /api/teacher/assignments - Get all assignments
 router.get('/assignments', getAssignments);
 
-// POST /api/teacher/assignments - Create assignment
-router.post('/assignments', createAssignment);
+// POST /api/teacher/assignments - Create assignment (single class, many classes, or individual student assignments)
+router.post('/assignments', validateAssignmentCreation, createAssignment);
 
 // PUT /api/teacher/assignments/:assignmentId - Update assignment
-router.put('/assignments/:assignmentId', updateAssignment);
+router.put('/assignments/:assignmentId', validateAssignmentUpdate, updateAssignment);
 
 // DELETE /api/teacher/assignments/:assignmentId - Delete assignment
 router.delete('/assignments/:assignmentId', deleteAssignment);
 
 // POST /api/teacher/assignments/:assignmentId/grade - Grade submission
-router.post('/assignments/:assignmentId/grade', gradeSubmission);
+router.post('/assignments/:assignmentId/grade', validateGradeSubmission, gradeSubmission);
 
 // POST /api/teacher/assignments/:assignmentId/bulk-grade - Bulk grade assignments
-router.post('/assignments/:assignmentId/bulk-grade', bulkGradeAssignments);
+router.post('/assignments/:assignmentId/bulk-grade', validateBulkGrade, bulkGradeAssignments);
 
 // ============================================================
 // GRADE MANAGEMENT
@@ -179,7 +204,7 @@ router.post('/assignments/:assignmentId/bulk-grade', bulkGradeAssignments);
 router.get('/grades/:classId', getClassGrades);
 
 // POST /api/teacher/grades/bulk - Bulk enter student marks (test/mid/final/other)
-router.post('/grades/bulk', bulkEnterGrades);
+router.post('/grades/bulk', validateBulkMarks, bulkEnterGrades);
 
 // POST /api/teacher/exam-grades - Enter exam grades
 router.post('/exam-grades', enterExamGrades);
@@ -192,7 +217,7 @@ router.post('/exam-grades', enterExamGrades);
 router.get('/conduct/:classId', getClassConduct);
 
 // POST /api/teacher/conduct - Grade student conduct
-router.post('/conduct', gradeConduct);
+router.post('/conduct', validateConduct, gradeConduct);
 
 // POST /api/teacher/conduct/bulk - Bulk grade student conduct
 router.post('/conduct/bulk', bulkGradeConduct);
@@ -208,7 +233,7 @@ router.post('/conduct/:conductId/comment', addConductComment);
 router.get('/lesson-plans', getLessonPlans);
 
 // POST /api/teacher/lesson-plans - Create lesson plan
-router.post('/lesson-plans', createLessonPlan);
+router.post('/lesson-plans', validateLessonPlan, createLessonPlan);
 
 // PUT /api/teacher/lesson-plans/:lessonPlanId - Update lesson plan
 router.put('/lesson-plans/:lessonPlanId', updateLessonPlan);
@@ -244,7 +269,7 @@ router.delete('/materials/:materialId', deleteMaterial);
 router.get('/online-classes', getOnlineClasses);
 
 // POST /api/teacher/online-classes - Create online class
-router.post('/online-classes', createOnlineClass);
+router.post('/online-classes', validateOnlineClass, createOnlineClass);
 
 // POST /api/teacher/online-classes/:onlineClassId/start - Start online class
 router.post('/online-classes/:onlineClassId/start', startOnlineClass);
@@ -290,6 +315,23 @@ router.get('/peer-evaluation-results/:classId', getPeerEvaluationResults);
 
 // GET /api/teacher/messages - Get messages
 router.get('/messages', getMessages);
+
+// POST /api/teacher/messages/upload-attachment - Upload message attachment
+router.post('/messages/upload-attachment', (req, res) => {
+  const upload = req.upload;
+  if (!upload) return res.status(500).json({ error: 'Upload middleware not configured' });
+  upload.single('attachment')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const fileUrl = `/uploads/messages/${req.file.filename}`;
+    res.json({
+      url: fileUrl,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimeType: req.file.mimetype
+    });
+  });
+});
 
 // POST /api/teacher/messages - Send message
 router.post('/messages', sendMessage);

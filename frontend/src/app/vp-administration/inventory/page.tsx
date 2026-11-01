@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { vpAdminApi } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translateVpAdministrationOperation } from "@/translations/vp-administration-operations";
 
 type InventoryItem = {
   inventory_id: number;
@@ -63,6 +65,8 @@ type Supplier = {
 };
 
 export default function InventoryPage() {
+  const { language } = useLanguage();
+  const tr = (value: string) => translateVpAdministrationOperation(value, language);
   const [activeTab, setActiveTab] = useState<"inventory" | "transactions" | "suppliers">("inventory");
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [transactions, setTransactions] = useState<InventoryTransaction[]>([]);
@@ -334,7 +338,7 @@ export default function InventoryPage() {
   }
 
   async function handleDeleteTransaction(id: number) {
-    if (!confirm("Are you sure you want to delete this transaction?")) return;
+    if (!confirm(tr("Are you sure you want to delete this transaction?"))) return;
     try {
       await vpAdminApi.delete(`/inventory-transactions/${id}`);
       setTransactions(transactions.filter(t => t.transaction_id !== id));
@@ -344,7 +348,7 @@ export default function InventoryPage() {
   }
 
   async function handleDeleteSupplier(id: number) {
-    if (!confirm("Are you sure you want to delete this supplier?")) return;
+    if (!confirm(tr("Are you sure you want to delete this supplier?"))) return;
     try {
       await vpAdminApi.delete(`/suppliers/${id}`);
       setSuppliers(suppliers.filter(s => s.supplier_id !== id));
@@ -463,24 +467,22 @@ export default function InventoryPage() {
     <div>
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Procurement & Inventory</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage inventory, stock transactions, and suppliers</p>
+          <h1 className="text-2xl font-bold text-slate-900">{tr("Procurement & Inventory")}</h1>
+          <p className="mt-1 text-sm text-slate-500">{tr("Manage inventory, stock transactions, and suppliers")}</p>
         </div>
         {activeTab === "inventory" && (
           <button
             onClick={() => openModal("inventory")}
             className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition w-full sm:w-auto"
           >
-            Add Inventory Item
-          </button>
+            {tr("Add Inventory Item")}</button>
         )}
         {activeTab === "suppliers" && (
           <button
             onClick={() => openModal("supplier")}
             className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition w-full sm:w-auto"
           >
-            Add Supplier
-          </button>
+            {tr("Add Supplier")}</button>
         )}
       </div>
 
@@ -494,7 +496,7 @@ export default function InventoryPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Inventory ({inventory.length})
+            {tr("Inventory (")}{inventory.length})
           </button>
           <button
             onClick={() => setActiveTab("transactions")}
@@ -504,7 +506,7 @@ export default function InventoryPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Transactions ({transactions.length})
+            {tr("Transactions (")}{transactions.length})
           </button>
           <button
             onClick={() => setActiveTab("suppliers")}
@@ -514,14 +516,14 @@ export default function InventoryPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Suppliers ({suppliers.length})
+            {tr("Suppliers (")}{suppliers.length})
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading...</div>
+          <div className="text-slate-500">{tr("Loading...")}</div>
         </div>
       ) : (
         <>
@@ -531,22 +533,22 @@ export default function InventoryPage() {
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Code</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Name</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Category</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Brand</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Model</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Supplier</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Stock</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Unit</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Reorder</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Max</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Cost</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Location</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Lead Time</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Shelf Life</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Min Order</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Code")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Name")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Category")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Brand")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Model")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Supplier")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Stock")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Unit")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Reorder")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Max")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Cost")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Location")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Lead Time")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Shelf Life")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Min Order")}</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -554,7 +556,7 @@ export default function InventoryPage() {
                       <tr key={item.inventory_id} className="hover:bg-slate-50">
                         <td className="px-4 py-3 text-xs font-medium text-slate-900">{item.item_code}</td>
                         <td className="px-4 py-3 text-xs text-slate-700">{item.item_name}</td>
-                        <td className="px-4 py-3 text-xs text-slate-600">{item.category.replace(/_/g, " ")}</td>
+                        <td className="px-4 py-3 text-xs text-slate-600">{tr(item.category.replace(/_/g, " "))}</td>
                         <td className="px-4 py-3 text-xs text-slate-600">{item.brand || "-"}</td>
                         <td className="px-4 py-3 text-xs text-slate-600">{item.model || "-"}</td>
                         <td className="px-4 py-3 text-xs text-slate-600">{item.supplier || "-"}</td>
@@ -562,7 +564,7 @@ export default function InventoryPage() {
                           <div className="flex items-center gap-1">
                             <span className="text-xs font-medium text-slate-900">{item.current_stock}</span>
                             <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${getStockLevelColor(item)}`}>
-                              {item.current_stock <= item.reorder_level ? "Low" : "OK"}
+                              {tr(item.current_stock <= item.reorder_level ? "Low" : "OK")}
                             </span>
                           </div>
                         </td>
@@ -579,16 +581,14 @@ export default function InventoryPage() {
                             onClick={() => openModal("inventory", item)}
                             className="rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 hover:bg-blue-100 transition"
                           >
-                            Edit
-                          </button>
+                            {tr("Edit")}</button>
                         </td>
                       </tr>
                     ))}
                     {inventory.length === 0 && (
                       <tr>
                         <td colSpan={17} className="px-4 py-12 text-center text-xs text-slate-400">
-                          No inventory items found. Click "Add Inventory Item" to get started.
-                        </td>
+                          {tr("No inventory items found. Click \"Add Inventory Item\" to get started.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -600,30 +600,29 @@ export default function InventoryPage() {
           {activeTab === "transactions" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-b border-slate-200 gap-3">
-                <h3 className="text-sm font-semibold text-slate-700">Stock Transactions</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{tr("Stock Transactions")}</h3>
                 <button
                   onClick={() => openModal("transaction")}
                   className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 transition w-full sm:w-auto"
                 >
-                  Record Transaction
-                </button>
+                  {tr("Record Transaction")}</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Date</th>
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Item</th>
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Qty</th>
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Remaining</th>
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Unit Cost</th>
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Total</th>
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Reference</th>
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Doc #</th>
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">By</th>
-                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Notes</th>
-                      <th className="px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Date")}</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Item")}</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Type")}</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Qty")}</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Remaining")}</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Unit Cost")}</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Total")}</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Reference")}</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Doc #")}</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("By")}</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Notes")}</th>
+                      <th className="px-4 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -633,7 +632,7 @@ export default function InventoryPage() {
                         <td className="px-4 py-2 text-xs font-medium text-slate-900">{trans.item_name}</td>
                         <td className="px-4 py-2">
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getTransactionTypeColor(trans.transaction_type)}`}>
-                            {trans.transaction_type}
+                            {tr(trans.transaction_type)}
                           </span>
                         </td>
                         <td className="px-4 py-2 text-xs text-slate-600">{trans.quantity}</td>
@@ -650,14 +649,12 @@ export default function InventoryPage() {
                               onClick={() => openModal("transaction", trans)}
                               className="rounded bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 hover:bg-blue-100 transition"
                             >
-                              Edit
-                            </button>
+                              {tr("Edit")}</button>
                             <button
                               onClick={() => handleDeleteTransaction(trans.transaction_id)}
                               className="rounded bg-red-50 px-2 py-1 text-[10px] font-medium text-red-700 hover:bg-red-100 transition"
                             >
-                              Delete
-                            </button>
+                              {tr("Delete")}</button>
                           </div>
                         </td>
                       </tr>
@@ -665,8 +662,7 @@ export default function InventoryPage() {
                     {transactions.length === 0 && (
                       <tr>
                         <td colSpan={11} className="px-4 py-12 text-center text-xs text-slate-400">
-                          No transactions recorded.
-                        </td>
+                          {tr("No transactions recorded.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -681,20 +677,20 @@ export default function InventoryPage() {
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Name</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Contact</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Phone</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Email</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Tax ID</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Website</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Payment</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Credit</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Delivery</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">License</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Bank</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Products</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Rating</th>
-                      <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Name")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Contact")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Phone")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Email")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Tax ID")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Website")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Payment")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Credit")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Delivery")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("License")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Bank")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Products")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Rating")}</th>
+                      <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -719,14 +715,12 @@ export default function InventoryPage() {
                               onClick={() => openModal("supplier", supplier)}
                               className="rounded bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 hover:bg-blue-100 transition"
                             >
-                              Edit
-                            </button>
+                              {tr("Edit")}</button>
                             <button
                               onClick={() => handleDeleteSupplier(supplier.supplier_id)}
                               className="rounded bg-red-50 px-2 py-1 text-[10px] font-medium text-red-700 hover:bg-red-100 transition"
                             >
-                              Delete
-                            </button>
+                              {tr("Delete")}</button>
                           </div>
                         </td>
                       </tr>
@@ -734,8 +728,7 @@ export default function InventoryPage() {
                     {suppliers.length === 0 && (
                       <tr>
                         <td colSpan={14} className="px-3 py-12 text-center text-xs text-slate-400">
-                          No suppliers found. Click "Add New Supplier" to get started.
-                        </td>
+                          {tr("No suppliers found. Click \"Add New Supplier\" to get started.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -751,9 +744,9 @@ export default function InventoryPage() {
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {modalType === "inventory" && (editingItem ? "Edit Inventory Item" : "Add Inventory Item")}
-                {modalType === "transaction" && "Record Stock Transaction"}
-                {modalType === "supplier" && "Add New Supplier"}
+                {modalType === "inventory" && tr(editingItem ? "Edit Inventory Item" : "Add Inventory Item")}
+                {modalType === "transaction" && tr("Record Stock Transaction")}
+                {modalType === "supplier" && tr("Add New Supplier")}
               </h2>
               <button
                 onClick={closeModal}
@@ -774,30 +767,29 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Basic Information
-                    </h3>
+                      {tr("Basic Information")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Item Name *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Item Name *")}</label>
                         <input
                           type="text"
                           name="item_name"
                           value={formData.item_name}
                           onChange={handleInputChange}
                           required
-                          placeholder="e.g., A4 Paper Ream"
+                          placeholder={tr("e.g., A4 Paper Ream")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Item Code *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Item Code *")}</label>
                         <input
                           type="text"
                           name="item_code"
                           value={formData.item_code}
                           onChange={handleInputChange}
                           required
-                          placeholder="e.g., INV-2024-001"
+                          placeholder={tr("e.g., INV-2024-001")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
@@ -810,11 +802,10 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                       </svg>
-                      Classification
-                    </h3>
+                      {tr("Classification")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Category *")}</label>
                         <select
                           name="category"
                           value={formData.category}
@@ -822,14 +813,14 @@ export default function InventoryPage() {
                           required
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         >
-                          <option value="">Select category</option>
+                          <option value="">{tr("Select category")}</option>
                           {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat.replace(/_/g, " ")}</option>
+                            <option key={cat} value={cat}>{tr(cat.replace(/_/g, " "))}</option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Unit of Measure *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Unit of Measure *")}</label>
                         <select
                           name="unit_of_measure"
                           value={formData.unit_of_measure}
@@ -837,9 +828,9 @@ export default function InventoryPage() {
                           required
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         >
-                          <option value="">Select unit</option>
+                          <option value="">{tr("Select unit")}</option>
                           {units.map(unit => (
-                            <option key={unit} value={unit}>{unit}</option>
+                            <option key={unit} value={unit}>{tr(unit)}</option>
                           ))}
                         </select>
                       </div>
@@ -852,11 +843,10 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
-                      Stock Management
-                    </h3>
+                      {tr("Stock Management")}</h3>
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Current Stock *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Current Stock *")}</label>
                         <input
                           type="number"
                           name="current_stock"
@@ -869,7 +859,7 @@ export default function InventoryPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Reorder Level *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Reorder Level *")}</label>
                         <input
                           type="number"
                           name="reorder_level"
@@ -882,7 +872,7 @@ export default function InventoryPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Max Stock</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Max Stock")}</label>
                         <input
                           type="number"
                           name="max_stock"
@@ -902,11 +892,10 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Financial Information
-                    </h3>
+                      {tr("Financial Information")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Unit Cost (ETB)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Unit Cost (ETB)")}</label>
                         <input
                           type="number"
                           name="unit_cost"
@@ -918,7 +907,7 @@ export default function InventoryPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Minimum Order Qty</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Minimum Order Qty")}</label>
                         <input
                           type="number"
                           name="minimum_order_quantity"
@@ -938,44 +927,43 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                       </svg>
-                      Product Details
-                    </h3>
+                      {tr("Product Details")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Brand</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Brand")}</label>
                         <input
                           type="text"
                           name="brand"
                           value={formData.brand}
                           onChange={handleInputChange}
-                          placeholder="e.g., HP, Canon"
+                          placeholder={tr("e.g., HP, Canon")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Model</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Model")}</label>
                         <input
                           type="text"
                           name="model"
                           value={formData.model}
                           onChange={handleInputChange}
-                          placeholder="e.g., LaserJet Pro"
+                          placeholder={tr("e.g., LaserJet Pro")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Supplier</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Supplier")}</label>
                         <input
                           type="text"
                           name="supplier"
                           value={formData.supplier}
                           onChange={handleInputChange}
-                          placeholder="e.g., ABC Supplies Ltd"
+                          placeholder={tr("e.g., ABC Supplies Ltd")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Reorder Lead Time (days)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Reorder Lead Time (days)")}</label>
                         <input
                           type="number"
                           name="reorder_lead_time"
@@ -996,39 +984,38 @@ export default function InventoryPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      Storage & Location
-                    </h3>
+                      {tr("Storage & Location")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Location")}</label>
                         <input
                           type="text"
                           name="location"
                           value={formData.location}
                           onChange={handleInputChange}
-                          placeholder="e.g., Warehouse A, Shelf 3"
+                          placeholder={tr("e.g., Warehouse A, Shelf 3")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Storage Requirements</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Storage Requirements")}</label>
                         <input
                           type="text"
                           name="storage_requirements"
                           value={formData.storage_requirements}
                           onChange={handleInputChange}
-                          placeholder="e.g., Cool, dry place"
+                          placeholder={tr("e.g., Cool, dry place")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Shelf Life</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Shelf Life")}</label>
                         <input
                           type="text"
                           name="shelf_life"
                           value={formData.shelf_life}
                           onChange={handleInputChange}
-                          placeholder="e.g., 12 months, 2 years"
+                          placeholder={tr("e.g., 12 months, 2 years")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
@@ -1041,28 +1028,27 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      Description & Notes
-                    </h3>
+                      {tr("Description & Notes")}</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Description")}</label>
                         <textarea
                           name="description"
                           value={formData.description}
                           onChange={handleInputChange}
                           rows={3}
-                          placeholder="Provide a detailed description of the item..."
+                          placeholder={tr("Provide a detailed description of the item...")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Additional Notes</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Additional Notes")}</label>
                         <textarea
                           name="item_notes"
                           value={formData.item_notes}
                           onChange={handleInputChange}
                           rows={2}
-                          placeholder="Any additional information or special instructions..."
+                          placeholder={tr("Any additional information or special instructions...")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
@@ -1079,10 +1065,9 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                       </svg>
-                      Transaction Details
-                    </h3>
+                      {tr("Transaction Details")}</h3>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Inventory Item *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Inventory Item *")}</label>
                       <select
                         name="supplier_id"
                         value={formData.supplier_id}
@@ -1090,7 +1075,7 @@ export default function InventoryPage() {
                         required
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                       >
-                        <option value="">Select item</option>
+                        <option value="">{tr("Select item")}</option>
                         {inventory.map(item => (
                           <option key={item.inventory_id} value={item.inventory_id}>{item.item_name} ({item.item_code}) - {item.current_stock} {item.unit_of_measure}</option>
                         ))}
@@ -1104,11 +1089,10 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Type & Date
-                    </h3>
+                      {tr("Type & Date")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Transaction Type *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Transaction Type *")}</label>
                         <select
                           name="transaction_type"
                           value={formData.transaction_type}
@@ -1117,12 +1101,12 @@ export default function InventoryPage() {
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         >
                           {transactionTypes.map(type => (
-                            <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
+                            <option key={type} value={type}>{tr(type.replace(/_/g, " "))}</option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Transaction Date</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Transaction Date")}</label>
                         <input
                           type="date"
                           name="transaction_date"
@@ -1140,10 +1124,9 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                       </svg>
-                      Quantity
-                    </h3>
+                      {tr("Quantity")}</h3>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Quantity *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Quantity *")}</label>
                       <input
                         type="number"
                         name="quantity"
@@ -1151,7 +1134,7 @@ export default function InventoryPage() {
                         onChange={handleInputChange}
                         required
                         min="1"
-                        placeholder="e.g., 10"
+                        placeholder={tr("e.g., 10")}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                       />
                     </div>
@@ -1163,11 +1146,10 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Financial Information
-                    </h3>
+                      {tr("Financial Information")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Unit Cost (ETB)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Unit Cost (ETB)")}</label>
                         <input
                           type="number"
                           name="unit_cost"
@@ -1179,7 +1161,7 @@ export default function InventoryPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Total Cost (ETB)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Total Cost (ETB)")}</label>
                         <input
                           type="number"
                           name="total_cost"
@@ -1199,28 +1181,27 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      Reference & Document
-                    </h3>
+                      {tr("Reference & Document")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Reference Number</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Reference Number")}</label>
                         <input
                           type="text"
                           name="reference"
                           value={formData.reference}
                           onChange={handleInputChange}
-                          placeholder="e.g., PO-2024-001"
+                          placeholder={tr("e.g., PO-2024-001")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Document Number</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Document Number")}</label>
                         <input
                           type="text"
                           name="document_number"
                           value={formData.document_number}
                           onChange={handleInputChange}
-                          placeholder="e.g., INV-001234"
+                          placeholder={tr("e.g., INV-001234")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
@@ -1233,28 +1214,27 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Additional Information
-                    </h3>
+                      {tr("Additional Information")}</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Performed By</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Performed By")}</label>
                         <input
                           type="text"
                           name="performed_by"
                           value={formData.performed_by}
                           onChange={handleInputChange}
-                          placeholder="e.g., John Doe"
+                          placeholder={tr("e.g., John Doe")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Notes")}</label>
                         <textarea
                           name="notes"
                           value={formData.notes}
                           onChange={handleInputChange}
                           rows={2}
-                          placeholder="Any additional notes or remarks..."
+                          placeholder={tr("Any additional notes or remarks...")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
@@ -1271,29 +1251,28 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
-                      Basic Information
-                    </h3>
+                      {tr("Basic Information")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Supplier Name *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Supplier Name *")}</label>
                         <input
                           type="text"
                           name="supplier_name"
                           value={formData.supplier_name}
                           onChange={handleInputChange}
                           required
-                          placeholder="e.g., ABC Supplies Ltd"
+                          placeholder={tr("e.g., ABC Supplies Ltd")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Contact Person *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Contact Person *")}</label>
                         <input
                           type="text"
                           name="contact_person"
                           onChange={handleInputChange}
                           required
-                          placeholder="e.g., John Doe"
+                          placeholder={tr("e.g., John Doe")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
@@ -1306,40 +1285,39 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
-                      Contact Information
-                    </h3>
+                      {tr("Contact Information")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Phone Number *")}</label>
                         <input
                           type="tel"
                           name="phone_number"
                           value={formData.phone_number}
                           onChange={handleInputChange}
                           required
-                          placeholder="e.g., +251 911 123 456"
+                          placeholder={tr("e.g., +251 911 123 456")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Email")}</label>
                         <input
                           type="email"
                           name="email"
                           value={formData.email}
                           onChange={handleInputChange}
-                          placeholder="e.g., contact@abc-supplies.com"
+                          placeholder={tr("e.g., contact@abc-supplies.com")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Website</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Website")}</label>
                         <input
                           type="url"
                           name="website"
                           value={formData.website}
                           onChange={handleInputChange}
-                          placeholder="e.g., https://www.abc-supplies.com"
+                          placeholder={tr("e.g., https://www.abc-supplies.com")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
@@ -1353,16 +1331,15 @@ export default function InventoryPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      Address
-                    </h3>
+                      {tr("Address")}</h3>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Physical Address</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Physical Address")}</label>
                       <textarea
                         name="address"
                         value={formData.address}
                         onChange={handleInputChange}
                         rows={3}
-                        placeholder="e.g., 123 Business Street, Addis Ababa, Ethiopia"
+                        placeholder={tr("e.g., 123 Business Street, Addis Ababa, Ethiopia")}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                       />
                     </div>
@@ -1374,44 +1351,43 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      Business Details
-                    </h3>
+                      {tr("Business Details")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Tax ID</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Tax ID")}</label>
                         <input
                           type="text"
                           name="tax_id"
                           value={formData.tax_id}
                           onChange={handleInputChange}
-                          placeholder="e.g., 123456789"
+                          placeholder={tr("e.g., 123456789")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Business License</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Business License")}</label>
                         <input
                           type="text"
                           name="business_license"
                           value={formData.business_license}
                           onChange={handleInputChange}
-                          placeholder="e.g., BL-2024-001"
+                          placeholder={tr("e.g., BL-2024-001")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Bank Account</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Bank Account")}</label>
                         <input
                           type="text"
                           name="bank_account"
                           value={formData.bank_account}
                           onChange={handleInputChange}
-                          placeholder="e.g., 1000 1234 5678"
+                          placeholder={tr("e.g., 1000 1234 5678")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Credit Limit (ETB)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Credit Limit (ETB)")}</label>
                         <input
                           type="number"
                           name="credit_limit"
@@ -1431,28 +1407,27 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                       </svg>
-                      Terms & Services
-                    </h3>
+                      {tr("Terms & Services")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Payment Terms</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Payment Terms")}</label>
                         <input
                           type="text"
                           name="payment_terms"
                           value={formData.payment_terms}
                           onChange={handleInputChange}
-                          placeholder="e.g., Net 30, COD"
+                          placeholder={tr("e.g., Net 30, COD")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Delivery Time</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Delivery Time")}</label>
                         <input
                           type="text"
                           name="delivery_time"
                           value={formData.delivery_time}
                           onChange={handleInputChange}
-                          placeholder="e.g., 3-5 business days"
+                          placeholder={tr("e.g., 3-5 business days")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
@@ -1465,28 +1440,27 @@ export default function InventoryPage() {
                       <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
-                      Products & Notes
-                    </h3>
+                      {tr("Products & Notes")}</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Products/Services (comma-separated)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Products/Services (comma-separated)")}</label>
                         <textarea
                           name="products_services"
                           value={formData.products_services}
                           onChange={handleInputChange}
                           rows={3}
-                          placeholder="e.g., Office supplies, Cleaning materials, Furniture"
+                          placeholder={tr("e.g., Office supplies, Cleaning materials, Furniture")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Additional Notes</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Additional Notes")}</label>
                         <textarea
                           name="notes"
                           value={formData.notes}
                           onChange={handleInputChange}
                           rows={2}
-                          placeholder="Any additional information about the supplier..."
+                          placeholder={tr("Any additional information about the supplier...")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
@@ -1501,15 +1475,14 @@ export default function InventoryPage() {
                   onClick={closeModal}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
-                </button>
+                  {tr("Cancel")}</button>
                 <button
                   type="submit"
                   className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition"
                 >
-                  {modalType === "inventory" && (editingItem ? "Update" : "Add")}
-                  {modalType === "transaction" && "Record"}
-                  {modalType === "supplier" && "Add"}
+                  {modalType === "inventory" && tr(editingItem ? "Update" : "Add")}
+                  {modalType === "transaction" && tr("Record")}
+                  {modalType === "supplier" && tr("Add")}
                 </button>
               </div>
             </form>

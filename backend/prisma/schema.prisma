@@ -754,6 +754,24 @@ model ClassSchedule {
   @@map("class_schedules")
 }
 
+model SemesterEvent {
+  event_id     Int       @id @default(autoincrement()) @map("event_id")
+  event_type   String    @db.VarChar(50)
+  title        String    @db.VarChar(200)
+  description  String?   @db.Text
+  event_date   DateTime  @db.Date
+  start_time   String    @db.VarChar(5)
+  end_time     String    @db.VarChar(5)
+  class_name   String?   @db.VarChar(100)
+  subject_name String?   @db.VarChar(100)
+  location     String?   @db.VarChar(100)
+  is_active    Boolean   @default(true)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  @@map("semester_events")
+}
+
 model Transcript {
   transcript_id Int       @id @default(autoincrement()) @map("transcript_id")
   student_id    Int       @map("student_id")
@@ -1603,6 +1621,7 @@ model SchoolAnnouncement {
   approved_by        Int?      @map("approved_by")
   status             String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, PUBLISHED, ARCHIVED
   publish_date       DateTime?
+  expire_date        DateTime? @db.Date
   is_urgent          Boolean   @default(false)
   attachment_url     String?   @db.Text
   created_at         DateTime  @default(now())

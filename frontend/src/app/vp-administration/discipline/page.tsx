@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { vpAdminApi } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translateVpAdministrationOperation } from "@/translations/vp-administration-operations";
 
 type Incident = {
   incident_id: number;
@@ -39,6 +41,8 @@ type DisciplinaryAction = {
 };
 
 export default function DisciplinePage() {
+  const { language } = useLanguage();
+  const tr = (value: string) => translateVpAdministrationOperation(value, language);
   const [activeTab, setActiveTab] = useState<"incidents" | "actions">("incidents");
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [disciplinaryActions, setDisciplinaryActions] = useState<DisciplinaryAction[]>([]);
@@ -193,7 +197,7 @@ export default function DisciplinePage() {
   }
 
   async function handleDeleteIncident(id: number) {
-    if (!confirm("Are you sure you want to delete this incident?")) return;
+    if (!confirm(tr("Are you sure you want to delete this incident?"))) return;
     try {
       await vpAdminApi.delete(`/incidents/${id}`);
       setIncidents(incidents.filter(i => i.incident_id !== id));
@@ -203,7 +207,7 @@ export default function DisciplinePage() {
   }
 
   async function handleDeleteDisciplinaryAction(id: number) {
-    if (!confirm("Are you sure you want to delete this disciplinary action?")) return;
+    if (!confirm(tr("Are you sure you want to delete this disciplinary action?"))) return;
     try {
       await vpAdminApi.delete(`/disciplinary-actions/${id}`);
       setDisciplinaryActions(disciplinaryActions.filter(a => a.action_id !== id));
@@ -318,8 +322,8 @@ export default function DisciplinePage() {
     <div>
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Discipline & Incident Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Log incidents and manage disciplinary actions</p>
+          <h1 className="text-2xl font-bold text-slate-900">{tr("Discipline & Incident Management")}</h1>
+          <p className="mt-1 text-sm text-slate-500">{tr("Log incidents and manage disciplinary actions")}</p>
         </div>
       </div>
 
@@ -333,7 +337,7 @@ export default function DisciplinePage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Incidents ({incidents.length})
+            {tr("Incidents (")}{incidents.length})
           </button>
           <button
             onClick={() => setActiveTab("actions")}
@@ -343,43 +347,42 @@ export default function DisciplinePage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Disciplinary Actions ({disciplinaryActions.length})
+            {tr("Disciplinary Actions (")}{disciplinaryActions.length})
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading...</div>
+          <div className="text-slate-500">{tr("Loading...")}</div>
         </div>
       ) : (
         <>
           {activeTab === "incidents" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-b border-slate-200 gap-3">
-                <h3 className="text-sm font-semibold text-slate-700">Incident Log</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{tr("Incident Log")}</h3>
                 <button
                   onClick={() => openModal("incident")}
                   className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 transition w-full sm:w-auto"
                 >
-                  Log New Incident
-                </button>
+                  {tr("Log New Incident")}</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Date</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Time</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Person</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Role</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Location</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Priority</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Severity</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Status</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Contact</th>
-                      <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Date")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Time")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Type")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Person")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Role")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Location")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Priority")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Severity")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Status")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Contact")}</th>
+                      <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -387,19 +390,19 @@ export default function DisciplinePage() {
                       <tr key={incident.incident_id} className="hover:bg-slate-50">
                         <td className="px-3 py-2 text-xs text-slate-600">{incident.incident_date}</td>
                         <td className="px-3 py-2 text-xs text-slate-600">{incident.incident_time || "-"}</td>
-                        <td className="px-3 py-2 text-xs text-slate-600">{incident.incident_type.replace(/_/g, " ")}</td>
+                        <td className="px-3 py-2 text-xs text-slate-600">{tr(incident.incident_type.replace(/_/g, " "))}</td>
                         <td className="px-3 py-2 text-xs text-slate-600">{incident.involved_person_name || "-"}</td>
-                        <td className="px-3 py-2 text-xs text-slate-600">{incident.involved_person_type?.replace(/_/g, " ") || "-"}</td>
+                        <td className="px-3 py-2 text-xs text-slate-600">{incident.involved_person_type ? tr(incident.involved_person_type.replace(/_/g, " ")) : "-"}</td>
                         <td className="px-3 py-2 text-xs text-slate-600">{incident.location || "-"}</td>
                         <td className="px-3 py-2">
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getPriorityColor(incident.priority)}`}>
-                            {incident.priority}
+                            {tr(incident.priority)}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-xs text-slate-600">{incident.severity || "-"}</td>
+                        <td className="px-3 py-2 text-xs text-slate-600">{incident.severity ? tr(incident.severity) : "-"}</td>
                         <td className="px-3 py-2">
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getStatusColor(incident.status)}`}>
-                            {incident.status}
+                            {tr(incident.status)}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-xs text-slate-600">{incident.reporter_contact || "-"}</td>
@@ -409,14 +412,12 @@ export default function DisciplinePage() {
                               onClick={() => openModal("incident", incident)}
                               className="rounded bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 hover:bg-blue-100 transition"
                             >
-                              Edit
-                            </button>
+                              {tr("Edit")}</button>
                             <button
                               onClick={() => handleDeleteIncident(incident.incident_id)}
                               className="rounded bg-red-50 px-2 py-1 text-[10px] font-medium text-red-700 hover:bg-red-100 transition"
                             >
-                              Delete
-                            </button>
+                              {tr("Delete")}</button>
                           </div>
                         </td>
                       </tr>
@@ -424,8 +425,7 @@ export default function DisciplinePage() {
                     {incidents.length === 0 && (
                       <tr>
                         <td colSpan={11} className="px-3 py-12 text-center text-xs text-slate-400">
-                          No incidents logged. Click "Log New Incident" to get started.
-                        </td>
+                          {tr("No incidents logged. Click \"Log New Incident\" to get started.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -437,41 +437,40 @@ export default function DisciplinePage() {
           {activeTab === "actions" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-b border-slate-200 gap-3">
-                <h3 className="text-sm font-semibold text-slate-700">Disciplinary Actions</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{tr("Disciplinary Actions")}</h3>
                 <button
                   onClick={() => openModal("action")}
                   className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 transition w-full sm:w-auto"
                 >
-                  Assign Action
-                </button>
+                  {tr("Assign Action")}</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Student</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Action</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Reason</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Start</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">End</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Days</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Status</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Notes</th>
-                      <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Student")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Action")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Reason")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Start")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("End")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Days")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Status")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Notes")}</th>
+                      <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {disciplinaryActions.map((action) => (
                       <tr key={action.action_id} className="hover:bg-slate-50">
                         <td className="px-3 py-2 text-xs font-medium text-slate-900">{action.student_name}</td>
-                        <td className="px-3 py-2 text-xs text-slate-600">{action.action_type.replace(/_/g, " ")}</td>
+                        <td className="px-3 py-2 text-xs text-slate-600">{tr(action.action_type.replace(/_/g, " "))}</td>
                         <td className="px-3 py-2 text-xs text-slate-600 max-w-[150px] truncate">{action.reason}</td>
                         <td className="px-3 py-2 text-xs text-slate-600">{action.start_date}</td>
                         <td className="px-3 py-2 text-xs text-slate-600">{action.end_date || "-"}</td>
                         <td className="px-3 py-2 text-xs text-slate-600">{action.duration_days || "-"}</td>
                         <td className="px-3 py-2">
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getStatusColor(action.status)}`}>
-                            {action.status}
+                            {tr(action.status)}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-xs text-slate-600 max-w-[100px] truncate">{action.notes || "-"}</td>
@@ -481,14 +480,12 @@ export default function DisciplinePage() {
                               onClick={() => openModal("action", undefined, action)}
                               className="rounded bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 hover:bg-blue-100 transition"
                             >
-                              Edit
-                            </button>
+                              {tr("Edit")}</button>
                             <button
                               onClick={() => handleDeleteDisciplinaryAction(action.action_id)}
                               className="rounded bg-red-50 px-2 py-1 text-[10px] font-medium text-red-700 hover:bg-red-100 transition"
                             >
-                              Delete
-                            </button>
+                              {tr("Delete")}</button>
                           </div>
                         </td>
                       </tr>
@@ -496,8 +493,7 @@ export default function DisciplinePage() {
                     {disciplinaryActions.length === 0 && (
                       <tr>
                         <td colSpan={9} className="px-3 py-12 text-center text-xs text-slate-400">
-                          No disciplinary actions assigned.
-                        </td>
+                          {tr("No disciplinary actions assigned.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -513,7 +509,7 @@ export default function DisciplinePage() {
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {modalType === "incident" ? "Log New Incident" : "Assign Disciplinary Action"}
+                {tr(modalType === "incident" ? "Log New Incident" : "Assign Disciplinary Action")}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -534,11 +530,10 @@ export default function DisciplinePage() {
                       <svg className="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      Incident Details
-                    </h3>
+                      {tr("Incident Details")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Incident Type *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Incident Type *")}</label>
                         <select
                           name="incident_type"
                           value={formData.incident_type}
@@ -546,14 +541,14 @@ export default function DisciplinePage() {
                           required
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         >
-                          <option value="">Select type</option>
+                          <option value="">{tr("Select type")}</option>
                           {incidentTypes.map(type => (
-                            <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
+                            <option key={type} value={type}>{tr(type.replace(/_/g, " "))}</option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Severity *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Severity *")}</label>
                         <select
                           name="severity"
                           value={formData.severity}
@@ -562,7 +557,7 @@ export default function DisciplinePage() {
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         >
                           {severities.map(sev => (
-                            <option key={sev} value={sev}>{sev}</option>
+                            <option key={sev} value={sev}>{tr(sev)}</option>
                           ))}
                         </select>
                       </div>
@@ -575,11 +570,10 @@ export default function DisciplinePage() {
                       <svg className="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Date & Time
-                    </h3>
+                      {tr("Date & Time")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Date *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Date *")}</label>
                         <input
                           type="date"
                           name="incident_date"
@@ -590,7 +584,7 @@ export default function DisciplinePage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Time</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Time")}</label>
                         <input
                           type="time"
                           name="incident_time"
@@ -608,22 +602,21 @@ export default function DisciplinePage() {
                       <svg className="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      Involved Person
-                    </h3>
+                      {tr("Involved Person")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Name")}</label>
                         <input
                           type="text"
                           name="involved_person_name"
                           value={formData.involved_person_name}
                           onChange={handleInputChange}
-                          placeholder="e.g., John Doe"
+                          placeholder={tr("e.g., John Doe")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Type")}</label>
                         <select
                           name="involved_person_type"
                           value={formData.involved_person_type}
@@ -631,7 +624,7 @@ export default function DisciplinePage() {
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         >
                           {personTypes.map(type => (
-                            <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
+                            <option key={type} value={type}>{tr(type.replace(/_/g, " "))}</option>
                           ))}
                         </select>
                       </div>
@@ -645,22 +638,21 @@ export default function DisciplinePage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      Location & Priority
-                    </h3>
+                      {tr("Location & Priority")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Location")}</label>
                         <input
                           type="text"
                           name="location"
                           value={formData.location}
                           onChange={handleInputChange}
-                          placeholder="e.g., Classroom 101, Playground"
+                          placeholder={tr("e.g., Classroom 101, Playground")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Priority *</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Priority *")}</label>
                         <select
                           name="priority"
                           value={formData.priority}
@@ -669,7 +661,7 @@ export default function DisciplinePage() {
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         >
                           {priorities.map(pri => (
-                            <option key={pri} value={pri}>{pri}</option>
+                            <option key={pri} value={pri}>{tr(pri)}</option>
                           ))}
                         </select>
                       </div>
@@ -682,17 +674,16 @@ export default function DisciplinePage() {
                       <svg className="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      Description
-                    </h3>
+                      {tr("Description")}</h3>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Incident Description *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Incident Description *")}</label>
                       <textarea
                         name="description"
                         value={formData.description}
                         onChange={handleInputChange}
                         required
                         rows={4}
-                        placeholder="Provide a detailed description of what happened..."
+                        placeholder={tr("Provide a detailed description of what happened...")}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                       />
                     </div>
@@ -704,61 +695,60 @@ export default function DisciplinePage() {
                       <svg className="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Additional Information
-                    </h3>
+                      {tr("Additional Information")}</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Witnesses</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Witnesses")}</label>
                         <input
                           type="text"
                           name="witnesses"
                           value={formData.witnesses}
                           onChange={handleInputChange}
-                          placeholder="e.g., Jane Smith, Michael Brown"
+                          placeholder={tr("e.g., Jane Smith, Michael Brown")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Immediate Action Taken</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Immediate Action Taken")}</label>
                         <textarea
                           name="immediate_action"
                           value={formData.immediate_action}
                           onChange={handleInputChange}
                           rows={2}
-                          placeholder="Describe any immediate actions taken..."
+                          placeholder={tr("Describe any immediate actions taken...")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Follow-up Required</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Follow-up Required")}</label>
                         <textarea
                           name="follow_up_required"
                           value={formData.follow_up_required}
                           onChange={handleInputChange}
                           rows={2}
-                          placeholder="Any follow-up actions required..."
+                          placeholder={tr("Any follow-up actions required...")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Evidence Notes</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Evidence Notes")}</label>
                         <textarea
                           name="evidence_notes"
                           value={formData.evidence_notes}
                           onChange={handleInputChange}
                           rows={2}
-                          placeholder="Any evidence collected or notes..."
+                          placeholder={tr("Any evidence collected or notes...")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Reporter Contact</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Reporter Contact")}</label>
                         <input
                           type="text"
                           name="reporter_contact"
                           value={formData.reporter_contact}
                           onChange={handleInputChange}
-                          placeholder="e.g., +251 911 123 456"
+                          placeholder={tr("e.g., +251 911 123 456")}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                         />
                       </div>
@@ -770,7 +760,7 @@ export default function DisciplinePage() {
               {modalType === "action" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Student ID *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Student ID *")}</label>
                     <input
                       type="number"
                       name="student_id"
@@ -781,7 +771,7 @@ export default function DisciplinePage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Action Type *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Action Type *")}</label>
                     <select
                       name="action_type"
                       value={formData.action_type}
@@ -789,14 +779,14 @@ export default function DisciplinePage() {
                       required
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                     >
-                      <option value="">Select action type</option>
+                      <option value="">{tr("Select action type")}</option>
                       {actionTypes.map(type => (
-                        <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
+                        <option key={type} value={type}>{tr(type.replace(/_/g, " "))}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Reason *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Reason *")}</label>
                     <textarea
                       name="reason"
                       value={formData.reason}
@@ -808,7 +798,7 @@ export default function DisciplinePage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Start Date *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Start Date *")}</label>
                       <input
                         type="date"
                         name="start_date"
@@ -819,7 +809,7 @@ export default function DisciplinePage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("End Date")}</label>
                       <input
                         type="date"
                         name="end_date"
@@ -830,7 +820,7 @@ export default function DisciplinePage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Duration (days)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Duration (days)")}</label>
                     <input
                       type="number"
                       name="duration_days"
@@ -849,14 +839,12 @@ export default function DisciplinePage() {
                   onClick={() => setShowModal(false)}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
-                </button>
+                  {tr("Cancel")}</button>
                 <button
                   type="submit"
                   className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition"
                 >
-                  Submit
-                </button>
+                  {tr("Submit")}</button>
               </div>
             </form>
           </div>

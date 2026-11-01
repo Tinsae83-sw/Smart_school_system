@@ -85,7 +85,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-indigo-200 dark:border-indigo-800 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-navy-200 dark:border-navy-800 border-teal-600 dark:border-teal-400 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Top Bar */}
-      <header className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+      <header data-app-navbar className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-[1440px] mx-auto flex items-center justify-between px-4 py-3 md:px-6">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden rounded-xl p-2 hover:bg-slate-100 dark:hover:bg-slate-700">
@@ -108,7 +108,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <button onClick={handleLogout} className="rounded-xl bg-indigo-600 px-4 py-2 text-white text-sm font-semibold hover:bg-indigo-700 transition">Logout</button>
+            <button onClick={handleLogout} className="rounded-xl bg-navy-600 px-4 py-2 text-white text-sm font-semibold hover:bg-navy-700 transition">Logout</button>
           </div>
         </div>
       </header>
@@ -118,7 +118,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
         {/* Sidebar */}
-        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform transition-transform lg:translate-x-0 lg:static lg:inset-0 overflow-y-auto ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <aside data-app-sidebar className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform transition-transform lg:translate-x-0 lg:static lg:inset-0 overflow-y-auto ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="p-4 border-b border-slate-100 dark:border-slate-700">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-2xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -137,7 +137,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
                 className={`w-full flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium transition ${
-                  pathname === item.href ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  pathname === item.href ? "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 }`}
               >
                 <svg className="w-5 h-5 flex-shrink-0 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} /></svg>

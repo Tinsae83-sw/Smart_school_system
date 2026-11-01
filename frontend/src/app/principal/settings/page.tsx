@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { principalTranslations } from "@/translations/principal";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
 
@@ -41,6 +43,8 @@ type AcademicPolicy = {
 };
 
 export default function SchoolSettingsPage() {
+  const { language } = useLanguage();
+  const t = principalTranslations[language];
   const [settings, setSettings] = useState<SchoolSettings | null>(null);
   const [calendar, setCalendar] = useState<AcademicCalendar | null>(null);
   const [policies, setPolicies] = useState<AcademicPolicy[]>([]);
@@ -54,9 +58,14 @@ export default function SchoolSettingsPage() {
   const [formData, setFormData] = useState<Partial<SchoolSettings>>({});
   const [calendarFormData, setCalendarFormData] = useState<Partial<AcademicCalendar>>({});
   const [policyFormData, setPolicyFormData] = useState<Partial<AcademicPolicy>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fetchSettingsRef = useRef<{ isFetching: boolean }>({ isFetching: false });
 
-  async function fetchSettings() {
+  const fetchSettings = useCallback(async () => {
+    if (fetchSettingsRef.current.isFetching) return;
+    fetchSettingsRef.current.isFetching = true;
     setLoading(true);
+
     try {
       const [settingsRes, calendarRes, policiesRes] = await Promise.all([
         fetch(`${API_BASE}/settings`, {
@@ -86,15 +95,16 @@ export default function SchoolSettingsPage() {
       }
     } catch (error) {
       console.error(error);
-      setStatusMessage({ type: "error", message: "Failed to load school settings." });
+      setStatusMessage({ type: "error", message: language === "am" ? "የትምህርት ቤት ቅንብሮችን መጫን አልተቻለም።" : "Failed to load school settings." });
     } finally {
       setLoading(false);
+      fetchSettingsRef.current.isFetching = false;
     }
-  }
+  }, [language]);
 
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [fetchSettings]);
 
   function handleEdit() {
     if (settings) {
@@ -121,25 +131,33 @@ export default function SchoolSettingsPage() {
   }
 
   function handleDeletePolicy(policyId: number) {
-    if (confirm("Are you sure you want to delete this policy?")) {
+    if (confirm(language === "am" ? "ይህን ፖሊሲ መሰረዝ ይፈልጋሉ?" : "Are you sure you want to delete this policy?")) {
       fetch(`${API_BASE}/settings/policies/${policyId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
         .then((res) => {
           if (res.ok) {
-            setStatusMessage({ type: "success", message: "Policy deleted successfully." });
+            setStatusMessage({ type: "success", message: language === "am" ? "ፖሊሲው ተሰርዟል።" : "Policy deleted successfully." });
             fetchSettings();
           } else {
-            setStatusMessage({ type: "error", message: "Failed to delete policy." });
+            setStatusMessage({ type: "error", message: language === "am" ? "ፖሊሲውን መሰረዝ አልተቻለም።" : "Failed to delete policy." });
           }
         })
-        .catch(() => setStatusMessage({ type: "error", message: "Failed to delete policy." }));
+        .catch(() => setStatusMessage({ type: "error", message: language === "am" ? "ፖሊሲውን መሰረዝ አልተቻለም።" : "Failed to delete policy." }));
     }
   }
 
   function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    // Optimistic update
+    if (settings) {
+      setSettings({ ...settings, ...formData } as SchoolSettings);
+    }
 
     fetch(`${API_BASE}/settings`, {
       method: "PUT",
@@ -149,20 +167,36 @@ export default function SchoolSettingsPage() {
       },
       body: JSON.stringify(formData),
     })
-      .then((res) => {
+      .then(async (res) => {
         if (res.ok) {
-          setStatusMessage({ type: "success", message: "School settings updated successfully." });
+          setStatusMessage({ type: "success", message: language === "am" ? "የትምህርት ቤቱ ቅንብሮች ተዘምነዋል።" : "School settings updated successfully." });
           setShowModal(false);
-          fetchSettings();
+          await fetchSettings();
         } else {
-          setStatusMessage({ type: "error", message: "Failed to update school settings." });
+          const errorData = await res.json();
+          setStatusMessage({ type: "error", message: errorData.error || (language === "am" ? "የትምህርት ቤቱን ቅንብሮች ማዘመን አልተቻለም።" : "Failed to update school settings.") });
+          await fetchSettings(); // Revert on error
         }
       })
-      .catch(() => setStatusMessage({ type: "error", message: "Failed to update school settings." }));
+      .catch(async (error) => {
+        setStatusMessage({ type: "error", message: language === "am" ? "የትምህርት ቤቱን ቅንብሮች ማዘመን አልተቻለም።" : "Failed to update school settings." });
+        await fetchSettings(); // Revert on error
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   }
 
   function handleSaveCalendar(e: React.FormEvent) {
     e.preventDefault();
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    // Optimistic update
+    if (calendar) {
+      setCalendar({ ...calendar, ...calendarFormData } as AcademicCalendar);
+    }
 
     fetch(`${API_BASE}/academic-calendar`, {
       method: "PUT",
@@ -172,26 +206,44 @@ export default function SchoolSettingsPage() {
       },
       body: JSON.stringify(calendarFormData),
     })
-      .then((res) => {
+      .then(async (res) => {
         if (res.ok) {
-          setStatusMessage({ type: "success", message: "Academic calendar updated successfully." });
+          setStatusMessage({ type: "success", message: language === "am" ? "የትምህርት ዘመን ቀን መቁጠሪያው ተዘምኗል።" : "Academic calendar updated successfully." });
           setShowCalendarModal(false);
-          fetchSettings();
+          await fetchSettings();
         } else {
-          setStatusMessage({ type: "error", message: "Failed to update academic calendar." });
+          const errorData = await res.json();
+          setStatusMessage({ type: "error", message: errorData.error || (language === "am" ? "የትምህርት ዘመን ቀን መቁጠሪያውን ማዘመን አልተቻለም።" : "Failed to update academic calendar.") });
+          await fetchSettings(); // Revert on error
         }
       })
-      .catch(() => setStatusMessage({ type: "error", message: "Failed to update academic calendar." }));
+      .catch(async (error) => {
+        setStatusMessage({ type: "error", message: language === "am" ? "የትምህርት ዘመን ቀን መቁጠሪያውን ማዘመን አልተቻለም።" : "Failed to update academic calendar." });
+        await fetchSettings(); // Revert on error
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   }
 
   function handleSavePolicy(e: React.FormEvent) {
     e.preventDefault();
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     const url = policyFormData.policy_id
       ? `${API_BASE}/settings/policies/${policyFormData.policy_id}`
       : `${API_BASE}/settings/policies`;
 
     const method = policyFormData.policy_id ? "PUT" : "POST";
+
+    // Optimistic update
+    if (policyFormData.policy_id) {
+      setPolicies(policies.map(p => p.policy_id === policyFormData.policy_id ? { ...p, ...policyFormData } as AcademicPolicy : p));
+    } else {
+      setPolicies([...policies, { ...policyFormData, policy_id: Date.now() } as AcademicPolicy]);
+    }
 
     fetch(url, {
       method,
@@ -201,28 +253,74 @@ export default function SchoolSettingsPage() {
       },
       body: JSON.stringify(policyFormData),
     })
-      .then((res) => {
+      .then(async (res) => {
         if (res.ok) {
-          setStatusMessage({ type: "success", message: "Policy saved successfully." });
+          setStatusMessage({ type: "success", message: language === "am" ? "ፖሊሲው ተቀምጧል።" : "Policy saved successfully." });
           setShowPolicyModal(false);
-          fetchSettings();
+          await fetchSettings();
         } else {
-          setStatusMessage({ type: "error", message: "Failed to save policy." });
+          const errorData = await res.json();
+          setStatusMessage({ type: "error", message: errorData.error || (language === "am" ? "ፖሊሲውን ማስቀመጥ አልተቻለም።" : "Failed to save policy.") });
+          await fetchSettings(); // Revert on error
         }
       })
-      .catch(() => setStatusMessage({ type: "error", message: "Failed to save policy." }));
+      .catch(async (error) => {
+        setStatusMessage({ type: "error", message: language === "am" ? "ፖሊሲውን ማስቀመጥ አልተቻለም።" : "Failed to save policy." });
+        await fetchSettings(); // Revert on error
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
+  }
+
+  function getStatusLabel(status: string) {
+    if (language === "en") return status;
+    return status === "ACTIVE" ? "ንቁ" : status.replaceAll("_", " ");
+  }
+
+  function getSchoolTypeLabel(schoolType: string) {
+    if (language === "en") return schoolType;
+    const labels: Record<string, string> = {
+      Secondary: t.secondarySchool,
+      "High School": t.highSchool,
+      Preparatory: t.preparatorySchool,
+    };
+    return labels[schoolType] || schoolType;
+  }
+
+  function getTermLabel(term: string) {
+    if (language === "en") return term;
+    const labels: Record<string, string> = {
+      "First Semester": t.firstSemester,
+      "Second Semester": t.secondSemester,
+    };
+    return labels[term] || term;
+  }
+
+  function getPolicyTypeLabel(policyType: string) {
+    if (language === "en") return policyType;
+    const labels: Record<string, string> = {
+      ATTENDANCE: t.attendance,
+      GRADING: t.grading,
+      DISCIPLINE: t.discipline,
+      UNIFORM: t.uniform,
+      ACADEMIC: t.academic,
+      BEHAVIOR: t.behavior,
+      OTHER: t.other,
+    };
+    return labels[policyType] || policyType;
   }
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">School Settings</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage school information and academic calendar</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.schoolSettings}</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.settingsSubtitle}</p>
       </div>
 
       {statusMessage && (
         <div className={`mb-6 rounded-xl px-4 py-3 text-sm ${
-          statusMessage.type === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-rose-50 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
+          statusMessage.type === "success" ? "bg-orange-50 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800" : "bg-rose-50 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
         }`}>
           {statusMessage.message}
         </div>
@@ -235,38 +333,38 @@ export default function SchoolSettingsPage() {
             onClick={() => setActiveTab("general")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "general"
-                ? "border-b-2 border-indigo-600 text-indigo-600"
+                ? "border-b-2 border-orange-600 text-orange-600"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            General Information
+            {t.generalInformation}
           </button>
           <button
             onClick={() => setActiveTab("academic")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "academic"
-                ? "border-b-2 border-indigo-600 text-indigo-600"
+                ? "border-b-2 border-orange-600 text-orange-600"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            Academic Calendar
+            {t.academicCalendar}
           </button>
           <button
             onClick={() => setActiveTab("policies")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "policies"
-                ? "border-b-2 border-indigo-600 text-indigo-600"
+                ? "border-b-2 border-orange-600 text-orange-600"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            School Policies
+            {t.schoolPolicies}
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="rounded-2xl bg-white dark:bg-slate-800 p-8 text-center text-sm text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-700">
-          Loading...
+          {t.loadingPage}
         </div>
       ) : (
         <>
@@ -274,72 +372,72 @@ export default function SchoolSettingsPage() {
             <div className="space-y-6">
               <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">School Information</h2>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t.schoolInformation}</h2>
                   <button
                     onClick={handleEdit}
-                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+                    className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 transition"
                   >
-                    Edit Settings
+                    {t.editSettings}
                   </button>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">School Name</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.schoolName}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.school_name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Principal Name</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.principalName}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.principal_name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.address}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.address}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.phone}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.phone}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.email}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.email}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">School Type</label>
-                    <p className="text-sm text-slate-900 dark:text-white">{settings.school_type}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.schoolTypeLabel}</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{getSchoolTypeLabel(settings.school_type)}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Grades Offered</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.gradesOfferedLabel}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.grades_offered}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Established Year</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.establishedYear}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.established_year}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Student Capacity</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.studentCapacity}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.student_capacity}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Current Academic Year</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.currentAcademicYear}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.academic_year}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Current Term</label>
-                    <p className="text-sm text-slate-900 dark:text-white">{settings.current_term}</p>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.currentTerm}</label>
+                    <p className="text-sm text-slate-900 dark:text-white">{getTermLabel(settings.current_term)}</p>
                   </div>
                 </div>
 
                 {settings.mission_statement && (
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mission Statement</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.missionStatement}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.mission_statement}</p>
                   </div>
                 )}
 
                 {settings.vision_statement && (
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Vision Statement</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.visionStatement}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{settings.vision_statement}</p>
                   </div>
                 )}
@@ -351,44 +449,44 @@ export default function SchoolSettingsPage() {
             <div className="space-y-6">
               <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Academic Calendar - {calendar.academic_year}</h2>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t.academicCalendar} - {calendar.academic_year}</h2>
                   <div className="flex items-center gap-3">
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      calendar.status === "ACTIVE" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" : "bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                      calendar.status === "ACTIVE" ? "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300" : "bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                     }`}>
-                      {calendar.status}
+                      {getStatusLabel(calendar.status)}
                     </span>
                     <button
                       onClick={handleEditCalendar}
-                      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+                      className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 transition"
                     >
-                      Edit Calendar
+                      {t.editCalendar}
                     </button>
                   </div>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Term Start Date</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.termStartDate}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{new Date(calendar.term_start_date).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Term End Date</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.termEndDate}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{new Date(calendar.term_end_date).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Exam Period Start</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.examPeriodStart}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{new Date(calendar.exam_period_start).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Exam Period End</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.examPeriodEnd}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{new Date(calendar.exam_period_end).toLocaleDateString()}</p>
                   </div>
                 </div>
 
                 {calendar.break_periods && (
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Break Periods</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.breakPeriods}</label>
                     <p className="text-sm text-slate-900 dark:text-white">{calendar.break_periods}</p>
                   </div>
                 )}
@@ -400,16 +498,16 @@ export default function SchoolSettingsPage() {
             <div className="space-y-6">
               <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">School Policies</h2>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t.schoolPolicies}</h2>
                   <button
                     onClick={handleAddPolicy}
-                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+                    className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 transition"
                   >
-                    Add Policy
+                    {t.addPolicy}
                   </button>
                 </div>
                 {policies.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No policies found. Click "Add Policy" to create one.</div>
+                  <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">{t.noPolicies}</div>
                 ) : (
                   <div className="space-y-4">
                     {policies.map((policy) => (
@@ -419,22 +517,22 @@ export default function SchoolSettingsPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleEditPolicy(policy)}
-                              className="text-sm text-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400"
+                              className="text-sm text-orange-600 hover:text-orange-700 dark:hover:text-orange-400"
                             >
-                              Edit
+                              {t.edit}
                             </button>
                             <button
                               onClick={() => handleDeletePolicy(policy.policy_id)}
                               className="text-sm text-rose-600 hover:text-rose-700 dark:hover:text-rose-400"
                             >
-                              Delete
+                              {t.delete}
                             </button>
                           </div>
                         </div>
                         <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">{policy.content}</p>
                         <div className="flex gap-4 text-xs text-slate-400 dark:text-slate-500">
-                          <span>Type: {policy.policy_type}</span>
-                          <span>Effective: {new Date(policy.effective_date).toLocaleDateString()}</span>
+                          <span>{t.type}: {getPolicyTypeLabel(policy.policy_type)}</span>
+                          <span>{t.effective}: {new Date(policy.effective_date).toLocaleDateString()}</span>
                         </div>
                       </div>
                     ))}
@@ -451,7 +549,7 @@ export default function SchoolSettingsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit School Settings</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t.editSchoolSettings}</h2>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
@@ -463,129 +561,129 @@ export default function SchoolSettingsPage() {
             <form onSubmit={handleSaveSettings} className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">School Name</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.schoolName}</label>
                   <input
                     type="text"
                     required
                     value={formData.school_name || ""}
                     onChange={(e) => setFormData({ ...formData, school_name: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Principal Name</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.principalName}</label>
                   <input
                     type="text"
                     required
                     value={formData.principal_name || ""}
                     onChange={(e) => setFormData({ ...formData, principal_name: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.address}</label>
                   <input
                     type="text"
                     required
                     value={formData.address || ""}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.phone}</label>
                   <input
                     type="text"
                     required
                     value={formData.phone || ""}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.email}</label>
                   <input
                     type="email"
                     required
                     value={formData.email || ""}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">School Type</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.schoolTypeLabel}</label>
                   <select
                     required
                     value={formData.school_type || ""}
                     onChange={(e) => setFormData({ ...formData, school_type: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   >
-                    <option value="Secondary">Secondary School</option>
-                    <option value="High School">High School</option>
-                    <option value="Preparatory">Preparatory School</option>
+                    <option value="Secondary">{t.secondarySchool}</option>
+                    <option value="High School">{t.highSchool}</option>
+                    <option value="Preparatory">{t.preparatorySchool}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Grades Offered</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.gradesOfferedLabel}</label>
                   <input
                     type="text"
                     required
                     value={formData.grades_offered || ""}
                     onChange={(e) => setFormData({ ...formData, grades_offered: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Student Capacity</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.studentCapacity}</label>
                   <input
                     type="number"
                     required
                     value={formData.student_capacity || 0}
                     onChange={(e) => setFormData({ ...formData, student_capacity: parseInt(e.target.value) })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Academic Year</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.academicYear}</label>
                   <input
                     type="text"
                     required
                     value={formData.academic_year || ""}
                     onChange={(e) => setFormData({ ...formData, academic_year: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Current Term</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.currentTerm}</label>
                   <select
                     required
                     value={formData.current_term || ""}
                     onChange={(e) => setFormData({ ...formData, current_term: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   >
-                    <option value="First Semester">First Semester</option>
-                    <option value="Second Semester">Second Semester</option>
+                    <option value="First Semester">{t.firstSemester}</option>
+                    <option value="Second Semester">{t.secondSemester}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mission Statement</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.missionStatement}</label>
                 <textarea
                   rows={3}
                   value={formData.mission_statement || ""}
                   onChange={(e) => setFormData({ ...formData, mission_statement: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Vision Statement</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.visionStatement}</label>
                 <textarea
                   rows={3}
                   value={formData.vision_statement || ""}
                   onChange={(e) => setFormData({ ...formData, vision_statement: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                 />
               </div>
 
@@ -595,13 +693,13 @@ export default function SchoolSettingsPage() {
                   onClick={() => setShowModal(false)}
                   className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                  className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
                 >
-                  Save Changes
+                  {t.saveChanges}
                 </button>
               </div>
             </form>
@@ -614,7 +712,7 @@ export default function SchoolSettingsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit Academic Calendar</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t.editCalendar}</h2>
               <button
                 onClick={() => setShowCalendarModal(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
@@ -625,68 +723,68 @@ export default function SchoolSettingsPage() {
 
             <form onSubmit={handleSaveCalendar} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Academic Year</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.academicYear}</label>
                 <input
                   type="text"
                   required
                   value={calendarFormData.academic_year || ""}
                   onChange={(e) => setCalendarFormData({ ...calendarFormData, academic_year: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                  placeholder="e.g., 2024-2025"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
+                  placeholder={t.academicYearExample}
                 />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Term Start Date</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.termStartDate}</label>
                   <input
                     type="date"
                     required
                     value={calendarFormData.term_start_date ? calendarFormData.term_start_date.split('T')[0] : ""}
                     onChange={(e) => setCalendarFormData({ ...calendarFormData, term_start_date: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Term End Date</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.termEndDate}</label>
                   <input
                     type="date"
                     required
                     value={calendarFormData.term_end_date ? calendarFormData.term_end_date.split('T')[0] : ""}
                     onChange={(e) => setCalendarFormData({ ...calendarFormData, term_end_date: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Exam Period Start</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.examPeriodStart}</label>
                   <input
                     type="date"
                     required
                     value={calendarFormData.exam_period_start ? calendarFormData.exam_period_start.split('T')[0] : ""}
                     onChange={(e) => setCalendarFormData({ ...calendarFormData, exam_period_start: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Exam Period End</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.examPeriodEnd}</label>
                   <input
                     type="date"
                     required
                     value={calendarFormData.exam_period_end ? calendarFormData.exam_period_end.split('T')[0] : ""}
                     onChange={(e) => setCalendarFormData({ ...calendarFormData, exam_period_end: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Break Periods</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.breakPeriods}</label>
                 <textarea
                   rows={3}
                   value={calendarFormData.break_periods || ""}
                   onChange={(e) => setCalendarFormData({ ...calendarFormData, break_periods: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                  placeholder="e.g., December 20 - January 5, February 8-12"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
+                  placeholder={t.breakPeriodsExample}
                 />
               </div>
 
@@ -696,13 +794,13 @@ export default function SchoolSettingsPage() {
                   onClick={() => setShowCalendarModal(false)}
                   className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                  className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
                 >
-                  Save Changes
+                  {t.saveChanges}
                 </button>
               </div>
             </form>
@@ -716,7 +814,7 @@ export default function SchoolSettingsPage() {
           <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                {policyFormData.policy_id ? "Edit Policy" : "Add Policy"}
+                {policyFormData.policy_id ? t.editPolicy : t.addPolicy}
               </h2>
               <button
                 onClick={() => setShowPolicyModal(false)}
@@ -728,55 +826,55 @@ export default function SchoolSettingsPage() {
 
             <form onSubmit={handleSavePolicy} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Policy Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.policyName}</label>
                 <input
                   type="text"
                   required
                   value={policyFormData.policy_name || ""}
                   onChange={(e) => setPolicyFormData({ ...policyFormData, policy_name: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                  placeholder="e.g., Attendance Policy"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
+                  placeholder={t.policyNameExample}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Policy Type</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.policyType}</label>
                 <select
                   required
                   value={policyFormData.policy_type || ""}
                   onChange={(e) => setPolicyFormData({ ...policyFormData, policy_type: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                 >
-                  <option value="ATTENDANCE">Attendance</option>
-                  <option value="GRADING">Grading</option>
-                  <option value="DISCIPLINE">Discipline</option>
-                  <option value="UNIFORM">Uniform</option>
-                  <option value="ACADEMIC">Academic</option>
-                  <option value="BEHAVIOR">Behavior</option>
-                  <option value="OTHER">Other</option>
+                  <option value="ATTENDANCE">{t.attendance}</option>
+                  <option value="GRADING">{t.grading}</option>
+                  <option value="DISCIPLINE">{t.discipline}</option>
+                  <option value="UNIFORM">{t.uniform}</option>
+                  <option value="ACADEMIC">{t.academic}</option>
+                  <option value="BEHAVIOR">{t.behavior}</option>
+                  <option value="OTHER">{t.other}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Content</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.content}</label>
                 <textarea
                   rows={5}
                   required
                   value={policyFormData.content || ""}
                   onChange={(e) => setPolicyFormData({ ...policyFormData, content: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                  placeholder="Enter the policy details..."
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
+                  placeholder={t.policyDetailsPlaceholder}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Effective Date</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.effectiveDate}</label>
                 <input
                   type="date"
                   required
                   value={policyFormData.effective_date ? policyFormData.effective_date.split('T')[0] : new Date().toISOString().split('T')[0]}
                   onChange={(e) => setPolicyFormData({ ...policyFormData, effective_date: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                 />
               </div>
 
@@ -786,13 +884,13 @@ export default function SchoolSettingsPage() {
                   onClick={() => setShowPolicyModal(false)}
                   className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                  className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
                 >
-                  {policyFormData.policy_id ? "Update Policy" : "Create Policy"}
+                  {policyFormData.policy_id ? t.updatePolicy : t.createPolicy}
                 </button>
               </div>
             </form>

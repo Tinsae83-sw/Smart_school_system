@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { vpAdminApi } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translateVpAdministrationOperation } from "@/translations/vp-administration-operations";
 
 type Facility = {
   facility_id: number;
@@ -53,6 +55,8 @@ type Maintenance = {
 };
 
 export default function FacilitiesPage() {
+  const { language } = useLanguage();
+  const tr = (value: string) => translateVpAdministrationOperation(value, language);
   const [activeTab, setActiveTab] = useState<"facilities" | "bookings" | "maintenance">("facilities");
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -140,7 +144,7 @@ export default function FacilitiesPage() {
   }
 
   async function handleDelete(facilityId: number) {
-    if (!confirm("Are you sure you want to delete this facility?")) return;
+    if (!confirm(tr("Are you sure you want to delete this facility?"))) return;
     try {
       const res = await vpAdminApi.delete(`/facilities/${facilityId}`);
       if (res.ok) {
@@ -235,16 +239,15 @@ export default function FacilitiesPage() {
     <div>
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Facility Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage school facilities, bookings, and maintenance</p>
+          <h1 className="text-2xl font-bold text-slate-900">{tr("Facility Management")}</h1>
+          <p className="mt-1 text-sm text-slate-500">{tr("Manage school facilities, bookings, and maintenance")}</p>
         </div>
         {activeTab === "facilities" && (
           <button
             onClick={() => setShowModal(true)}
             className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition w-full sm:w-auto"
           >
-            Add Facility
-          </button>
+            {tr("Add Facility")}</button>
         )}
       </div>
 
@@ -258,7 +261,7 @@ export default function FacilitiesPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Facilities ({facilities.length})
+            {tr("Facilities (")}{facilities.length})
           </button>
           <button
             onClick={() => setActiveTab("bookings")}
@@ -268,7 +271,7 @@ export default function FacilitiesPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Bookings ({bookings.length})
+            {tr("Bookings (")}{bookings.length})
           </button>
           <button
             onClick={() => setActiveTab("maintenance")}
@@ -278,14 +281,14 @@ export default function FacilitiesPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Maintenance ({maintenance.length})
+            {tr("Maintenance (")}{maintenance.length})
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading...</div>
+          <div className="text-slate-500">{tr("Loading...")}</div>
         </div>
       ) : (
         <>
@@ -295,27 +298,27 @@ export default function FacilitiesPage() {
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Name</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Capacity</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Building</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Floor</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Location</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Area</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Contact</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Phone</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Hours</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Dept</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Amenities</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Status</th>
-                      <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Name")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Type")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Capacity")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Building")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Floor")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Location")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Area")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Contact")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Phone")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Hours")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Dept")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Amenities")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Status")}</th>
+                      <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {facilities.map((facility) => (
                       <tr key={facility.facility_id} className="hover:bg-slate-50">
                         <td className="px-3 py-2 text-xs font-medium text-slate-900">{facility.facility_name}</td>
-                        <td className="px-3 py-2 text-xs text-slate-600">{facility.facility_type}</td>
+                        <td className="px-3 py-2 text-xs text-slate-600">{tr(facility.facility_type.replace(/_/g, " "))}</td>
                         <td className="px-3 py-2 text-xs text-slate-600">{facility.capacity}</td>
                         <td className="px-3 py-2 text-xs text-slate-600">{facility.building || "-"}</td>
                         <td className="px-3 py-2 text-xs text-slate-600">{facility.floor ? `Floor ${facility.floor}` : "-"}</td>
@@ -328,7 +331,7 @@ export default function FacilitiesPage() {
                         <td className="px-3 py-2 text-xs text-slate-600 max-w-[100px] truncate">{facility.amenities?.join(", ") || "-"}</td>
                         <td className="px-3 py-2">
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getStatusColor(facility.status)}`}>
-                            {facility.status}
+                            {tr(facility.status)}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-right">
@@ -337,14 +340,12 @@ export default function FacilitiesPage() {
                               onClick={() => openEditModal(facility)}
                               className="rounded bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 hover:bg-blue-100 transition"
                             >
-                              Edit
-                            </button>
+                              {tr("Edit")}</button>
                             <button
                               onClick={() => handleDelete(facility.facility_id)}
                               className="rounded bg-red-50 px-2 py-1 text-[10px] font-medium text-red-700 hover:bg-red-100 transition"
                             >
-                              Delete
-                            </button>
+                              {tr("Delete")}</button>
                           </div>
                         </td>
                       </tr>
@@ -352,8 +353,7 @@ export default function FacilitiesPage() {
                     {facilities.length === 0 && (
                       <tr>
                         <td colSpan={14} className="px-3 py-12 text-center text-xs text-slate-400">
-                          No facilities found. Click "Add Facility" to get started.
-                        </td>
+                          {tr("No facilities found. Click \"Add Facility\" to get started.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -368,15 +368,15 @@ export default function FacilitiesPage() {
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Facility</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Date</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Start</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">End</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Purpose</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Booked By</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Approved By</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Status</th>
-                      <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Facility")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Date")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Start")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("End")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Purpose")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Booked By")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Approved By")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Status")}</th>
+                      <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -391,7 +391,7 @@ export default function FacilitiesPage() {
                         <td className="px-3 py-2 text-xs text-slate-600">{booking.approved_by || "-"}</td>
                         <td className="px-3 py-2">
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getStatusColor(booking.status)}`}>
-                            {booking.status}
+                            {tr(booking.status)}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-right">
@@ -401,14 +401,12 @@ export default function FacilitiesPage() {
                                 onClick={() => handleBookingAction(booking.booking_id, "approve")}
                                 className="rounded bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 hover:bg-emerald-100 transition"
                               >
-                                Approve
-                              </button>
+                                {tr("Approve")}</button>
                               <button
                                 onClick={() => handleBookingAction(booking.booking_id, "reject")}
                                 className="rounded bg-red-50 px-2 py-1 text-[10px] font-medium text-red-700 hover:bg-red-100 transition"
                               >
-                                Reject
-                              </button>
+                                {tr("Reject")}</button>
                             </div>
                           )}
                         </td>
@@ -417,8 +415,7 @@ export default function FacilitiesPage() {
                     {bookings.length === 0 && (
                       <tr>
                         <td colSpan={9} className="px-3 py-12 text-center text-xs text-slate-400">
-                          No bookings found.
-                        </td>
+                          {tr("No bookings found.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -433,17 +430,17 @@ export default function FacilitiesPage() {
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Facility</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Description</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Priority</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Reported By</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Assigned To</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Scheduled</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Completed</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Cost</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Notes</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Facility")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Type")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Description")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Priority")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Reported By")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Assigned To")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Scheduled")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Completed")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Cost")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Notes")}</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Status")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -454,7 +451,7 @@ export default function FacilitiesPage() {
                         <td className="px-3 py-2 text-xs text-slate-600 max-w-[150px] truncate">{maint.description}</td>
                         <td className="px-3 py-2">
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getPriorityColor(maint.priority)}`}>
-                            {maint.priority}
+                            {tr(maint.priority)}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-xs text-slate-600">{maint.reported_by || "-"}</td>
@@ -465,7 +462,7 @@ export default function FacilitiesPage() {
                         <td className="px-3 py-2 text-xs text-slate-600 max-w-[100px] truncate">{maint.notes || "-"}</td>
                         <td className="px-3 py-2">
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getStatusColor(maint.status)}`}>
-                            {maint.status}
+                            {tr(maint.status)}
                           </span>
                         </td>
                       </tr>
@@ -473,8 +470,7 @@ export default function FacilitiesPage() {
                     {maintenance.length === 0 && (
                       <tr>
                         <td colSpan={11} className="px-3 py-12 text-center text-xs text-slate-400">
-                          No maintenance requests found.
-                        </td>
+                          {tr("No maintenance requests found.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -490,7 +486,7 @@ export default function FacilitiesPage() {
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {editingFacility ? "Edit Facility" : "Add New Facility"}
+                {tr(editingFacility ? "Edit Facility" : "Add New Facility")}
               </h2>
               <button
                 onClick={closeModal}
@@ -509,23 +505,22 @@ export default function FacilitiesPage() {
                   <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Basic Information
-                </h3>
+                  {tr("Basic Information")}</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Facility Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Facility Name *")}</label>
                     <input
                       type="text"
                       name="facility_name"
                       value={formData.facility_name}
                       onChange={handleInputChange}
                       required
-                      placeholder="e.g., Main Conference Hall"
+                      placeholder={tr("e.g., Main Conference Hall")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Facility Type *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Facility Type *")}</label>
                     <select
                       name="facility_type"
                       value={formData.facility_type}
@@ -533,9 +528,9 @@ export default function FacilitiesPage() {
                       required
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     >
-                      <option value="">Select type</option>
+                      <option value="">{tr("Select type")}</option>
                       {facilityTypes.map(type => (
-                        <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
+                        <option key={type} value={type}>{tr(type.replace(/_/g, " "))}</option>
                       ))}
                     </select>
                   </div>
@@ -549,11 +544,10 @@ export default function FacilitiesPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  Capacity & Location
-                </h3>
+                  {tr("Capacity & Location")}</h3>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Capacity *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Capacity *")}</label>
                     <input
                       type="number"
                       name="capacity"
@@ -566,7 +560,7 @@ export default function FacilitiesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Area (sq ft)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Area (sq ft)")}</label>
                     <input
                       type="number"
                       name="area_sqft"
@@ -578,7 +572,7 @@ export default function FacilitiesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Status *")}</label>
                     <select
                       name="status"
                       value={formData.status}
@@ -587,7 +581,7 @@ export default function FacilitiesPage() {
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     >
                       {statuses.map(status => (
-                        <option key={status} value={status}>{status.replace(/_/g, " ")}</option>
+                        <option key={status} value={status}>{tr(status.replace(/_/g, " "))}</option>
                       ))}
                     </select>
                   </div>
@@ -600,22 +594,21 @@ export default function FacilitiesPage() {
                   <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
-                  Building Details
-                </h3>
+                  {tr("Building Details")}</h3>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Building</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Building")}</label>
                     <input
                       type="text"
                       name="building"
                       value={formData.building}
                       onChange={handleInputChange}
-                      placeholder="e.g., Building A"
+                      placeholder={tr("e.g., Building A")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Floor</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Floor")}</label>
                     <input
                       type="number"
                       name="floor"
@@ -626,13 +619,13 @@ export default function FacilitiesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Location")}</label>
                     <input
                       type="text"
                       name="location"
                       value={formData.location}
                       onChange={handleInputChange}
-                      placeholder="e.g., North Wing"
+                      placeholder={tr("e.g., North Wing")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
@@ -645,28 +638,27 @@ export default function FacilitiesPage() {
                   <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  Contact Information
-                </h3>
+                  {tr("Contact Information")}</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Contact Person</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Contact Person")}</label>
                     <input
                       type="text"
                       name="contact_person"
                       value={formData.contact_person}
                       onChange={handleInputChange}
-                      placeholder="e.g., John Smith"
+                      placeholder={tr("e.g., John Smith")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Contact Phone</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Contact Phone")}</label>
                     <input
                       type="tel"
                       name="contact_phone"
                       value={formData.contact_phone}
                       onChange={handleInputChange}
-                      placeholder="e.g., +251 911 123 456"
+                      placeholder={tr("e.g., +251 911 123 456")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
@@ -679,28 +671,27 @@ export default function FacilitiesPage() {
                   <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Operating Details
-                </h3>
+                  {tr("Operating Details")}</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Operating Hours</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Operating Hours")}</label>
                     <input
                       type="text"
                       name="operating_hours"
                       value={formData.operating_hours}
                       onChange={handleInputChange}
-                      placeholder="e.g., 8:00 AM - 6:00 PM"
+                      placeholder={tr("e.g., 8:00 AM - 6:00 PM")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Responsible Department</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Responsible Department")}</label>
                     <input
                       type="text"
                       name="responsible_department"
                       value={formData.responsible_department}
                       onChange={handleInputChange}
-                      placeholder="e.g., Administration"
+                      placeholder={tr("e.g., Administration")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
@@ -713,16 +704,15 @@ export default function FacilitiesPage() {
                   <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 9V7a2 2 0 012-2h10a2 2 0 012 2v2M5 9v10a2 2 0 002 2h10a2 2 0 002-2V9M5 9h14" />
                   </svg>
-                  Amenities
-                </h3>
+                  {tr("Amenities")}</h3>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Amenities (comma-separated)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Amenities (comma-separated)")}</label>
                   <textarea
                     name="amenities"
                     value={formData.amenities}
                     onChange={handleInputChange}
                     rows={2}
-                    placeholder="e.g., Projector, Whiteboard, AC, WiFi"
+                    placeholder={tr("e.g., Projector, Whiteboard, AC, WiFi")}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
@@ -734,28 +724,27 @@ export default function FacilitiesPage() {
                   <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  Description & Notes
-                </h3>
+                  {tr("Description & Notes")}</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Description")}</label>
                     <textarea
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
                       rows={3}
-                      placeholder="Provide a detailed description of the facility..."
+                      placeholder={tr("Provide a detailed description of the facility...")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Additional Notes</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Additional Notes")}</label>
                     <textarea
                       name="notes"
                       value={formData.notes}
                       onChange={handleInputChange}
                       rows={2}
-                      placeholder="Any additional information or special instructions..."
+                      placeholder={tr("Any additional information or special instructions...")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
@@ -768,13 +757,12 @@ export default function FacilitiesPage() {
                   onClick={closeModal}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
-                </button>
+                  {tr("Cancel")}</button>
                 <button
                   type="submit"
                   className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
                 >
-                  {editingFacility ? "Update Facility" : "Add Facility"}
+                  {tr(editingFacility ? "Update Facility" : "Add Facility")}
                 </button>
               </div>
             </form>

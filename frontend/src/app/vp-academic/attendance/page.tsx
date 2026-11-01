@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+import { vpAcademicApi } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAcademicTranslations } from "@/translations/vp-academic";
 
 type AttendanceRecord = {
   record_id: number;
@@ -13,6 +14,17 @@ type AttendanceRecord = {
   status: "PRESENT" | "ABSENT" | "LATE";
   remarks?: string;
   recorded_by: string;
+};
+
+type Student = {
+  student_id: number;
+  user: {
+    full_name: string;
+  };
+  current_class: {
+    class_id: number;
+    class_name: string;
+  };
 };
 
 type TeacherAttendanceRecord = {
@@ -47,9 +59,26 @@ type Teacher = {
   department?: string;
 };
 
+type StudentAttendanceHistory = {
+  student_id: number;
+  student_name: string;
+  class_name: string;
+  attendance_records: AttendanceRecord[];
+  stats: {
+    total: number;
+    present: number;
+    absent: number;
+    late: number;
+    attendance_rate: number;
+  };
+};
+
 export default function AttendancePage() {
+  const { language } = useLanguage();
+  const t = vpAcademicTranslations[language];
   const [activeTab, setActiveTab] = useState<"students" | "classes" | "teachers">("students");
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [teacherAttendance, setTeacherAttendance] = useState<TeacherAttendanceRecord[]>([]);
   const [classAttendanceSummary, setClassAttendanceSummary] = useState<ClassAttendanceSummary[]>([]);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
@@ -57,12 +86,9 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    student_id: "",
-    status: "PRESENT" as "PRESENT" | "ABSENT" | "LATE",
-    remarks: "",
-  });
+  const [showStudentModal, setShowStudentModal] = useState(false);
+  const [selectedStudentHistory, setSelectedStudentHistory] = useState<StudentAttendanceHistory | null>(null);
+  const [loadingStudentHistory, setLoadingStudentHistory] = useState(false);
 
   async function fetchData() {
     setLoading(true);
@@ -70,9 +96,10 @@ export default function AttendancePage() {
       const ADMIN_API = process.env.NEXT_PUBLIC_ADMIN_API || "http://localhost:5000/api";
       
       if (activeTab === "students") {
-        const [attendanceRes, classesRes] = await Promise.all([
-          fetch(`${API_BASE}/academic/attendance?class_id=${selectedClass}&date=${selectedDate}`),
+        const [attendanceRes, classesRes, studentsRes] = await Promise.all([
+          vpAcademicApi.get(`/academic/attendance?class_id=${selectedClass}&date=${selectedDate}`),
           fetch(`${ADMIN_API}/admin/classes`),
+          fetch(`${ADMIN_API}/admin/students`),
         ]);
 
         if (attendanceRes.ok) {
@@ -83,10 +110,14 @@ export default function AttendancePage() {
           const classesData = await classesRes.json();
           setClasses(Array.isArray(classesData.classes) ? classesData.classes : Array.isArray(classesData) ? classesData : []);
         }
+        if (studentsRes.ok) {
+          const studentsData = await studentsRes.json();
+          setStudents(Array.isArray(studentsData.students) ? studentsData.students : Array.isArray(studentsData) ? studentsData : []);
+        }
       } else if (activeTab === "classes") {
         const [classesRes, summaryRes] = await Promise.all([
           fetch(`${ADMIN_API}/admin/classes`),
-          fetch(`${API_BASE}/academic/attendance/summary?date=${selectedDate}`),
+          vpAcademicApi.get(`/academic/attendance/summary?date=${selectedDate}`),
         ]);
 
         if (classesRes.ok) {
@@ -98,7 +129,7 @@ export default function AttendancePage() {
           setClassAttendanceSummary(Array.isArray(summaryData) ? summaryData : []);
         } else {
           // Fallback: calculate summary from attendance data
-          const attendanceRes = await fetch(`${API_BASE}/academic/attendance?date=${selectedDate}`);
+          const attendanceRes = await vpAcademicApi.get(`/academic/attendance?date=${selectedDate}`);
           if (attendanceRes.ok) {
             const attendanceData = await attendanceRes.json();
             const records = Array.isArray(attendanceData) ? attendanceData : [];
@@ -132,7 +163,7 @@ export default function AttendancePage() {
       } else if (activeTab === "teachers") {
         const [teachersRes, attendanceRes] = await Promise.all([
           fetch(`${ADMIN_API}/admin/teachers`),
-          fetch(`${API_BASE}/teachers/attendance?date=${selectedDate}`),
+          vpAcademicApi.get(`/teachers/attendance?date=${selectedDate}`),
         ]);
 
         if (teachersRes.ok) {
@@ -159,42 +190,67 @@ export default function AttendancePage() {
     }
   }
 
+  function getStatusLabel(status: string) {
+    switch (status) {
+      case "PRESENT":
+        return t.present;
+      case "ABSENT":
+        return t.absent;
+      case "LATE":
+        return t.late;
+      case "NOT_RECORDED":
+        return t.notRecorded;
+      default:
+        return status;
+    }
+  }
+
+  async function fetchStudentAttendanceHistory(studentId: number, studentName: string, className: string) {
+    setLoadingStudentHistory(true);
+    try {
+      const res = await vpAcademicApi.get(`/academic/attendance?student_id=${studentId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const records = Array.isArray(data) ? data : [];
+        
+        const stats = {
+          total: records.length,
+          present: records.filter((r: any) => r.status === "PRESENT").length,
+          absent: records.filter((r: any) => r.status === "ABSENT").length,
+          late: records.filter((r: any) => r.status === "LATE").length,
+          attendance_rate: records.length > 0 ? (records.filter((r: any) => r.status === "PRESENT").length / records.length) * 100 : 0,
+        };
+
+        setSelectedStudentHistory({
+          student_id: studentId,
+          student_name: studentName,
+          class_name: className,
+          attendance_records: records,
+          stats,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      alert(t.failedFetchHistory);
+    } finally {
+      setLoadingStudentHistory(false);
+    }
+  }
+
   useEffect(() => {
     fetchData();
   }, [activeTab, selectedClass, selectedDate]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      const res = await fetch(`${API_BASE}/../attendance`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          student_id: parseInt(formData.student_id),
-          class_id: parseInt(selectedClass),
-          date: selectedDate,
-          status: formData.status,
-          remarks: formData.remarks,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to record attendance");
-      setShowModal(false);
-      setFormData({ student_id: "", status: "PRESENT", remarks: "" });
-      fetchData();
-    } catch (error) {
-      console.error(error);
-      alert("Failed to record attendance.");
-    }
-  }
-
   function getStatusColor(status: string) {
     switch (status) {
       case "PRESENT":
-        return "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300";
+        return "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300";
       case "ABSENT":
         return "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300";
       case "LATE":
         return "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300";
+      case "NOT_RECORDED":
+        return "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400";
       default:
         return "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300";
     }
@@ -220,6 +276,12 @@ export default function AttendancePage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
+      case "NOT_RECORDED":
+        return (
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12zm-.75 0h.008v.008h-.008v-.008zm0 3.75h.008v.008H12zm-.75 0h.008v.008h-.008v-.008z" />
+          </svg>
+        );
       default:
         return null;
     }
@@ -232,24 +294,29 @@ export default function AttendancePage() {
     total: attendance.length,
   };
 
+  // Filter students by selected class and match with attendance records
+  const studentsWithAttendance = students
+    .filter(s => !selectedClass || s.current_class?.class_id === parseInt(selectedClass))
+    .map(student => {
+      const attendanceRecord = attendance.find(a => a.student_id === student.student_id);
+      return {
+        student_id: student.student_id,
+        student_name: student.user?.full_name || 'Unknown',
+        class_name: student.current_class?.class_name || 'Unknown',
+        date: selectedDate,
+        status: attendanceRecord?.status || "NOT_RECORDED",
+        remarks: attendanceRecord?.remarks,
+        recorded_by: attendanceRecord?.recorded_by,
+      };
+    });
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Attendance Management</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">View and manage attendance records for students, classes, and teachers</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.attendanceManagement}</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.viewAttendanceRecords}</p>
         </div>
-        {activeTab === "students" && (
-          <button
-            onClick={() => {
-              setFormData({ student_id: "", status: "PRESENT", remarks: "" });
-              setShowModal(true);
-            }}
-            className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
-          >
-            Record Attendance
-          </button>
-        )}
       </div>
 
       <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
@@ -258,54 +325,54 @@ export default function AttendancePage() {
             onClick={() => setActiveTab("students")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "students"
-                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                ? "border-b-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            Student Attendance
+            {t.studentAttendance}
           </button>
           <button
             onClick={() => setActiveTab("classes")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "classes"
-                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                ? "border-b-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            Class Summary
+            {t.classSummary}
           </button>
           <button
             onClick={() => setActiveTab("teachers")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "teachers"
-                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                ? "border-b-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            Teacher Attendance
+            {t.teacherAttendance}
           </button>
         </nav>
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.dateLabel}</label>
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
           />
         </div>
         {activeTab === "students" && (
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Class</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.classLabelFilter}</label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             >
-              <option value="">All Classes</option>
+              <option value="">{t.allClasses}</option>
               {classes.map((cls) => (
                 <option key={cls.class_id} value={cls.class_id}>
                   {cls.class_name}
@@ -318,16 +385,16 @@ export default function AttendancePage() {
 
       {activeTab === "students" && attendanceStats.total > 0 && (
         <div className="mb-6 grid gap-4 sm:grid-cols-4">
-          <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 p-4">
+          <div className="rounded-xl bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-600 text-white">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-300">{attendanceStats.present}</p>
-                <p className="text-xs text-emerald-600 dark:text-emerald-400">Present</p>
+                <p className="text-2xl font-bold text-orange-900 dark:text-orange-300">{attendanceStats.present}</p>
+                <p className="text-xs text-orange-600 dark:text-orange-400">{t.present}</p>
               </div>
             </div>
           </div>
@@ -340,7 +407,7 @@ export default function AttendancePage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-rose-900 dark:text-rose-300">{attendanceStats.absent}</p>
-                <p className="text-xs text-rose-600 dark:text-rose-400">Absent</p>
+                <p className="text-xs text-rose-600 dark:text-rose-400">{t.absent}</p>
               </div>
             </div>
           </div>
@@ -353,7 +420,7 @@ export default function AttendancePage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-amber-900 dark:text-amber-300">{attendanceStats.late}</p>
-                <p className="text-xs text-amber-600 dark:text-amber-400">Late</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400">{t.late}</p>
               </div>
             </div>
           </div>
@@ -366,7 +433,7 @@ export default function AttendancePage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">{attendanceStats.total}</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Total</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{t.totalAttendance}</p>
               </div>
             </div>
           </div>
@@ -375,7 +442,7 @@ export default function AttendancePage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-600 border-t-transparent" />
         </div>
       ) : (
         <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -384,34 +451,39 @@ export default function AttendancePage() {
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    <th className="px-6 py-4">Student</th>
-                    <th className="px-6 py-4">Class</th>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Remarks</th>
-                    <th className="px-6 py-4">Recorded By</th>
+                    <th className="px-6 py-4">{t.studentLabel}</th>
+                    <th className="px-6 py-4">{t.classLabel}</th>
+                    <th className="px-6 py-4">{t.dateLabel}</th>
+                    <th className="px-6 py-4">{t.status}</th>
+                    <th className="px-6 py-4">{t.remarks}</th>
+                    <th className="px-6 py-4">{t.recordedBy}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                  {attendance.map((record) => (
-                    <tr key={record.record_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{record.student_name}</td>
+                  {studentsWithAttendance.map((record) => (
+                    <tr key={record.student_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer" onClick={() => fetchStudentAttendanceHistory(record.student_id, record.student_name, record.class_name)}>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                        {record.student_name}
+                        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                        </svg>
+                      </td>
                       <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{record.class_name}</td>
                       <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{new Date(record.date).toLocaleDateString()}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(record.status)}`}>
                           {getStatusIcon(record.status)}
-                          {record.status}
+                          {getStatusLabel(record.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{record.remarks || "-"}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{record.recorded_by}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{record.recorded_by || "-"}</td>
                     </tr>
                   ))}
-                  {attendance.length === 0 && (
+                  {studentsWithAttendance.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
-                        No attendance records found for the selected date and class.
+                        {t.noStudentsFound}
                       </td>
                     </tr>
                   )}
@@ -423,12 +495,12 @@ export default function AttendancePage() {
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    <th className="px-6 py-4">Class</th>
-                    <th className="px-6 py-4">Total Students</th>
-                    <th className="px-6 py-4">Present</th>
-                    <th className="px-6 py-4">Absent</th>
-                    <th className="px-6 py-4">Late</th>
-                    <th className="px-6 py-4">Attendance Rate</th>
+                    <th className="px-6 py-4">{t.classLabel}</th>
+                    <th className="px-6 py-4">{t.totalStudents}</th>
+                    <th className="px-6 py-4">{t.present}</th>
+                    <th className="px-6 py-4">{t.absent}</th>
+                    <th className="px-6 py-4">{t.late}</th>
+                    <th className="px-6 py-4">{t.attendanceRateLabel}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -436,14 +508,14 @@ export default function AttendancePage() {
                     <tr key={summary.class_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                       <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{summary.class_name}</td>
                       <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{summary.total_students}</td>
-                      <td className="px-6 py-4 text-sm text-emerald-600 dark:text-emerald-400 font-medium">{summary.present_count}</td>
+                      <td className="px-6 py-4 text-sm text-orange-600 dark:text-orange-400 font-medium">{summary.present_count}</td>
                       <td className="px-6 py-4 text-sm text-rose-600 dark:text-rose-400 font-medium">{summary.absent_count}</td>
                       <td className="px-6 py-4 text-sm text-amber-600 dark:text-amber-400 font-medium">{summary.late_count}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700">
                             <div
-                              className={`h-2 rounded-full ${summary.attendance_rate >= 75 ? "bg-emerald-500" : "bg-amber-500"}`}
+                              className={`h-2 rounded-full ${summary.attendance_rate >= 75 ? "bg-orange-500" : "bg-amber-500"}`}
                               style={{ width: `${summary.attendance_rate}%` }}
                             />
                           </div>
@@ -457,7 +529,7 @@ export default function AttendancePage() {
                   {classAttendanceSummary.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
-                        No class attendance data available for the selected date.
+                        {t.noAttendanceData}
                       </td>
                     </tr>
                   )}
@@ -469,24 +541,24 @@ export default function AttendancePage() {
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    <th className="px-6 py-4">Teacher</th>
-                    <th className="px-6 py-4">Department</th>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Remarks</th>
-                    <th className="px-6 py-4">Recorded By</th>
+                    <th className="px-6 py-4">{t.teacherLabel}</th>
+                    <th className="px-6 py-4">{t.departmentLabel}</th>
+                    <th className="px-6 py-4">{t.dateLabel}</th>
+                    <th className="px-6 py-4">{t.status}</th>
+                    <th className="px-6 py-4">{t.remarks}</th>
+                    <th className="px-6 py-4">{t.recordedBy}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {teacherAttendance.map((record) => (
                     <tr key={record.record_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                       <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{record.teacher_name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teachers.find(t => t.teacher_id === record.teacher_id)?.department || "N/A"}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teachers.find(t => t.teacher_id === record.teacher_id)?.department || t.notProvided}</td>
                       <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{new Date(record.date).toLocaleDateString()}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(record.status)}`}>
                           {getStatusIcon(record.status)}
-                          {record.status}
+                          {getStatusLabel(record.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{record.remarks || "-"}</td>
@@ -496,7 +568,7 @@ export default function AttendancePage() {
                   {teacherAttendance.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
-                        No teacher attendance records found for the selected date.
+                        {t.noAttendanceRecords}
                       </td>
                     </tr>
                   )}
@@ -507,14 +579,19 @@ export default function AttendancePage() {
         </div>
       )}
 
-      {/* Record Attendance Modal */}
-      {showModal && (
+      {/* Student Attendance History Modal */}
+      {showStudentModal && selectedStudentHistory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6">
+          <div className="w-full max-w-4xl rounded-2xl bg-white dark:bg-slate-800 p-6 max-h-[90vh] overflow-y-auto">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Record Attendance</h2>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.attendanceHistory}</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  {selectedStudentHistory.student_name} - {selectedStudentHistory.class_name}
+                </p>
+              </div>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => setShowStudentModal(false)}
                 className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -523,58 +600,116 @@ export default function AttendancePage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Student ID</label>
-                <input
-                  type="number"
-                  required
-                  value={formData.student_id}
-                  onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
+            {loadingStudentHistory ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-600 border-t-transparent" />
               </div>
+            ) : (
+              <>
+                {/* Stats Cards */}
+                <div className="mb-6 grid gap-4 sm:grid-cols-4">
+                  <div className="rounded-xl bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-600 text-white">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-orange-900 dark:text-orange-300">{selectedStudentHistory.stats.present}</p>
+                        <p className="text-xs text-orange-600 dark:text-orange-400">{t.present}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-600 text-white">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-rose-900 dark:text-rose-300">{selectedStudentHistory.stats.absent}</p>
+                        <p className="text-xs text-rose-600 dark:text-rose-400">{t.absent}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600 text-white">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-amber-900 dark:text-amber-300">{selectedStudentHistory.stats.late}</p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400">{t.late}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-600 text-white">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-sky-900 dark:text-sky-300">{selectedStudentHistory.stats.attendance_rate.toFixed(1)}%</p>
+                        <p className="text-xs text-sky-600 dark:text-sky-400">{t.attendanceRateLabel}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
-                <select
-                  required
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                >
-                  <option value="PRESENT">Present</option>
-                  <option value="ABSENT">Absent</option>
-                  <option value="LATE">Late</option>
-                </select>
-              </div>
+                {/* Attendance History Table */}
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          <th className="px-6 py-4">{t.dateLabel}</th>
+                          <th className="px-6 py-4">{t.status}</th>
+                          <th className="px-6 py-4">{t.remarks}</th>
+                          <th className="px-6 py-4">{t.recordedBy}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                        {selectedStudentHistory.attendance_records.map((record) => (
+                          <tr key={record.record_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{new Date(record.date).toLocaleDateString()}</td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(record.status)}`}>
+                                {getStatusIcon(record.status)}
+                                {getStatusLabel(record.status)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{record.remarks || "-"}</td>
+                            <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{record.recorded_by}</td>
+                          </tr>
+                        ))}
+                        {selectedStudentHistory.attendance_records.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
+                              No attendance records found for this student.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Remarks</label>
-                <textarea
-                  value={formData.remarks}
-                  onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                  rows={3}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
-                >
-                  Record Attendance
-                </button>
-              </div>
-            </form>
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700 mt-6">
+                  <button
+                    onClick={() => setShowStudentModal(false)}
+                    className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                  >
+                    Close
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -182,13 +182,10 @@ export default function LoginPage() {
 
         <div className="text-center mb-8">
 
-          <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-            </svg>
+          <div className="w-16 h-16 bg-gradient-to-br from-navy-500 to-teal-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg overflow-hidden">
+            <img src="/school-logo.jpg" alt="School Logo" className="w-full h-full object-cover" />
           </div>
-          <p className="text-sm uppercase tracking-[0.3em] text-indigo-600 dark:text-indigo-400 font-semibold">EduConnect Portal</p>
+          <p className="text-sm uppercase tracking-[0.3em] text-navy-600 dark:text-teal-400 font-semibold">Yekatit 25/67 Secondary School</p>
 
           <h1 className="mt-4 text-3xl font-bold text-slate-900 dark:text-slate-100">Sign in</h1>
 
@@ -212,7 +209,7 @@ export default function LoginPage() {
 
               onChange={(event) => setEmail(event.target.value)}
 
-              className="mt-2 w-full rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="mt-2 w-full rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
 
               placeholder="your@email.com"
 
@@ -234,7 +231,7 @@ export default function LoginPage() {
 
               onChange={(event) => setPassword(event.target.value)}
 
-              className="mt-2 w-full rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="mt-2 w-full rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
 
               placeholder="Password123!"
 
@@ -254,7 +251,7 @@ export default function LoginPage() {
 
             type="submit"
 
-            className="w-full rounded-2xl bg-indigo-600 px-5 py-3 text-white font-semibold transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="w-full rounded-2xl bg-navy-600 px-5 py-3 text-white font-semibold transition hover:bg-navy-700 disabled:cursor-not-allowed disabled:bg-slate-400"
 
             disabled={loading}
 

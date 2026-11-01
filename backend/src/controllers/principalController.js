@@ -331,6 +331,20 @@ async function registerSeniorStaff(req, res) {
           appointment_date: appointment_date ? new Date(appointment_date) : null
         }
       });
+
+      // If department is provided, update the department's head_of_department_id
+      if (department) {
+        const dept = await prisma.department.findUnique({
+          where: { name: department.trim() }
+        });
+
+        if (dept) {
+          await prisma.department.update({
+            where: { department_id: dept.department_id },
+            data: { head_of_department_id: user.user_id }
+          });
+        }
+      }
     }
 
     return res.status(201).json({
@@ -419,27 +433,105 @@ async function updateSeniorStaff(req, res) {
       return res.status(403).json({ error: 'Can only update senior staff' });
     }
 
+    // Build user update data
+    const userData = {};
+    if (full_name !== undefined) userData.full_name = full_name;
+    if (email !== undefined) userData.email = email;
+    if (phone_number !== undefined) userData.phone_number = phone_number;
+
     // Update user
     const updatedUser = await prisma.user.update({
       where: { user_id: parseInt(id) },
-      data: {
-        full_name: full_name || user.full_name,
-        email: email || user.email,
-        phone_number: phone_number !== undefined ? phone_number : user.phone_number
-      }
+      data: userData
     });
 
     // Update department if department head
+    let updatedDepartment = null;
     if (user.role === 'DEPARTMENT_HEAD' && department !== undefined) {
-      await prisma.departmentHead.update({
+      const oldDeptHead = await prisma.departmentHead.findUnique({
+        where: { user_id: parseInt(id) }
+      });
+
+      // Remove this user as head from old department if it existed
+      if (oldDeptHead && oldDeptHead.department) {
+        const oldDept = await prisma.department.findUnique({
+          where: { name: oldDeptHead.department }
+        });
+        if (oldDept && oldDept.head_of_department_id === parseInt(id)) {
+          await prisma.department.update({
+            where: { department_id: oldDept.department_id },
+            data: { head_of_department_id: null }
+          });
+        }
+      }
+
+      // Update department head's department
+      const updatedDeptHead = await prisma.departmentHead.update({
         where: { user_id: parseInt(id) },
         data: { department: department ? department.trim() : null }
       });
+      updatedDepartment = updatedDeptHead.department;
+
+      // If new department is provided, assign this user as head
+      if (department) {
+        const newDept = await prisma.department.findUnique({
+          where: { name: department.trim() }
+        });
+
+        if (newDept) {
+          await prisma.department.update({
+            where: { department_id: newDept.department_id },
+            data: { head_of_department_id: parseInt(id) }
+          });
+        }
+      }
+    }
+
+    // Fetch updated staff data to return
+    let staffData;
+    if (user.role === 'VP_ACADEMIC') {
+      const vp = await prisma.vPAcademic.findUnique({
+        where: { user_id: parseInt(id) },
+        include: { user: true }
+      });
+      staffData = {
+        ...vp.user,
+        role: 'VP_ACADEMIC',
+        employee_id: vp.employee_id,
+        appointment_date: vp.appointment_date,
+        status: vp.user.is_active ? 'ACTIVE' : 'INACTIVE'
+      };
+    } else if (user.role === 'VP_ADMINISTRATION') {
+      const vp = await prisma.vPAdministration.findUnique({
+        where: { user_id: parseInt(id) },
+        include: { user: true }
+      });
+      staffData = {
+        ...vp.user,
+        role: 'VP_ADMINISTRATION',
+        employee_id: vp.employee_id,
+        appointment_date: vp.appointment_date,
+        status: vp.user.is_active ? 'ACTIVE' : 'INACTIVE'
+      };
+    } else if (user.role === 'DEPARTMENT_HEAD') {
+      const dh = await prisma.departmentHead.findUnique({
+        where: { user_id: parseInt(id) },
+        include: { user: true }
+      });
+      staffData = {
+        ...dh.user,
+        role: 'DEPARTMENT_HEAD',
+        employee_id: dh.employee_id,
+        department: dh.department,
+        appointment_date: dh.appointment_date,
+        status: dh.user.is_active ? 'ACTIVE' : 'INACTIVE'
+      };
     }
 
     return res.json({
       message: 'Senior staff updated successfully',
-      user_id: updatedUser.user_id
+      user_id: updatedUser.user_id,
+      staff: staffData
     });
   } catch (error) {
     console.error('Update senior staff error:', error);
@@ -530,7 +622,6 @@ async function getStaffPerformance(req, res) {
 async function getDepartments(req, res) {
   try {
     const departments = await prisma.department.findMany({
-      where: { is_active: true },
       include: {
         head_of_department: {
           include: { user: true }
@@ -634,17 +725,17 @@ async function updateDepartment(req, res) {
       }
     }
 
+    // Build update data object
+    const updateData = {};
+    if (name !== undefined) updateData.name = name.trim();
+    if (code !== undefined) updateData.code = code ? code.trim() : null;
+    if (description !== undefined) updateData.description = description;
+    if (head_of_department_id !== undefined) updateData.head_of_department_id = head_of_department_id ? parseInt(head_of_department_id) : null;
+    if (is_active !== undefined) updateData.is_active = is_active;
+
     const department = await prisma.department.update({
       where: { department_id: parseInt(id) },
-      data: {
-        name: name ? name.trim() : existingDept.name,
-        code: code !== undefined ? (code ? code.trim() : null) : existingDept.code,
-        description: description !== undefined ? description : existingDept.description,
-        head_of_department_id: head_of_department_id !== undefined 
-          ? (head_of_department_id ? parseInt(head_of_department_id) : null) 
-          : existingDept.head_of_department_id,
-        is_active: is_active !== undefined ? is_active : existingDept.is_active
-      },
+      data: updateData,
       include: {
         head_of_department: {
           include: { user: true }
@@ -687,12 +778,20 @@ async function deleteDepartment(req, res) {
     }
 
     // Soft delete by setting is_active to false
-    await prisma.department.update({
+    const department = await prisma.department.update({
       where: { department_id: parseInt(id) },
-      data: { is_active: false }
+      data: { is_active: false },
+      include: {
+        head_of_department: {
+          include: { user: true }
+        }
+      }
     });
 
-    return res.json({ message: 'Department deleted successfully' });
+    return res.json({ 
+      message: 'Department deactivated successfully',
+      department 
+    });
   } catch (error) {
     console.error('Delete department error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -817,24 +916,28 @@ async function updateTeacher(req, res) {
       return res.status(403).json({ error: 'Can only update teachers' });
     }
 
+    // Build update data object only with provided fields
+    const userData = {};
+    if (full_name !== undefined) userData.full_name = full_name;
+    if (email !== undefined) userData.email = email;
+    if (phone_number !== undefined) userData.phone_number = phone_number;
+
     // Update user
     const updatedUser = await prisma.user.update({
       where: { user_id: parseInt(id) },
-      data: {
-        full_name: full_name || user.full_name,
-        email: email || user.email,
-        phone_number: phone_number !== undefined ? phone_number : user.phone_number
-      }
+      data: userData
     });
+
+    // Build teacher update data
+    const teacherData = {};
+    if (department !== undefined) teacherData.department = department;
+    if (qualification !== undefined) teacherData.degree_level = qualification;
+    if (years_of_experience !== undefined) teacherData.experience_years = years_of_experience;
 
     // Update teacher record
     await prisma.teacher.update({
       where: { user_id: parseInt(id) },
-      data: {
-        department: department !== undefined ? department : undefined,
-        degree_level: qualification !== undefined ? qualification : undefined,
-        experience_years: years_of_experience !== undefined ? years_of_experience : undefined
-      }
+      data: teacherData
     });
 
     return res.json({
@@ -935,7 +1038,7 @@ async function getSchoolSettings(req, res) {
     return res.json(settings);
   } catch (error) {
     console.error('Get school settings error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
 
@@ -1084,7 +1187,7 @@ async function updateSchoolSettings(req, res) {
     }
   } catch (error) {
     console.error('Update school settings error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
 
@@ -1128,7 +1231,7 @@ async function getAcademicCalendar(req, res) {
     return res.json(calendar);
   } catch (error) {
     console.error('Get academic calendar error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
 
@@ -1186,7 +1289,7 @@ async function updateAcademicCalendar(req, res) {
     return res.json(calendar);
   } catch (error) {
     console.error('Update academic calendar error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
 
@@ -1347,7 +1450,7 @@ async function createAcademicPolicy(req, res) {
     return res.status(201).json(policy);
   } catch (error) {
     console.error('Create academic policy error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
 
@@ -1364,7 +1467,7 @@ async function getAcademicPolicies(req, res) {
     return res.json(policies);
   } catch (error) {
     console.error('Get academic policies error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
 
@@ -1778,7 +1881,20 @@ async function getSIPs(req, res) {
       orderBy: { created_at: 'desc' }
     });
 
-    return res.json(sips);
+    // Format SIPs for frontend
+    const formattedSIPs = sips.map(sip => ({
+      sip_id: sip.sip_id,
+      title: sip.title,
+      description: sip.description,
+      academic_year: sip.academic_year,
+      term: sip.term,
+      status: sip.status,
+      submission_date: sip.created_at,
+      approval_date: sip.approved_at,
+      approved_by: sip.approved_by
+    }));
+
+    return res.json(formattedSIPs);
   } catch (error) {
     console.error('Get SIPs error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -1808,6 +1924,37 @@ async function approveSIP(req, res) {
     });
   } catch (error) {
     console.error('Approve SIP error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
+ * Get PTSA Executives
+ * GET /api/principal/governance/ptsa/executive
+ */
+async function getPTSAExecutives(req, res) {
+  try {
+    const executives = await prisma.pTSAExecutive.findMany({
+      where: { is_active: true },
+      include: {
+        user: true
+      },
+      orderBy: { term_start: 'desc' }
+    });
+
+    const formattedExecutives = executives.map(exec => ({
+      member_id: exec.executive_id,
+      name: exec.user.full_name,
+      role: exec.position,
+      term_start: exec.term_start,
+      term_end: exec.term_end,
+      status: exec.is_active ? 'ACTIVE' : 'INACTIVE',
+      contact_info: exec.user.email
+    }));
+
+    return res.json(formattedExecutives);
+  } catch (error) {
+    console.error('Get PTSA executives error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -1845,10 +1992,26 @@ async function recognizePTSAExecutive(req, res) {
 async function getPTSAFeedback(req, res) {
   try {
     const feedback = await prisma.pTSAFeedback.findMany({
+      include: {
+        submitted_by_user: true,
+        responded_by_user: true
+      },
       orderBy: { submitted_at: 'desc' }
     });
 
-    return res.json(feedback);
+    // Format feedback for frontend
+    const formattedFeedback = feedback.map(fb => ({
+      feedback_id: fb.feedback_id,
+      title: fb.title || 'PTSA Feedback',
+      description: fb.description,
+      submitted_by: fb.submitted_by_user?.full_name || 'Unknown',
+      submission_date: fb.submitted_at,
+      status: fb.status,
+      response: fb.response,
+      response_date: fb.responded_at
+    }));
+
+    return res.json(formattedFeedback);
   } catch (error) {
     console.error('Get PTSA feedback error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -1912,9 +2075,9 @@ async function getGrievances(req, res) {
       complainant_type: g.user?.role || 'UNKNOWN',
       subject: g.subject,
       description: g.description,
-      category: g.category,
-      priority: g.priority,
-      status: g.status,
+      category: g.category || 'GENERAL',
+      priority: g.priority || 'MEDIUM',
+      status: g.status || 'PENDING',
       submitted_date: g.submitted_at,
       resolution: g.resolution,
       resolved_date: g.resolved_at
@@ -1923,7 +2086,7 @@ async function getGrievances(req, res) {
     return res.json(mapped);
   } catch (error) {
     console.error('Get grievances error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
 
@@ -1976,19 +2139,19 @@ async function getDisciplineRecords(req, res) {
       record_id: d.action_id,
       student_name: d.student?.user?.full_name || 'Unknown',
       student_id: d.student?.student_id || 'Unknown',
-      infraction: d.action_type,
-      description: d.reason,
+      infraction: d.action_type || 'Unknown',
+      description: d.reason || 'No description provided',
       severity: d.action_type === 'EXPULSION' ? 'HIGH' : d.action_type === 'SUSPENSION' ? 'HIGH' : d.action_type === 'PROBATION' ? 'MEDIUM' : 'LOW',
-      action_taken: d.action_type,
-      action_date: d.start_date,
+      action_taken: d.action_type || 'Unknown',
+      action_date: d.start_date || d.created_at,
       reported_by: d.recommended_by_user?.full_name || 'Unknown',
-      status: d.status
+      status: d.status || 'ACTIVE'
     }));
 
     return res.json(mapped);
   } catch (error) {
     console.error('Get discipline records error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
 
@@ -2161,7 +2324,7 @@ async function approveStaffTransfer(req, res) {
  */
 async function createAnnouncement(req, res) {
   try {
-    const { title, content, announcement_type, target_audience, is_urgent, attachment_url } = req.body;
+    const { title, content, announcement_type, target_audience, is_urgent, attachment_url, expire_date } = req.body;
 
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content are required' });
@@ -2177,7 +2340,8 @@ async function createAnnouncement(req, res) {
         is_urgent: is_urgent || false,
         attachment_url,
         status: 'PUBLISHED',
-        publish_date: new Date()
+        publish_date: new Date(),
+        expire_date: expire_date ? new Date(expire_date) : null
       }
     });
 
@@ -2207,12 +2371,49 @@ async function createAnnouncement(req, res) {
 async function getAnnouncements(req, res) {
   try {
     const announcements = await prisma.schoolAnnouncement.findMany({
+      include: {
+        created_by_user: true
+      },
       orderBy: { created_at: 'desc' }
     });
 
-    return res.json(announcements);
+    // Format announcements for frontend
+    const formattedAnnouncements = announcements.map(ann => ({
+      announcement_id: ann.announcement_id,
+      title: ann.title,
+      content: ann.content,
+      created_by: ann.created_by_user?.full_name || 'Unknown',
+      created_at: ann.created_at,
+      target_audience: ann.target_audience,
+      status: ann.status,
+      announcement_type: ann.announcement_type,
+      is_urgent: ann.is_urgent,
+      attachment_url: ann.attachment_url,
+      expire_date: ann.expire_date
+    }));
+
+    return res.json(formattedAnnouncements);
   } catch (error) {
     console.error('Get announcements error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
+ * Delete Announcement
+ * DELETE /api/principal/communications/announcements/:id
+ */
+async function deleteAnnouncement(req, res) {
+  try {
+    const { id } = req.params;
+
+    await prisma.schoolAnnouncement.delete({
+      where: { announcement_id: parseInt(id) }
+    });
+
+    return res.json({ message: 'Announcement deleted successfully' });
+  } catch (error) {
+    console.error('Delete announcement error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -2343,42 +2544,159 @@ async function generateReport(req, res) {
 
     let report;
     const principalId = await getPrincipalId(req);
+    const currentYear = new Date().getFullYear().toString();
 
     switch (report_type) {
       case 'ENROLLMENT':
+        // Fetch real enrollment data
+        const students = await prisma.student.findMany({
+          include: {
+            current_class: true
+          }
+        });
+
+        // Calculate enrollment by grade
+        const enrollmentByGrade = {};
+        const enrollmentByGender = { male: 0, female: 0, other: 0 };
+        const enrollmentByStatus = { active: 0, inactive: 0 };
+        
+        students.forEach(student => {
+          const grade = student.current_class?.class_name?.match(/\d+/)?.[0] || 'Unknown';
+          enrollmentByGrade[grade] = (enrollmentByGrade[grade] || 0) + 1;
+          
+          if (student.gender === 'MALE') enrollmentByGender.male++;
+          else if (student.gender === 'FEMALE') enrollmentByGender.female++;
+          else enrollmentByGender.other++;
+
+          if (student.is_active) enrollmentByStatus.active++;
+          else enrollmentByStatus.inactive++;
+        });
+
         report = await prisma.report.create({
           data: {
             title: 'Enrollment Report',
             data: {
               type: 'ENROLLMENT',
               description: 'Student enrollment statistics by grade and gender',
-              academic_year: new Date().getFullYear().toString()
+              academic_year: currentYear,
+              total_students: students.length,
+              enrollment_by_grade: enrollmentByGrade,
+              enrollment_by_gender: enrollmentByGender,
+              enrollment_by_status: enrollmentByStatus,
+              generated_at: new Date().toISOString()
             },
             generated_by: principalId
           }
         });
         break;
       case 'PERFORMANCE':
+        // Fetch real performance data
+        const grades = await prisma.grade.findMany({
+          include: {
+            submission: {
+              include: {
+                student: {
+                  include: {
+                    current_class: true
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        // Calculate average grades by grade level
+        const performanceByGrade = {};
+        const gradeDistribution = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+        let totalScore = 0;
+        
+        grades.forEach(grade => {
+          const gradeLevel = grade.submission?.student?.current_class?.class_name?.match(/\d+/)?.[0] || 'Unknown';
+          if (!performanceByGrade[gradeLevel]) {
+            performanceByGrade[gradeLevel] = { total: 0, count: 0 };
+          }
+          performanceByGrade[gradeLevel].total += Number(grade.score || 0);
+          performanceByGrade[gradeLevel].count += 1;
+          
+          if (grade.letter_grade) {
+            gradeDistribution[grade.letter_grade] = (gradeDistribution[grade.letter_grade] || 0) + 1;
+          }
+
+          totalScore += Number(grade.score || 0);
+        });
+
+        // Calculate averages
+        Object.keys(performanceByGrade).forEach(grade => {
+          performanceByGrade[grade].average = performanceByGrade[grade].count > 0 
+            ? (performanceByGrade[grade].total / performanceByGrade[grade].count).toFixed(2)
+            : 0;
+        });
+
+        const averageScore = grades.length > 0 ? (totalScore / grades.length).toFixed(2) : 0;
+
         report = await prisma.report.create({
           data: {
             title: 'Academic Performance Report',
             data: {
               type: 'PERFORMANCE',
               description: 'Student performance metrics and grade distribution',
-              academic_year: new Date().getFullYear().toString()
+              academic_year: currentYear,
+              total_grades: grades.length,
+              performance_by_grade: performanceByGrade,
+              grade_distribution: gradeDistribution,
+              average_score: averageScore,
+              generated_at: new Date().toISOString()
             },
             generated_by: principalId
           }
         });
         break;
       case 'ATTENDANCE':
+        // Fetch real attendance data
+        const attendanceRecords = await prisma.attendanceRecord.findMany({
+          include: {
+            student: true
+          },
+          orderBy: { date: 'desc' },
+          take: 1000
+        });
+
+        // Calculate attendance statistics
+        const totalRecords = attendanceRecords.length;
+        const presentCount = attendanceRecords.filter(r => r.status === 'PRESENT').length;
+        const absentCount = attendanceRecords.filter(r => r.status === 'ABSENT').length;
+        const lateCount = attendanceRecords.filter(r => r.status === 'LATE').length;
+        const excusedCount = attendanceRecords.filter(r => r.status === 'EXCUSED').length;
+        const attendanceRate = totalRecords > 0 ? ((presentCount / totalRecords) * 100).toFixed(1) : 0;
+
+        // Calculate attendance by date
+        const attendanceByDate = {};
+        attendanceRecords.forEach(record => {
+          const date = record.date ? record.date.toISOString().split('T')[0] : 'Unknown';
+          if (!attendanceByDate[date]) {
+            attendanceByDate[date] = { present: 0, absent: 0, late: 0, excused: 0 };
+          }
+          if (record.status === 'PRESENT') attendanceByDate[date].present++;
+          else if (record.status === 'ABSENT') attendanceByDate[date].absent++;
+          else if (record.status === 'LATE') attendanceByDate[date].late++;
+          else if (record.status === 'EXCUSED') attendanceByDate[date].excused++;
+        });
+
         report = await prisma.report.create({
           data: {
             title: 'Attendance Report',
             data: {
               type: 'ATTENDANCE',
               description: 'Student attendance statistics and trends',
-              academic_year: new Date().getFullYear().toString()
+              academic_year: currentYear,
+              total_records: totalRecords,
+              present_count: presentCount,
+              absent_count: absentCount,
+              late_count: lateCount,
+              excused_count: excusedCount,
+              attendance_rate: parseFloat(attendanceRate),
+              attendance_by_date: attendanceByDate,
+              generated_at: new Date().toISOString()
             },
             generated_by: principalId
           }
@@ -2388,7 +2706,7 @@ async function generateReport(req, res) {
         report = await prisma.complianceReport.create({
           data: {
             report_name: 'Compliance Report',
-            academic_year: new Date().getFullYear().toString(),
+            academic_year: currentYear,
             compliance_type: 'GENERAL',
             status: 'PENDING',
             findings: [],
@@ -2410,7 +2728,7 @@ async function generateReport(req, res) {
     return res.status(201).json(report);
   } catch (error) {
     console.error('Generate report error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
 
@@ -2502,7 +2820,18 @@ async function getComplianceReports(req, res) {
       orderBy: { created_at: 'desc' }
     });
 
-    return res.json(reports);
+    // Format for frontend
+    const formatted = reports.map(r => ({
+      report_id: r.compliance_report_id,
+      report_type: r.report_type || 'COMPLIANCE',
+      title: r.title,
+      description: r.description || '',
+      generated_date: r.created_at,
+      status: r.status,
+      submitted_date: r.submission_date
+    }));
+
+    return res.json(formatted);
   } catch (error) {
     console.error('Get compliance reports error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -2707,6 +3036,7 @@ module.exports = {
   
   // Governance & Compliance
   getGovernanceOverview,
+  getPTSAExecutives,
   getSIPs,
   approveSIP,
   recognizePTSAExecutive,
@@ -2729,6 +3059,7 @@ module.exports = {
   // Communication
   createAnnouncement,
   getAnnouncements,
+  deleteAnnouncement,
   sendUrgentAlert,
   getCommunicationLog,
   

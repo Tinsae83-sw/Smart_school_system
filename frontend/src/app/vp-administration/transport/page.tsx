@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAdministrationTransportTranslations } from "@/translations/vp-administration-transport";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
 
@@ -56,6 +58,8 @@ type TransportSchedule = {
 };
 
 export default function TransportPage() {
+  const { language } = useLanguage();
+  const t = vpAdministrationTransportTranslations[language];
   const [activeTab, setActiveTab] = useState<"vehicles" | "maintenance" | "assignments" | "schedules">("vehicles");
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [maintenance, setMaintenance] = useState<VehicleMaintenance[]>([]);
@@ -95,6 +99,46 @@ export default function TransportPage() {
   const maintenanceStatuses = ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
   const shifts = ["MORNING", "AFTERNOON", "NIGHT", "FULL_DAY"];
   const scheduleStatuses = ["ACTIVE", "SUSPENDED", "CANCELLED"];
+
+  function translateValue(value: string) {
+    const labels: Record<string, string> = {
+      BUS: t.bus,
+      VAN: t.van,
+      CAR: t.car,
+      TRUCK: t.truck,
+      MINIBUS: t.minibus,
+      DIESEL: t.diesel,
+      PETROL: t.petrol,
+      ELECTRIC: t.electric,
+      HYBRID: t.hybrid,
+      AVAILABLE: t.available,
+      IN_USE: t.inUse,
+      MAINTENANCE: t.maintenance,
+      OUT_OF_SERVICE: t.outOfService,
+      ROUTINE: t.routine,
+      REPAIR: t.repair,
+      INSPECTION: t.inspection,
+      EMERGENCY: t.emergency,
+      SCHEDULED: t.scheduledStatus,
+      IN_PROGRESS: t.inProgress,
+      COMPLETED: t.completed,
+      CANCELLED: t.cancelled,
+      MORNING: t.morning,
+      AFTERNOON: t.afternoon,
+      NIGHT: t.night,
+      FULL_DAY: t.fullDay,
+      ACTIVE: t.active,
+      SUSPENDED: t.suspended,
+      Monday: t.monday,
+      Tuesday: t.tuesday,
+      Wednesday: t.wednesday,
+      Thursday: t.thursday,
+      Friday: t.friday,
+      Saturday: t.saturday,
+      Sunday: t.sunday,
+    };
+    return labels[value] ?? value.replace(/_/g, " ");
+  }
 
   async function fetchData() {
     setLoading(true);
@@ -220,15 +264,15 @@ export default function TransportPage() {
 
   function getStatusColor(status: string) {
     switch (status) {
-      case "AVAILABLE": return "bg-emerald-50 text-emerald-700";
+      case "AVAILABLE": return "bg-orange-50 text-orange-700";
       case "IN_USE": return "bg-blue-50 text-blue-700";
       case "MAINTENANCE": return "bg-amber-50 text-amber-700";
       case "OUT_OF_SERVICE": return "bg-rose-50 text-rose-700";
       case "SCHEDULED": return "bg-blue-50 text-blue-700";
       case "IN_PROGRESS": return "bg-amber-50 text-amber-700";
-      case "COMPLETED": return "bg-emerald-50 text-emerald-700";
+      case "COMPLETED": return "bg-orange-50 text-orange-700";
       case "CANCELLED": return "bg-rose-50 text-rose-700";
-      case "ACTIVE": return "bg-emerald-50 text-emerald-700";
+      case "ACTIVE": return "bg-orange-50 text-orange-700";
       case "SUSPENDED": return "bg-amber-50 text-amber-700";
       default: return "bg-gray-50 text-gray-700";
     }
@@ -238,8 +282,8 @@ export default function TransportPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Transport Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage school vehicles, maintenance, drivers, and schedules</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t.subtitle}</p>
         </div>
       </div>
 
@@ -253,7 +297,7 @@ export default function TransportPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Vehicles ({vehicles.length})
+            {t.vehicles} ({vehicles.length})
           </button>
           <button
             onClick={() => setActiveTab("maintenance")}
@@ -263,7 +307,7 @@ export default function TransportPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Maintenance ({maintenance.length})
+            {t.maintenance} ({maintenance.length})
           </button>
           <button
             onClick={() => setActiveTab("assignments")}
@@ -273,7 +317,7 @@ export default function TransportPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Driver Assignments ({assignments.length})
+            {t.driverAssignments} ({assignments.length})
           </button>
           <button
             onClick={() => setActiveTab("schedules")}
@@ -283,51 +327,51 @@ export default function TransportPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Schedules ({schedules.length})
+            {t.schedules} ({schedules.length})
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading...</div>
+          <div className="text-slate-500">{t.loading}</div>
         </div>
       ) : (
         <>
           {activeTab === "vehicles" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Vehicle Fleet</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.vehicleFleet}</h3>
                 <button
                   onClick={() => openModal("vehicle")}
                   className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 transition"
                 >
-                  Add Vehicle
+                  {t.addVehicle}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">License Plate</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Capacity</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Location</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.name}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.type}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.licensePlate}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.capacity}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.location}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {vehicles.map((vehicle) => (
                       <tr key={vehicle.vehicle_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{vehicle.vehicle_name}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{vehicle.vehicle_type}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{translateValue(vehicle.vehicle_type)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{vehicle.license_plate}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{vehicle.capacity} seats</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{vehicle.capacity} {t.seats}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{vehicle.current_location || "-"}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(vehicle.status)}`}>
-                            {vehicle.status}
+                            {translateValue(vehicle.status)}
                           </span>
                         </td>
                       </tr>
@@ -335,7 +379,7 @@ export default function TransportPage() {
                     {vehicles.length === 0 && (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No vehicles found. Click "Add Vehicle" to get started.
+                          {t.noVehicles}
                         </td>
                       </tr>
                     )}
@@ -348,37 +392,37 @@ export default function TransportPage() {
           {activeTab === "maintenance" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Maintenance Records</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.maintenanceRecords}</h3>
                 <button
                   onClick={() => openModal("maintenance")}
                   className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 transition"
                 >
-                  Schedule Maintenance
+                  {t.scheduleMaintenance}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Vehicle</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Description</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Scheduled</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Cost</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.vehicle}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.type}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.description}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.scheduled}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.cost}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {maintenance.map((maint) => (
                       <tr key={maint.maintenance_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{maint.vehicle_name}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{maint.maintenance_type}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{translateValue(maint.maintenance_type)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600 max-w-xs truncate">{maint.description}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{maint.scheduled_date}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{maint.cost ? `ETB ${maint.cost}` : "-"}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(maint.status)}`}>
-                            {maint.status}
+                            {translateValue(maint.status)}
                           </span>
                         </td>
                       </tr>
@@ -386,7 +430,7 @@ export default function TransportPage() {
                     {maintenance.length === 0 && (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No maintenance records found.
+                          {t.noMaintenance}
                         </td>
                       </tr>
                     )}
@@ -399,24 +443,24 @@ export default function TransportPage() {
           {activeTab === "assignments" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Driver Assignments</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.driverAssignments}</h3>
                 <button
                   onClick={() => openModal("assignment")}
                   className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 transition"
                 >
-                  Assign Driver
+                  {t.assignDriver}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Driver</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Vehicle</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Shift</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Route</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Assigned Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.driver}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.vehicle}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.shift}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.route}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.assignedDate}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -424,12 +468,12 @@ export default function TransportPage() {
                       <tr key={assignment.assignment_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{assignment.driver_name}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{assignment.vehicle_name}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{assignment.shift}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{translateValue(assignment.shift)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{assignment.route || "-"}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{assignment.assigned_date}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(assignment.status)}`}>
-                            {assignment.status}
+                            {translateValue(assignment.status)}
                           </span>
                         </td>
                       </tr>
@@ -437,7 +481,7 @@ export default function TransportPage() {
                     {assignments.length === 0 && (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No driver assignments found.
+                          {t.noAssignments}
                         </td>
                       </tr>
                     )}
@@ -450,25 +494,25 @@ export default function TransportPage() {
           {activeTab === "schedules" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Transport Schedules</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.transportSchedules}</h3>
                 <button
                   onClick={() => openModal("schedule")}
                   className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 transition"
                 >
-                  Add Schedule
+                  {t.addSchedule}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Vehicle</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Route</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Departure</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Arrival</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Days</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Purpose</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.vehicle}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.route}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.departure}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.arrival}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.days}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.purpose}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -478,11 +522,11 @@ export default function TransportPage() {
                         <td className="px-6 py-3 text-sm text-slate-600">{schedule.route}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{schedule.departure_time}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{schedule.arrival_time}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{schedule.days_of_week.join(", ")}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{schedule.days_of_week.map(translateValue).join(", ")}</td>
                         <td className="px-6 py-3 text-sm text-slate-600 max-w-xs truncate">{schedule.purpose}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(schedule.status)}`}>
-                            {schedule.status}
+                            {translateValue(schedule.status)}
                           </span>
                         </td>
                       </tr>
@@ -490,7 +534,7 @@ export default function TransportPage() {
                     {schedules.length === 0 && (
                       <tr>
                         <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No schedules found.
+                          {t.noSchedules}
                         </td>
                       </tr>
                     )}
@@ -507,10 +551,10 @@ export default function TransportPage() {
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {modalType === "vehicle" && "Add Vehicle"}
-                {modalType === "maintenance" && "Schedule Maintenance"}
-                {modalType === "assignment" && "Assign Driver"}
-                {modalType === "schedule" && "Add Schedule"}
+                {modalType === "vehicle" && t.addVehicleModal}
+                {modalType === "maintenance" && t.scheduleMaintenanceModal}
+                {modalType === "assignment" && t.assignDriverModal}
+                {modalType === "schedule" && t.addScheduleModal}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -527,7 +571,7 @@ export default function TransportPage() {
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle Name *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.vehicleNameRequired}</label>
                       <input
                         type="text"
                         name="vehicle_name"
@@ -538,7 +582,7 @@ export default function TransportPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle Type *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.vehicleTypeRequired}</label>
                       <select
                         name="vehicle_type"
                         value={formData.vehicle_type}
@@ -547,14 +591,14 @@ export default function TransportPage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                       >
                         {vehicleTypes.map(type => (
-                          <option key={type} value={type}>{type}</option>
+                          <option key={type} value={type}>{translateValue(type)}</option>
                         ))}
                       </select>
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">License Plate *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.licensePlateRequired}</label>
                       <input
                         type="text"
                         name="license_plate"
@@ -565,7 +609,7 @@ export default function TransportPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Capacity *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.capacityRequired}</label>
                       <input
                         type="number"
                         name="capacity"
@@ -579,7 +623,7 @@ export default function TransportPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Model</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.model}</label>
                       <input
                         type="text"
                         name="model"
@@ -589,7 +633,7 @@ export default function TransportPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Year</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.year}</label>
                       <input
                         type="number"
                         name="year"
@@ -603,7 +647,7 @@ export default function TransportPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Fuel Type *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.fuelTypeRequired}</label>
                       <select
                         name="fuel_type"
                         value={formData.fuel_type}
@@ -612,12 +656,12 @@ export default function TransportPage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                       >
                         {fuelTypes.map(type => (
-                          <option key={type} value={type}>{type}</option>
+                          <option key={type} value={type}>{translateValue(type)}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.statusRequired}</label>
                       <select
                         name="status"
                         value={formData.status}
@@ -626,13 +670,13 @@ export default function TransportPage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                       >
                         {vehicleStatuses.map(status => (
-                          <option key={status} value={status}>{status.replace(/_/g, " ")}</option>
+                          <option key={status} value={status}>{translateValue(status)}</option>
                         ))}
                       </select>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Current Location</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.currentLocation}</label>
                     <input
                       type="text"
                       name="current_location"
@@ -642,7 +686,7 @@ export default function TransportPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.notes}</label>
                     <textarea
                       name="notes"
                       value={formData.notes}
@@ -657,7 +701,7 @@ export default function TransportPage() {
               {modalType === "maintenance" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.vehicle} *</label>
                     <select
                       name="vehicle_id"
                       value={formData.vehicle_id}
@@ -665,14 +709,14 @@ export default function TransportPage() {
                       required
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                     >
-                      <option value="">Select vehicle</option>
+                      <option value="">{t.selectVehicle}</option>
                       {vehicles.map(v => (
                         <option key={v.vehicle_id} value={v.vehicle_id}>{v.vehicle_name}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Maintenance Type *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.maintenanceTypeRequired}</label>
                     <select
                       name="maintenance_type"
                       value={formData.maintenance_type}
@@ -681,12 +725,12 @@ export default function TransportPage() {
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                     >
                       {maintenanceTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
+                        <option key={type} value={type}>{translateValue(type)}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Description *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.descriptionRequired}</label>
                     <textarea
                       name="description"
                       value={formData.description}
@@ -698,7 +742,7 @@ export default function TransportPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Scheduled Date *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.scheduledDateRequired}</label>
                       <input
                         type="date"
                         name="scheduled_date"
@@ -709,7 +753,7 @@ export default function TransportPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Estimated Cost (ETB)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.estimatedCost}</label>
                       <input
                         type="number"
                         name="cost"
@@ -726,7 +770,7 @@ export default function TransportPage() {
               {modalType === "assignment" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.vehicle} *</label>
                     <select
                       name="vehicle_id"
                       value={formData.vehicle_id}
@@ -734,14 +778,14 @@ export default function TransportPage() {
                       required
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                     >
-                      <option value="">Select vehicle</option>
+                      <option value="">{t.selectVehicle}</option>
                       {vehicles.map(v => (
                         <option key={v.vehicle_id} value={v.vehicle_id}>{v.vehicle_name}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Driver ID *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.driverIdRequired}</label>
                     <input
                       type="number"
                       name="driver_id"
@@ -753,7 +797,7 @@ export default function TransportPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Shift *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.shiftRequired}</label>
                       <select
                         name="shift"
                         value={formData.shift}
@@ -762,12 +806,12 @@ export default function TransportPage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                       >
                         {shifts.map(shift => (
-                          <option key={shift} value={shift}>{shift}</option>
+                          <option key={shift} value={shift}>{translateValue(shift)}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Route</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.route}</label>
                       <input
                         type="text"
                         name="route"
@@ -783,7 +827,7 @@ export default function TransportPage() {
               {modalType === "schedule" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.vehicle} *</label>
                     <select
                       name="vehicle_id"
                       value={formData.vehicle_id}
@@ -791,14 +835,14 @@ export default function TransportPage() {
                       required
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                     >
-                      <option value="">Select vehicle</option>
+                      <option value="">{t.selectVehicle}</option>
                       {vehicles.map(v => (
                         <option key={v.vehicle_id} value={v.vehicle_id}>{v.vehicle_name}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Route *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.routeRequired}</label>
                     <input
                       type="text"
                       name="route"
@@ -810,7 +854,7 @@ export default function TransportPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Departure Time *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.departureTimeRequired}</label>
                       <input
                         type="time"
                         name="departure_time"
@@ -821,7 +865,7 @@ export default function TransportPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Arrival Time *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.arrivalTimeRequired}</label>
                       <input
                         type="time"
                         name="arrival_time"
@@ -833,19 +877,19 @@ export default function TransportPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Days of Week (comma-separated) *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.daysOfWeekRequired}</label>
                     <input
                       type="text"
                       name="days_of_week"
                       value={formData.days_of_week}
                       onChange={handleInputChange}
                       required
-                      placeholder="e.g., Monday, Wednesday, Friday"
+                      placeholder={t.daysPlaceholder}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Purpose *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.purposeRequired}</label>
                     <textarea
                       name="purpose"
                       value={formData.purpose}
@@ -864,13 +908,13 @@ export default function TransportPage() {
                   onClick={() => setShowModal(false)}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
                   className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 transition"
                 >
-                  Submit
+                  {t.submit}
                 </button>
               </div>
             </form>

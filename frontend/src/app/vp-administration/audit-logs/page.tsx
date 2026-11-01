@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAdministrationReportingTranslations } from "@/translations/vp-administration-reporting";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
 
@@ -10,10 +12,12 @@ type AuditLog = {
   action: string;
   timestamp: string;
   ip_address?: string;
-  details?: string;
+  details?: unknown;
 };
 
 export default function AuditLogsPage() {
+  const { language } = useLanguage();
+  const t = vpAdministrationReportingTranslations[language];
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -22,6 +26,13 @@ export default function AuditLogsPage() {
     dateFrom: "",
     dateTo: "",
   });
+
+  function formatDetails(details: unknown): string {
+    if (details === null || details === undefined || details === "") return "-";
+    if (typeof details === "string") return details;
+    if (typeof details === "object") return JSON.stringify(details);
+    return String(details);
+  }
 
   async function fetchLogs() {
     setLoading(true);
@@ -88,10 +99,10 @@ export default function AuditLogsPage() {
 
   function getActionColor(action: string) {
     const actionLower = action.toLowerCase();
-    if (actionLower.includes("create") || actionLower.includes("add")) return "bg-emerald-50 text-emerald-700";
+    if (actionLower.includes("create") || actionLower.includes("add")) return "bg-orange-50 text-orange-700";
     if (actionLower.includes("update") || actionLower.includes("edit")) return "bg-blue-50 text-blue-700";
     if (actionLower.includes("delete") || actionLower.includes("remove")) return "bg-rose-50 text-rose-700";
-    if (actionLower.includes("approve") || actionLower.includes("accept")) return "bg-emerald-50 text-emerald-700";
+    if (actionLower.includes("approve") || actionLower.includes("accept")) return "bg-orange-50 text-orange-700";
     if (actionLower.includes("reject") || actionLower.includes("deny")) return "bg-rose-50 text-rose-700";
     return "bg-gray-50 text-gray-700";
   }
@@ -100,43 +111,43 @@ export default function AuditLogsPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Audit Log</h1>
-          <p className="mt-1 text-sm text-slate-500">Track all administrative actions and system changes</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t.auditTitle}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t.auditSubtitle}</p>
         </div>
         <button
           onClick={exportLogs}
           className="rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
         >
-          Export Logs
+          {t.exportLogs}
         </button>
       </div>
 
       <div className="mb-6 rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">User</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">{t.user}</label>
             <input
               type="text"
               name="user"
               value={filters.user}
               onChange={handleFilterChange}
-              placeholder="Filter by user name"
+              placeholder={t.filterByUser}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Action</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">{t.action}</label>
             <input
               type="text"
               name="action"
               value={filters.action}
               onChange={handleFilterChange}
-              placeholder="Filter by action"
+              placeholder={t.filterByAction}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">From Date</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">{t.fromDate}</label>
             <input
               type="date"
               name="dateFrom"
@@ -146,7 +157,7 @@ export default function AuditLogsPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">To Date</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">{t.toDate}</label>
             <input
               type="date"
               name="dateTo"
@@ -161,20 +172,20 @@ export default function AuditLogsPage() {
             onClick={applyFilters}
             className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
           >
-            Apply Filters
+            {t.applyFilters}
           </button>
           <button
             onClick={clearFilters}
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
           >
-            Clear Filters
+            {t.clearFilters}
           </button>
         </div>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading audit logs...</div>
+          <div className="text-slate-500">{t.loadingAuditLogs}</div>
         </div>
       ) : (
         <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
@@ -182,11 +193,11 @@ export default function AuditLogsPage() {
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Timestamp</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">User</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Action</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Details</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">IP Address</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.timestamp}</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.user}</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.action}</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.details}</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.ipAddress}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -201,14 +212,14 @@ export default function AuditLogsPage() {
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600 max-w-md truncate">{log.details || "-"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 max-w-md truncate">{formatDetails(log.details)}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">{log.ip_address || "-"}</td>
                   </tr>
                 ))}
                 {logs.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400">
-                      No audit logs found matching your filters.
+                      {t.noAuditLogs}
                     </td>
                   </tr>
                 )}

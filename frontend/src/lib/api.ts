@@ -70,4 +70,27 @@ export const vpAdminApi = {
   },
 };
 
+/**
+ * VP Academic API helper
+ */
+export const vpAcademicApi = {
+  get: (endpoint: string) => apiFetch(`/vp-academic${endpoint}`, { method: 'GET' }),
+  post: (endpoint: string, data: any) => apiFetch(`/vp-academic${endpoint}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  put: (endpoint: string, data: any) => apiFetch(`/vp-academic${endpoint}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  delete: (endpoint: string) => apiFetch(`/vp-academic${endpoint}`, { method: 'DELETE' }),
+  request: (method: string, endpoint: string, data?: any) => {
+    const config: RequestInit = { method: method.toUpperCase() };
+    if (data) {
+      config.body = JSON.stringify(data);
+    }
+    return apiFetch(`/vp-academic${endpoint}`, config);
+  },
+};
+
 export default apiFetch;

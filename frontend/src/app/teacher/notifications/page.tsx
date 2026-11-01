@@ -39,7 +39,7 @@ export default function NotificationsPage() {
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">Notifications</h1>
         <div className="space-y-4">
           {notifications.map((notification: any) => (
-            <div key={notification.notification_id} className={`bg-white dark:bg-slate-800 rounded-2xl border p-6 ${notification.read ? "border-slate-200 dark:border-slate-700" : "border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/30"}`}>
+            <div key={notification.notification_id} className={`bg-white dark:bg-slate-800 rounded-2xl border p-6 ${notification.read ? "border-slate-200 dark:border-slate-700" : "border-navy-200 dark:border-navy-700 bg-navy-50 dark:bg-navy-900/30"}`}>
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{notification.title}</h2>
               <p className="text-slate-600 dark:text-slate-300 mt-2">{notification.message}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">{new Date(notification.created_at).toLocaleString()}</p>

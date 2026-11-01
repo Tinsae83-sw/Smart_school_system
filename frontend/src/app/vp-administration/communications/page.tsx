@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { vpAdminApi } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAdministrationTranslations } from "@/translations/vp-administration";
 
 type Announcement = {
   announcement_id: number;
@@ -24,6 +26,8 @@ type Message = {
 };
 
 export default function CommunicationsPage() {
+  const { language } = useLanguage();
+  const t = vpAdministrationTranslations[language].communicationsPage;
   const [activeTab, setActiveTab] = useState<"announcements" | "messages">("announcements");
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -92,7 +96,7 @@ export default function CommunicationsPage() {
   }
 
   async function deleteAnnouncement(announcementId: number) {
-    if (!confirm("Are you sure you want to delete this announcement?")) return;
+    if (!confirm(t.confirmDelete)) return;
     try {
       const res = await vpAdminApi.delete(`/announcements/${announcementId}`);
       if (res.ok) {
@@ -112,19 +116,40 @@ export default function CommunicationsPage() {
     }
   }
 
+  function translateType(type: string) {
+    const labels: Record<string, string> = {
+      GENERAL: t.general,
+      URGENT: t.urgent,
+      ADMINISTRATIVE: t.administrative,
+      MAINTENANCE: t.maintenance,
+    };
+    return labels[type] ?? type;
+  }
+
+  function translateAudience(audience: string) {
+    const labels: Record<string, string> = {
+      ALL: t.all,
+      NON_ACADEMIC_STAFF: t.nonAcademicStaff,
+      TEACHERS: t.teachers,
+      STUDENTS: t.students,
+      PARENTS: t.parents,
+    };
+    return labels[audience] ?? audience.replace(/_/g, " ");
+  }
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Communication & Announcements</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage administrative announcements and communications</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t.subtitle}</p>
         </div>
         {activeTab === "announcements" && (
           <button
             onClick={() => setShowModal(true)}
             className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
           >
-            Post Announcement
+            {t.postAnnouncement}
           </button>
         )}
       </div>
@@ -139,7 +164,7 @@ export default function CommunicationsPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Announcements ({announcements.length})
+            {t.announcements} ({announcements.length})
           </button>
           <button
             onClick={() => setActiveTab("messages")}
@@ -149,14 +174,14 @@ export default function CommunicationsPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Messages ({messages.length})
+            {t.messages} ({messages.length})
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading...</div>
+          <div className="text-slate-500">{t.loading}</div>
         </div>
       ) : (
         <>
@@ -166,13 +191,13 @@ export default function CommunicationsPage() {
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Title</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Target Audience</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Created By</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Date</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.titleColumn}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.type}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.targetAudience}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.createdBy}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.date}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">{t.actions}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -181,30 +206,30 @@ export default function CommunicationsPage() {
                         <td className="px-6 py-4 text-sm font-medium text-slate-900">{announcement.title}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getTypeColor(announcement.announcement_type)}`}>
-                            {announcement.announcement_type}
+                            {translateType(announcement.announcement_type)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">{announcement.target_audience.replace(/_/g, " ")}</td>
+                        <td className="px-6 py-4 text-sm text-slate-600">{translateAudience(announcement.target_audience)}</td>
                         <td className="px-6 py-4 text-sm text-slate-600">{announcement.created_by}</td>
                         <td className="px-6 py-4 text-sm text-slate-600">{new Date(announcement.created_at).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${announcement.is_active ? "bg-emerald-50 text-emerald-700" : "bg-gray-50 text-gray-700"}`}>
-                            {announcement.is_active ? "Active" : "Inactive"}
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${announcement.is_active ? "bg-orange-50 text-orange-700" : "bg-gray-50 text-gray-700"}`}>
+                            {announcement.is_active ? t.active : t.inactive}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => toggleAnnouncement(announcement.announcement_id, announcement.is_active)}
-                              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${announcement.is_active ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
+                              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${announcement.is_active ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-orange-50 text-orange-700 hover:bg-orange-100"}`}
                             >
-                              {announcement.is_active ? "Deactivate" : "Activate"}
+                              {announcement.is_active ? t.deactivate : t.activate}
                             </button>
                             <button
                               onClick={() => deleteAnnouncement(announcement.announcement_id)}
                               className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition"
                             >
-                              Delete
+                              {t.delete}
                             </button>
                           </div>
                         </td>
@@ -213,7 +238,7 @@ export default function CommunicationsPage() {
                     {announcements.length === 0 && (
                       <tr>
                         <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No announcements found. Click "Post Announcement" to get started.
+                          {t.noAnnouncements}
                         </td>
                       </tr>
                     )}
@@ -229,11 +254,11 @@ export default function CommunicationsPage() {
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">From</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">To</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Message</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Date</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.from}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.to}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.message}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.date}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -244,8 +269,8 @@ export default function CommunicationsPage() {
                         <td className="px-6 py-4 text-sm text-slate-700 max-w-xs truncate">{message.content}</td>
                         <td className="px-6 py-4 text-sm text-slate-600">{new Date(message.timestamp).toLocaleString()}</td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${message.is_read ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                            {message.is_read ? "Read" : "Unread"}
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${message.is_read ? "bg-orange-50 text-orange-700" : "bg-amber-50 text-amber-700"}`}>
+                            {message.is_read ? t.read : t.unread}
                           </span>
                         </td>
                       </tr>
@@ -253,7 +278,7 @@ export default function CommunicationsPage() {
                     {messages.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No messages found.
+                          {t.noMessages}
                         </td>
                       </tr>
                     )}
@@ -269,7 +294,7 @@ export default function CommunicationsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Post New Announcement</h2>
+              <h2 className="text-xl font-bold text-slate-900">{t.newAnnouncement}</h2>
               <button
                 onClick={() => setShowModal(false)}
                 className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
@@ -282,57 +307,57 @@ export default function CommunicationsPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t.titleRequired}</label>
                 <input
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
                   required
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-navy-500 focus:outline-none focus:ring-1 focus:ring-navy-500"
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Type *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t.typeRequired}</label>
                   <select
                     name="announcement_type"
                     value={formData.announcement_type}
                     onChange={handleInputChange}
                     required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-navy-500 focus:outline-none focus:ring-1 focus:ring-navy-500"
                   >
                     {announcementTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
+                      <option key={type} value={type}>{translateType(type)}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Target Audience *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t.audienceRequired}</label>
                   <select
                     name="target_audience"
                     value={formData.target_audience}
                     onChange={handleInputChange}
                     required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-navy-500 focus:outline-none focus:ring-1 focus:ring-navy-500"
                   >
                     {targetAudiences.map(audience => (
-                      <option key={audience} value={audience}>{audience.replace(/_/g, " ")}</option>
+                      <option key={audience} value={audience}>{translateAudience(audience)}</option>
                     ))}
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Content *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t.contentRequired}</label>
                 <textarea
                   name="content"
                   value={formData.content}
                   onChange={handleInputChange}
                   required
                   rows={4}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-navy-500 focus:outline-none focus:ring-1 focus:ring-navy-500"
                 />
               </div>
 
@@ -342,13 +367,13 @@ export default function CommunicationsPage() {
                   onClick={() => setShowModal(false)}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+                  className="rounded-xl bg-navy-600 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-700 transition"
                 >
-                  Post Announcement
+                  {t.submitAnnouncement}
                 </button>
               </div>
             </form>

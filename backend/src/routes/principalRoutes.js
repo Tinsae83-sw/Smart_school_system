@@ -194,6 +194,10 @@ router.get('/governance/sip', principalController.getSIPs);
 // PUT /api/principal/governance/sip/:id/approve
 router.put('/governance/sip/:id/approve', principalController.approveSIP);
 
+// Get PTSA Executives
+// GET /api/principal/governance/ptsa/executive
+router.get('/governance/ptsa/executive', principalController.getPTSAExecutives);
+
 // Recognize PTSA Executive
 // POST /api/principal/governance/ptsa/executive
 router.post('/governance/ptsa/executive', principalController.recognizePTSAExecutive);
@@ -255,6 +259,10 @@ router.post('/communications/announcements', principalController.createAnnouncem
 // Get School Announcements
 // GET /api/principal/communications/announcements
 router.get('/communications/announcements', principalController.getAnnouncements);
+
+// Delete Announcement
+// DELETE /api/principal/communications/announcements/:id
+router.delete('/communications/announcements/:id', principalController.deleteAnnouncement);
 
 // Send Urgent Alert
 // POST /api/principal/communications/alerts

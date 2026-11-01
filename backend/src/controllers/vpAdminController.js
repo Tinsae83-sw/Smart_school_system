@@ -3,14 +3,26 @@ const prisma = require('../config/prisma');
 // Dashboard
 exports.getDashboard = async (req, res) => {
   try {
-    const [totalAssets, totalFacilities, totalStaff, disciplineCases, inventoryItems, pendingRequests] = await Promise.all([
+    const [totalAssets, totalFacilities, totalStaff, disciplineCases, inventoryItems, pendingRequests, budgetData, facilityBookings, maintenanceRequests] = await Promise.all([
       prisma.assetInventory.count(),
       prisma.facility.count(),
       prisma.nonAcademicStaff.count(),
       prisma.incident.count({ where: { status: { not: 'CLOSED' } } }),
       prisma.inventory.count(),
       prisma.purchaseRequest.count({ where: { status: 'PENDING' } }),
+      prisma.budget.findFirst({ orderBy: { academic_year: 'desc' } }),
+      prisma.facilityBooking.count({ 
+        where: { 
+          booking_date: { gte: new Date(new Date().setDate(new Date().getDate() - 7)) }
+        }
+      }),
+      prisma.facilityMaintenance.count({ where: { status: 'PENDING' } }),
     ]);
+
+    // Calculate budget utilization
+    const budgetRemaining = budgetData?.remaining_amount || 0;
+    const budgetTotal = budgetData?.total_amount || 1;
+    const budgetUtilization = budgetTotal > 0 ? Math.round(((budgetTotal - budgetRemaining) / budgetTotal) * 100) : 0;
 
     res.json({
       total_assets: totalAssets,
@@ -19,6 +31,10 @@ exports.getDashboard = async (req, res) => {
       discipline_cases: disciplineCases,
       inventory_items: inventoryItems,
       pending_requests: pendingRequests,
+      budget_remaining: budgetRemaining,
+      budget_utilization: budgetUtilization,
+      facility_bookings_this_week: facilityBookings,
+      pending_maintenance: maintenanceRequests,
     });
   } catch (error) {
     console.error('Dashboard error:', error);
@@ -1727,5 +1743,81 @@ exports.createFoodTransaction = async (req, res) => {
   } catch (error) {
     console.error('Create food transaction error:', error);
     res.status(500).json({ error: 'Failed to create food transaction' });
+  }
+};
+
+// Activities (Recent Activity)
+exports.getActivities = async (req, res) => {
+  try {
+    // Get recent audit logs as activities
+    const auditLogs = await prisma.auditLog.findMany({
+      include: {
+        user: {
+          select: { full_name: true },
+        },
+      },
+      orderBy: { timestamp: 'desc' },
+      take: 20,
+    });
+
+    const activities = auditLogs.map(log => ({
+      id: log.log_id,
+      type: log.action,
+      description: `${log.user?.full_name || 'Unknown'} ${log.action.toLowerCase()}`,
+      timestamp: log.timestamp,
+    }));
+
+    res.json(activities);
+  } catch (error) {
+    console.error('Get activities error:', error);
+    res.status(500).json({ error: 'Failed to fetch activities' });
+  }
+};
+
+// Notifications
+exports.getNotifications = async (req, res) => {
+  try {
+    const notifications = [];
+    
+    // Check for pending requests
+    const pendingPurchaseRequests = await prisma.purchaseRequest.count({ where: { status: 'PENDING' } });
+    if (pendingPurchaseRequests > 0) {
+      notifications.push({
+        id: Date.now(),
+        type: 'PURCHASE_REQUEST',
+        message: `${pendingPurchaseRequests} pending purchase request(s)`,
+        priority: 'MEDIUM',
+        timestamp: new Date(),
+      });
+    }
+
+    // Check for pending maintenance
+    const pendingMaintenance = await prisma.facilityMaintenance.count({ where: { status: 'PENDING' } });
+    if (pendingMaintenance > 0) {
+      notifications.push({
+        id: Date.now() + 1,
+        type: 'MAINTENANCE',
+        message: `${pendingMaintenance} pending maintenance request(s)`,
+        priority: 'HIGH',
+        timestamp: new Date(),
+      });
+    }
+
+    // Check for open incidents
+    const openIncidents = await prisma.incident.count({ where: { status: { not: 'CLOSED' } } });
+    if (openIncidents > 0) {
+      notifications.push({
+        id: Date.now() + 2,
+        type: 'INCIDENT',
+        message: `${openIncidents} open incident(s)`,
+        priority: 'HIGH',
+        timestamp: new Date(),
+      });
+    }
+
+    res.json(notifications);
+  } catch (error) {
+    console.error('Get notifications error:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 };

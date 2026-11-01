@@ -188,7 +188,7 @@ export default function PTSARepresentativeLayout({ children }: { children: React
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-navy-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
@@ -202,20 +202,18 @@ export default function PTSARepresentativeLayout({ children }: { children: React
       )}
 
       <aside
+        data-app-sidebar
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform transition-transform duration-200 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-700 px-6 py-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-600 text-white">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-              </svg>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy-600 text-white overflow-hidden">
+              <img src="/school-logo.jpg" alt="School Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Smart School</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Yekatit 25/67</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">PTSA Panel</p>
             </div>
             <button className="ml-auto lg:hidden" onClick={() => setSidebarOpen(false)}>
@@ -266,7 +264,7 @@ export default function PTSARepresentativeLayout({ children }: { children: React
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-6">
+        <header data-app-navbar className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-6">
           <button className="lg:hidden" onClick={() => setSidebarOpen(true)}>
             <svg className="w-6 h-6 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -279,7 +277,7 @@ export default function PTSARepresentativeLayout({ children }: { children: React
           </div>
         </header>
 
-        <main className="p-6">{children}</main>
+        <main data-app-content className="p-6">{children}</main>
       </div>
     </div>
   );

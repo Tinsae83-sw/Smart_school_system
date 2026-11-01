@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { vpAdminApi } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAdministrationTranslations } from "@/translations/vp-administration";
 
 type Budget = {
   budget_id: number;
@@ -45,6 +47,8 @@ type PurchaseRequest = {
 };
 
 export default function FinancePage() {
+  const { language } = useLanguage();
+  const t = vpAdministrationTranslations[language].financePage;
   const [activeTab, setActiveTab] = useState<"budget" | "expenditures" | "income" | "requests">("budget");
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [expenditures, setExpenditures] = useState<Expenditure[]>([]);
@@ -73,6 +77,36 @@ export default function FinancePage() {
   const priorities = ["LOW", "MEDIUM", "HIGH", "URGENT"];
   const requestCategories = ["EQUIPMENT", "MATERIALS", "SUPPLIES", "SERVICES"];
   const statuses = ["PENDING", "APPROVED", "REJECTED", "ORDERED", "RECEIVED"];
+
+  function translateValue(value: string) {
+    const labels: Record<string, string> = {
+      ACTIVE: t.active,
+      PENDING: t.pending,
+      APPROVED: t.approved,
+      REJECTED: t.rejected,
+      ORDERED: t.ordered,
+      RECEIVED: t.received,
+      CLOSED: t.closed,
+      SALARIES: t.salaries,
+      MATERIALS: t.materials,
+      INFRASTRUCTURE: t.infrastructure,
+      MAINTENANCE: t.maintenance,
+      EXTRACURRICULAR: t.extracurricular,
+      EQUIPMENT: t.equipment,
+      GOVERNMENT_GRANT: t.governmentGrant,
+      SCHOOL_FEES: t.schoolFees,
+      DONATION: t.donation,
+      PTSA_CONTRIBUTION: t.ptsaContribution,
+      OTHER: t.other,
+      LOW: t.low,
+      MEDIUM: t.medium,
+      HIGH: t.high,
+      URGENT: t.urgent,
+      SUPPLIES: t.supplies,
+      SERVICES: t.services,
+    };
+    return labels[value] ?? value.replace(/_/g, " ");
+  }
 
   async function fetchData() {
     setLoading(true);
@@ -183,12 +217,12 @@ export default function FinancePage() {
 
   function getStatusColor(status: string) {
     switch (status) {
-      case "ACTIVE": return "bg-emerald-50 text-emerald-700";
+      case "ACTIVE": return "bg-orange-50 text-orange-700";
       case "PENDING": return "bg-amber-50 text-amber-700";
-      case "APPROVED": return "bg-emerald-50 text-emerald-700";
+      case "APPROVED": return "bg-orange-50 text-orange-700";
       case "REJECTED": return "bg-rose-50 text-rose-700";
       case "ORDERED": return "bg-blue-50 text-blue-700";
-      case "RECEIVED": return "bg-emerald-50 text-emerald-700";
+      case "RECEIVED": return "bg-orange-50 text-orange-700";
       case "CLOSED": return "bg-gray-50 text-gray-700";
       default: return "bg-gray-50 text-gray-700";
     }
@@ -212,8 +246,8 @@ export default function FinancePage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Financial Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage budgets, expenditures, income, and purchase requests</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t.subtitle}</p>
         </div>
       </div>
 
@@ -227,7 +261,7 @@ export default function FinancePage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Budget Overview
+            {t.budgetOverview}
           </button>
           <button
             onClick={() => setActiveTab("expenditures")}
@@ -237,7 +271,7 @@ export default function FinancePage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Expenditures ({expenditures.length})
+            {t.expenditures} ({expenditures.length})
           </button>
           <button
             onClick={() => setActiveTab("income")}
@@ -247,7 +281,7 @@ export default function FinancePage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Income ({income.length})
+            {t.income} ({income.length})
           </button>
           <button
             onClick={() => setActiveTab("requests")}
@@ -257,14 +291,14 @@ export default function FinancePage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Purchase Requests ({purchaseRequests.length})
+            {t.purchaseRequests} ({purchaseRequests.length})
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading...</div>
+          <div className="text-slate-500">{t.loading}</div>
         </div>
       ) : (
         <>
@@ -272,7 +306,7 @@ export default function FinancePage() {
             <div className="space-y-6">
               {budgets.map((budget) => {
                 const utilizationPercent = (budget.spent_amount / budget.total_amount) * 100;
-                const healthColor = utilizationPercent < 70 ? "bg-emerald-500" : utilizationPercent < 90 ? "bg-amber-500" : "bg-rose-500";
+                const healthColor = utilizationPercent < 70 ? "bg-orange-500" : utilizationPercent < 90 ? "bg-amber-500" : "bg-rose-500";
                 
                 return (
                   <div key={budget.budget_id} className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
@@ -282,25 +316,25 @@ export default function FinancePage() {
                         <p className="text-sm text-slate-500">{budget.academic_year}</p>
                       </div>
                       <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(budget.status)}`}>
-                        {budget.status}
+                        {translateValue(budget.status)}
                       </span>
                     </div>
                     
                     <div className="grid gap-4 sm:grid-cols-4 mb-4">
                       <div>
-                        <p className="text-xs text-slate-500 uppercase tracking-wider">Total Budget</p>
+                        <p className="text-xs text-slate-500 uppercase tracking-wider">{t.totalBudget}</p>
                         <p className="text-xl font-bold text-slate-900">{formatCurrency(budget.total_amount)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500 uppercase tracking-wider">Spent</p>
+                        <p className="text-xs text-slate-500 uppercase tracking-wider">{t.spent}</p>
                         <p className="text-xl font-bold text-rose-600">{formatCurrency(budget.spent_amount)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500 uppercase tracking-wider">Remaining</p>
-                        <p className="text-xl font-bold text-emerald-600">{formatCurrency(budget.remaining_amount)}</p>
+                        <p className="text-xs text-slate-500 uppercase tracking-wider">{t.remaining}</p>
+                        <p className="text-xl font-bold text-orange-600">{formatCurrency(budget.remaining_amount)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500 uppercase tracking-wider">Utilization</p>
+                        <p className="text-xs text-slate-500 uppercase tracking-wider">{t.utilization}</p>
                         <p className="text-xl font-bold text-slate-900">{utilizationPercent.toFixed(1)}%</p>
                       </div>
                     </div>
@@ -316,7 +350,7 @@ export default function FinancePage() {
               })}
               {budgets.length === 0 && (
                 <div className="rounded-2xl bg-white p-12 text-center shadow-sm border border-slate-200">
-                  <p className="text-sm text-slate-400">No budgets found.</p>
+                  <p className="text-sm text-slate-400">{t.noBudgets}</p>
                 </div>
               )}
             </div>
@@ -325,35 +359,35 @@ export default function FinancePage() {
           {activeTab === "expenditures" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Expenditure Log</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.expenditureLog}</h3>
                 <button
                   onClick={() => openModal("expenditure")}
                   className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 transition"
                 >
-                  Add Expenditure
+                  {t.addExpenditure}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Description</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Amount</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.date}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.category}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.description}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.amount}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {expenditures.map((exp) => (
                       <tr key={exp.expenditure_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm text-slate-600">{exp.expenditure_date}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{exp.category}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{translateValue(exp.category)}</td>
                         <td className="px-6 py-3 text-sm text-slate-700">{exp.description}</td>
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{formatCurrency(exp.amount)}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(exp.status)}`}>
-                            {exp.status}
+                            {translateValue(exp.status)}
                           </span>
                         </td>
                       </tr>
@@ -361,7 +395,7 @@ export default function FinancePage() {
                     {expenditures.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No expenditures recorded.
+                          {t.noExpenditures}
                         </td>
                       </tr>
                     )}
@@ -374,37 +408,37 @@ export default function FinancePage() {
           {activeTab === "income" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Income Transactions</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.incomeTransactions}</h3>
                 <button
                   onClick={() => openModal("income")}
-                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                  className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 transition"
                 >
-                  Add Income
+                  {t.addIncome}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Source</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Description</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Amount</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.date}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.source}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.description}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.amount}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {income.map((inc) => (
                       <tr key={inc.income_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm text-slate-600">{inc.income_date}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{inc.income_source.replace(/_/g, " ")}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{translateValue(inc.income_source)}</td>
                         <td className="px-6 py-3 text-sm text-slate-700">{inc.description}</td>
-                        <td className="px-6 py-3 text-sm font-medium text-emerald-600">+{formatCurrency(inc.amount)}</td>
+                        <td className="px-6 py-3 text-sm font-medium text-orange-600">+{formatCurrency(inc.amount)}</td>
                       </tr>
                     ))}
                     {income.length === 0 && (
                       <tr>
                         <td colSpan={4} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No income transactions recorded.
+                          {t.noIncome}
                         </td>
                       </tr>
                     )}
@@ -417,25 +451,25 @@ export default function FinancePage() {
           {activeTab === "requests" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Purchase Requests</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.purchaseRequests}</h3>
                 <button
                   onClick={() => openModal("request")}
                   className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 transition"
                 >
-                  New Request
+                  {t.submit}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Request #</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Item</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Quantity</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Total Cost</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Priority</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
-                      <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.requestNumber}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.item}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.quantity}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.totalCost}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.priority}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
+                      <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">{t.actions}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -447,12 +481,12 @@ export default function FinancePage() {
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{formatCurrency(req.total_cost)}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityColor(req.priority)}`}>
-                            {req.priority}
+                            {translateValue(req.priority)}
                           </span>
                         </td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(req.status)}`}>
-                            {req.status}
+                            {translateValue(req.status)}
                           </span>
                         </td>
                         <td className="px-6 py-3 text-right">
@@ -460,15 +494,15 @@ export default function FinancePage() {
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => handleRequestAction(req.request_id, "approve")}
-                                className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition"
+                                className="rounded-lg bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700 hover:bg-orange-100 transition"
                               >
-                                Approve
+                                {t.approve}
                               </button>
                               <button
                                 onClick={() => handleRequestAction(req.request_id, "reject")}
                                 className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition"
                               >
-                                Reject
+                                {t.reject}
                               </button>
                             </div>
                           )}
@@ -478,7 +512,7 @@ export default function FinancePage() {
                     {purchaseRequests.length === 0 && (
                       <tr>
                         <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No purchase requests found.
+                          {t.noRequests}
                         </td>
                       </tr>
                     )}
@@ -495,9 +529,9 @@ export default function FinancePage() {
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {modalType === "expenditure" && "Add Expenditure"}
-                {modalType === "income" && "Add Income"}
-                {modalType === "request" && "New Purchase Request"}
+                {modalType === "expenditure" && t.expenditureModal}
+                {modalType === "income" && t.incomeModal}
+                {modalType === "request" && t.requestModal}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -513,7 +547,7 @@ export default function FinancePage() {
               {modalType === "expenditure" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Budget</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.budget}</label>
                     <select
                       name="budget_id"
                       value={formData.budget_id}
@@ -521,14 +555,14 @@ export default function FinancePage() {
                       required
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     >
-                      <option value="">Select budget</option>
+                      <option value="">{t.selectBudget}</option>
                       {budgets.map(bud => (
                         <option key={bud.budget_id} value={bud.budget_id}>{bud.budget_name}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.category}</label>
                     <select
                       name="category"
                       value={formData.category}
@@ -536,14 +570,14 @@ export default function FinancePage() {
                       required
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     >
-                      <option value="">Select category</option>
+                      <option value="">{t.selectCategory}</option>
                       {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat}>{translateValue(cat)}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.description}</label>
                     <textarea
                       name="description"
                       value={formData.description}
@@ -555,7 +589,7 @@ export default function FinancePage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Amount (ETB)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.amountETB}</label>
                       <input
                         type="number"
                         name="amount"
@@ -567,7 +601,7 @@ export default function FinancePage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.date}</label>
                       <input
                         type="date"
                         name="expenditure_date"
@@ -584,34 +618,34 @@ export default function FinancePage() {
               {modalType === "income" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Income Source</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.incomeSource}</label>
                     <select
                       name="income_source"
                       value={formData.income_source}
                       onChange={handleInputChange}
                       required
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                     >
-                      <option value="">Select source</option>
+                      <option value="">{t.selectSource}</option>
                       {incomeSources.map(src => (
-                        <option key={src} value={src}>{src.replace(/_/g, " ")}</option>
+                        <option key={src} value={src}>{translateValue(src)}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.description}</label>
                     <textarea
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
                       required
                       rows={2}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Amount (ETB)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.amountETB}</label>
                       <input
                         type="number"
                         name="amount"
@@ -619,18 +653,18 @@ export default function FinancePage() {
                         onChange={handleInputChange}
                         required
                         step="0.01"
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.date}</label>
                       <input
                         type="date"
                         name="income_date"
                         value={formData.income_date}
                         onChange={handleInputChange}
                         required
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                       />
                     </div>
                   </div>
@@ -640,7 +674,7 @@ export default function FinancePage() {
               {modalType === "request" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Item Name</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.itemName}</label>
                     <input
                       type="text"
                       name="item_name"
@@ -652,7 +686,7 @@ export default function FinancePage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Quantity</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.quantity}</label>
                       <input
                         type="number"
                         name="quantity"
@@ -664,7 +698,7 @@ export default function FinancePage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Unit Cost (ETB)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.unitCost}</label>
                       <input
                         type="number"
                         name="unit_cost"
@@ -678,7 +712,7 @@ export default function FinancePage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.category}</label>
                       <select
                         name="category"
                         value={formData.category}
@@ -686,14 +720,14 @@ export default function FinancePage() {
                         required
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                       >
-                        <option value="">Select category</option>
+                        <option value="">{t.selectCategory}</option>
                         {requestCategories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
+                          <option key={cat} value={cat}>{translateValue(cat)}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.priority}</label>
                       <select
                         name="priority"
                         value={formData.priority}
@@ -702,13 +736,13 @@ export default function FinancePage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                       >
                         {priorities.map(pri => (
-                          <option key={pri} value={pri}>{pri}</option>
+                          <option key={pri} value={pri}>{translateValue(pri)}</option>
                         ))}
                       </select>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Justification</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.justification}</label>
                     <textarea
                       name="justification"
                       value={formData.justification}
@@ -727,13 +761,13 @@ export default function FinancePage() {
                   onClick={() => setShowModal(false)}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
                   className="rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
                 >
-                  Submit
+                  {t.newRequest}
                 </button>
               </div>
             </form>

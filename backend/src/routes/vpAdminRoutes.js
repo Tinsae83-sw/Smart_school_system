@@ -9,6 +9,12 @@ const { authenticateVPAdmin } = require('../middleware/vpAdminAuth');
 // Dashboard
 router.get('/dashboard', vpAdminController.getDashboard);
 
+// Activities
+router.get('/activities', vpAdminController.getActivities);
+
+// Notifications
+router.get('/notifications', vpAdminController.getNotifications);
+
 // Assets
 router.get('/assets', vpAdminController.getAssets);
 router.post('/assets', vpAdminController.createAsset);

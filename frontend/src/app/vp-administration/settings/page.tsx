@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { vpAdminApi } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAdministrationReportingTranslations } from "@/translations/vp-administration-reporting";
 
 type Category = {
   category_id: number;
@@ -26,6 +28,8 @@ type Preference = {
 };
 
 export default function SettingsPage() {
+  const { language } = useLanguage();
+  const t = vpAdministrationReportingTranslations[language];
   const [activeTab, setActiveTab] = useState<"categories" | "suppliers" | "preferences">("categories");
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -133,7 +137,7 @@ export default function SettingsPage() {
   }
 
   async function deleteCategory(categoryId: number) {
-    if (!confirm("Are you sure you want to delete this category?")) return;
+    if (!confirm(t.confirmDeleteCategory)) return;
     try {
       const res = await vpAdminApi.delete(`/settings/categories/${categoryId}`);
       if (res.ok) {
@@ -169,8 +173,8 @@ export default function SettingsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="mt-1 text-sm text-slate-500">Manage categories, suppliers, and system preferences</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t.settingsTitle}</h1>
+        <p className="mt-1 text-sm text-slate-500">{t.settingsSubtitle}</p>
       </div>
 
       <div className="mb-6 border-b border-slate-200">
@@ -183,7 +187,7 @@ export default function SettingsPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Categories ({categories.length})
+            {t.categories} ({categories.length})
           </button>
           <button
             onClick={() => setActiveTab("suppliers")}
@@ -193,7 +197,7 @@ export default function SettingsPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Suppliers ({suppliers.length})
+            {t.suppliers} ({suppliers.length})
           </button>
           <button
             onClick={() => setActiveTab("preferences")}
@@ -203,36 +207,36 @@ export default function SettingsPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Preferences
+            {t.preferences}
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading...</div>
+          <div className="text-slate-500">{t.loading}</div>
         </div>
       ) : (
         <>
           {activeTab === "categories" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Category Management</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.categoryManagement}</h3>
                 <button
                   onClick={() => openModal("category")}
                   className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 transition"
                 >
-                  Add Category
+                  {t.addCategory}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Name</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.name}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.type}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">{t.actions}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -241,23 +245,23 @@ export default function SettingsPage() {
                         <td className="px-6 py-4 text-sm font-medium text-slate-900">{category.name}</td>
                         <td className="px-6 py-4 text-sm text-slate-600">{category.type}</td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${category.is_active ? "bg-emerald-50 text-emerald-700" : "bg-gray-50 text-gray-700"}`}>
-                            {category.is_active ? "Active" : "Inactive"}
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${category.is_active ? "bg-orange-50 text-orange-700" : "bg-gray-50 text-gray-700"}`}>
+                            {category.is_active ? t.active : t.inactive}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => toggleCategory(category.category_id, category.is_active)}
-                              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${category.is_active ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
+                              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${category.is_active ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-orange-50 text-orange-700 hover:bg-orange-100"}`}
                             >
-                              {category.is_active ? "Deactivate" : "Activate"}
+                              {category.is_active ? t.deactivate : t.activate}
                             </button>
                             <button
                               onClick={() => deleteCategory(category.category_id)}
                               className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition"
                             >
-                              Delete
+                              {t.delete}
                             </button>
                           </div>
                         </td>
@@ -266,7 +270,7 @@ export default function SettingsPage() {
                     {categories.length === 0 && (
                       <tr>
                         <td colSpan={4} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No categories found. Click "Add Category" to get started.
+                          {t.noCategories}
                         </td>
                       </tr>
                     )}
@@ -279,24 +283,24 @@ export default function SettingsPage() {
           {activeTab === "suppliers" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Supplier Database</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.supplierDatabase}</h3>
                 <button
                   onClick={() => openModal("supplier")}
                   className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 transition"
                 >
-                  Add Supplier
+                  {t.addSupplier}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Supplier Name</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Contact Person</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Phone</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Email</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.supplierName}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.contactPerson}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.phone}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.email}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">{t.actions}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -307,16 +311,16 @@ export default function SettingsPage() {
                         <td className="px-6 py-4 text-sm text-slate-600">{supplier.phone_number}</td>
                         <td className="px-6 py-4 text-sm text-slate-600">{supplier.email || "-"}</td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${supplier.is_approved ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
-                            {supplier.is_approved ? "Approved" : "Not Approved"}
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${supplier.is_approved ? "bg-orange-50 text-orange-700" : "bg-rose-50 text-rose-700"}`}>
+                            {supplier.is_approved ? t.approved : t.notApproved}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => toggleSupplier(supplier.supplier_id, supplier.is_approved)}
-                            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${supplier.is_approved ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
+                            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${supplier.is_approved ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-orange-50 text-orange-700 hover:bg-orange-100"}`}
                           >
-                            {supplier.is_approved ? "Revoke" : "Approve"}
+                            {supplier.is_approved ? t.revoke : t.approve}
                           </button>
                         </td>
                       </tr>
@@ -324,7 +328,7 @@ export default function SettingsPage() {
                     {suppliers.length === 0 && (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No suppliers found. Click "Add Supplier" to get started.
+                          {t.noSuppliers}
                         </td>
                       </tr>
                     )}
@@ -337,7 +341,7 @@ export default function SettingsPage() {
           {activeTab === "preferences" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">System Preferences</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.systemPreferences}</h3>
               </div>
               <div className="divide-y divide-slate-100">
                 {preferences.map((pref) => (
@@ -369,7 +373,7 @@ export default function SettingsPage() {
                 ))}
                 {preferences.length === 0 && (
                   <div className="p-12 text-center text-sm text-slate-400">
-                    No preferences configured.
+                    {t.noPreferences}
                   </div>
                 )}
               </div>
@@ -383,7 +387,7 @@ export default function SettingsPage() {
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {modalType === "category" ? "Add New Category" : "Add New Supplier"}
+                {modalType === "category" ? t.addNewCategory : t.addNewSupplier}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -399,7 +403,7 @@ export default function SettingsPage() {
               {modalType === "category" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Category Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.categoryName} *</label>
                     <input
                       type="text"
                       name="name"
@@ -410,7 +414,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Category Type *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.categoryType} *</label>
                     <select
                       name="type"
                       value={formData.type}
@@ -419,7 +423,7 @@ export default function SettingsPage() {
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     >
                       {categoryTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
+                        <option key={type} value={type}>{type === "ASSET" ? t.assetCategory : type === "FACILITY" ? t.facilityCategory : type === "EXPENDITURE" ? t.expenditureCategory : t.inventoryCategory}</option>
                       ))}
                     </select>
                   </div>
@@ -430,7 +434,7 @@ export default function SettingsPage() {
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Supplier Name *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.supplierName} *</label>
                       <input
                         type="text"
                         name="supplier_name"
@@ -441,7 +445,7 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Contact Person *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.contactPerson} *</label>
                       <input
                         type="text"
                         name="contact_person"
@@ -454,7 +458,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.phoneNumber} *</label>
                       <input
                         type="tel"
                         name="phone_number"
@@ -465,7 +469,7 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.email}</label>
                       <input
                         type="email"
                         name="email"
@@ -476,7 +480,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.address}</label>
                     <textarea
                       name="address"
                       value={formData.address}
@@ -494,13 +498,13 @@ export default function SettingsPage() {
                   onClick={() => setShowModal(false)}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
                   className="rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
                 >
-                  {modalType === "category" ? "Add Category" : "Add Supplier"}
+                  {modalType === "category" ? t.addCategory : t.addSupplier}
                 </button>
               </div>
             </form>

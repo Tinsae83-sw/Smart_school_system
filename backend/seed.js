@@ -1019,10 +1019,10 @@ async function main() {
     where: { school_code: 'AASS-001' },
     update: {},
     create: {
-      school_name: 'Addis Ababa Smart School',
-      address: 'Bole Road, Addis Ababa, Ethiopia',
+      school_name: 'YEKATIT25/67 SCHOOL',
+      address: 'Ethiopia',
       phone_number: '+251118888888',
-      email: 'info@smart-school.edu',
+      email: 'info@yekatit25-67.edu',
       motto: 'Excellence in Education',
       school_code: 'AASS-001',
       woreda: 'Bole',

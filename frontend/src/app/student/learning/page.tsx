@@ -284,7 +284,7 @@ export default function StudentLearningPage() {
             {virtualClasses.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2">
                 {virtualClasses.map((vc) => (
-                  <div key={vc.virtual_class_id} className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800 p-5">
+                  <div key={vc.virtual_class_id} className="rounded-xl bg-gradient-to-br from-blue-50 to-navy-50 dark:from-blue-900/20 dark:to-navy-900/20 border border-blue-100 dark:border-blue-800 p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <h3 className="font-semibold text-slate-900 dark:text-white">{vc.title}</h3>

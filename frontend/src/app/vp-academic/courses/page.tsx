@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { vpAcademicApi } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAcademicTranslations } from "@/translations/vp-academic";
 
 // Subject to department mapping for subjects without department data
 const SUBJECT_DEPARTMENT_MAP: Record<string, string> = {
@@ -66,64 +67,25 @@ type Subject = {
   grade_levels?: number[];
 };
 
-type ClassSubject = {
-  class_subject_id: number;
-  school_class: {
-    class_id: number;
-    class_name: string;
-    academic_year: string;
-  };
-  subject: {
-    subject_id: number;
-    subject_name: string;
-    subject_code: string;
-    department?: string;
-  };
-  teacher: {
-    teacher_id: number;
-    user: {
-      full_name: string;
-    };
-  };
-  credit_hour?: number;
-};
-
-type SchoolClass = {
-  class_id: number;
-  class_name: string;
-  academic_year: string;
-};
-
-type Teacher = {
-  teacher_id: number;
-  user: {
-    full_name: string;
-  };
-  department?: string;
+type Department = {
+  department_id: number;
+  name: string;
+  code?: string;
 };
 
 export default function CoursesPage() {
-  const [classSubjects, setClassSubjects] = useState<ClassSubject[]>([]);
+  const { language } = useLanguage();
+  const t = vpAcademicTranslations[language];
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [classes, setClasses] = useState<SchoolClass[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
   const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [showEditSubjectModal, setShowEditSubjectModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [courseFilter, setCourseFilter] = useState({
-    class_id: "",
-    subject_id: "",
-    teacher_id: "",
-    department: "",
-  });
-  const [formData, setFormData] = useState({
-    class_id: "",
-    subject_id: "",
-    teacher_id: "",
-    credit_hour: "3",
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const fetchDataRef = useRef<{ isFetching: boolean }>({ isFetching: false });
   const [subjectFormData, setSubjectFormData] = useState({
     subject_name: "",
     subject_code: "",
@@ -143,515 +105,321 @@ export default function CoursesPage() {
       return acc;
     }, {});
 
-    // Sort departments: Natural, Social, General
+    // Sort departments: first by database departments, then by custom order for fallback departments
     const sortedGrouped: Record<string, Subject[]> = {};
-    const order = { 'Natural': 1, 'Social': 2, 'General': 3 };
+    const deptOrder = departments.map(d => d.name);
+    const fallbackOrder = { 'Natural': 1, 'Social': 2, 'General': 3 };
+
     Object.keys(grouped)
-      .sort((a, b) => (order[a as keyof typeof order] || 99) - (order[b as keyof typeof order] || 99))
+      .sort((a, b) => {
+        const aIndex = deptOrder.indexOf(a);
+        const bIndex = deptOrder.indexOf(b);
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
+        return (fallbackOrder[a as keyof typeof fallbackOrder] || 99) - (fallbackOrder[b as keyof typeof fallbackOrder] || 99);
+      })
       .forEach(dept => {
         sortedGrouped[dept] = grouped[dept].sort((a, b) => a.subject_name.localeCompare(b.subject_name));
       });
 
     return sortedGrouped;
-  }, [subjects]);
+  }, [subjects, departments]);
 
-  // Filter course assignments
-  const filteredClassSubjects = useMemo(() => {
-    return classSubjects.filter((cs) => {
-      if (courseFilter.class_id && cs.school_class.class_id !== parseInt(courseFilter.class_id)) {
-        return false;
+
+
+  // Filter subjects by search
+  const filteredSubjectsByDepartment = useMemo(() => {
+    if (!searchQuery) return subjectsByDepartment;
+    
+    const query = searchQuery.toLowerCase();
+    const filtered: Record<string, Subject[]> = {};
+    
+    Object.entries(subjectsByDepartment).forEach(([department, deptSubjects]) => {
+      const matching = deptSubjects.filter(subject => 
+        subject.subject_name.toLowerCase().includes(query) ||
+        subject.subject_code.toLowerCase().includes(query)
+      );
+      if (matching.length > 0) {
+        filtered[department] = matching;
       }
-      if (courseFilter.subject_id && cs.subject.subject_id !== parseInt(courseFilter.subject_id)) {
-        return false;
-      }
-      if (courseFilter.teacher_id && cs.teacher?.teacher_id !== parseInt(courseFilter.teacher_id)) {
-        return false;
-      }
-      if (courseFilter.department) {
-        const subjectDept = cs.subject.department || getDepartmentFromSubject(cs.subject.subject_name);
-        if (subjectDept !== courseFilter.department) {
-          return false;
-        }
-      }
-      return true;
     });
-  }, [classSubjects, courseFilter]);
+    
+    return filtered;
+  }, [subjectsByDepartment, searchQuery]);
 
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
+    if (fetchDataRef.current.isFetching) return;
+    fetchDataRef.current.isFetching = true;
     setLoading(true);
     try {
-      const [classSubjectsRes, subjectsRes, classesRes, teachersRes] = await Promise.all([
-        fetch(`${API_BASE}/../admin/class-subject`),
-        fetch(`${API_BASE}/../admin/subjects`),
-        fetch(`${API_BASE}/../admin/classes`),
-        fetch(`${API_BASE}/teachers`),
-      ]);
+      const subjectsRes = await vpAcademicApi.get(`/../admin/subjects`);
 
-      if (classSubjectsRes.ok) {
-        const data = await classSubjectsRes.json();
-        setClassSubjects(data.class_subjects || data);
-      }
       if (subjectsRes.ok) {
         const data = await subjectsRes.json();
         setSubjects(data.subjects || data);
       }
-      if (classesRes.ok) {
-        const data = await classesRes.json();
-        setClasses(data.classes || data);
-      }
-      if (teachersRes.ok) {
-        const data = await teachersRes.json();
-        setTeachers(data.teachers || data);
+
+      // Fetch departments from database
+      const academicOptionsRes = await vpAcademicApi.get(`/students/academic-options`);
+      if (academicOptionsRes.ok) {
+        const optionsData = await academicOptionsRes.json();
+        setDepartments(optionsData.departments || []);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch data:", error);
     } finally {
       setLoading(false);
+      fetchDataRef.current.isFetching = false;
     }
-  }
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      const res = await fetch(`${API_BASE}/../admin/class-subject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          class_id: parseInt(formData.class_id),
-          subject_id: parseInt(formData.subject_id),
-          teacher_id: parseInt(formData.teacher_id),
-          credit_hour: parseInt(formData.credit_hour),
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to assign course");
-      setShowModal(false);
-      setFormData({ class_id: "", subject_id: "", teacher_id: "", credit_hour: "3" });
-      fetchData();
-    } catch (error) {
-      console.error(error);
-      alert("Failed to assign course.");
-    }
-  }
-
-  async function handleDelete(classSubjectId: number) {
-    if (!confirm("Are you sure you want to remove this course assignment?")) return;
-    try {
-      const res = await fetch(`${API_BASE}/../admin/class-subject/${classSubjectId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete course");
-      fetchData();
-    } catch (error) {
-      console.error(error);
-      alert("Failed to delete course.");
-    }
-  }
+  }, [fetchData]);
 
   async function handleSubjectSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE}/../admin/subjects`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subject_name: subjectFormData.subject_name,
-          subject_code: subjectFormData.subject_code,
-          credit_hour: parseInt(subjectFormData.credit_hour),
-          department: subjectFormData.department,
-          grade_levels: subjectFormData.grade_levels,
-        }),
+      const res = await vpAcademicApi.post(`/../admin/subjects`, {
+        subject_name: subjectFormData.subject_name,
+        subject_code: subjectFormData.subject_code,
+        credit_hour: parseInt(subjectFormData.credit_hour),
+        department: subjectFormData.department,
+        grade_levels: subjectFormData.grade_levels,
       });
       if (!res.ok) throw new Error("Failed to create subject");
       setShowSubjectModal(false);
       setSubjectFormData({ subject_name: "", subject_code: "", credit_hour: "3", department: "", grade_levels: [] });
-      fetchData();
+      await fetchData();
     } catch (error) {
-      console.error(error);
-      alert("Failed to create subject.");
+      console.error("Failed to create subject:", error);
+      alert(t.failedCreateSubject);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
-  async function handleDeleteSubject(subjectId: number) {
-    if (!confirm("Are you sure you want to delete this subject? This will affect all course assignments.")) return;
+  function handleDeleteSubject(subject: Subject) {
+    setSelectedSubject(subject);
+    setShowDeleteModal(true);
+  }
+
+  async function confirmDeleteSubject() {
+    if (!selectedSubject) return;
     try {
-      const res = await fetch(`${API_BASE}/../admin/subjects/${subjectId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete subject");
-      fetchData();
+      const res = await vpAcademicApi.delete(`/../admin/subjects/${selectedSubject.subject_id}`);
+      if (res.ok) {
+        setShowDeleteModal(false);
+        setSelectedSubject(null);
+        await fetchData();
+      }
     } catch (error) {
-      console.error(error);
-      alert("Failed to delete subject.");
+      console.error("Failed to delete subject:", error);
+      alert(t.failedDeleteSubject);
     }
   }
 
   async function handleEditSubjectSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedSubject) return;
+    if (!selectedSubject || isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE}/../admin/subjects/${selectedSubject.subject_id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subject_name: subjectFormData.subject_name,
-          subject_code: subjectFormData.subject_code,
-          credit_hour: parseInt(subjectFormData.credit_hour),
-          department: subjectFormData.department,
-          grade_levels: subjectFormData.grade_levels,
-        }),
+      const res = await vpAcademicApi.put(`/../admin/subjects/${selectedSubject.subject_id}`, {
+        subject_name: subjectFormData.subject_name,
+        subject_code: subjectFormData.subject_code,
+        credit_hour: parseInt(subjectFormData.credit_hour),
+        department: subjectFormData.department,
+        grade_levels: subjectFormData.grade_levels,
       });
       if (!res.ok) throw new Error("Failed to update subject");
       setShowEditSubjectModal(false);
       setSelectedSubject(null);
       setSubjectFormData({ subject_name: "", subject_code: "", credit_hour: "3", department: "", grade_levels: [] });
-      fetchData();
+      await fetchData();
     } catch (error) {
-      console.error(error);
-      alert("Failed to update subject.");
+      console.error("Failed to update subject:", error);
+      alert(t.failedUpdateSubject);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
+  // Calculate stats
+  const totalSubjects = subjects.length;
+
+  // Count subjects per department from database
+  const departmentStats = useMemo(() => {
+    const stats: Record<string, number> = {};
+    departments.forEach(dept => {
+      stats[dept.name] = subjects.filter(s => s.department === dept.name).length;
+    });
+    return stats;
+  }, [subjects, departments]);
+
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Courses Management</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Manage subject assignments to classes and teachers</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{t.coursesManagement}</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.manageSubjectAssignments}</p>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => {
-              setSubjectFormData({ subject_name: "", subject_code: "", credit_hour: "3", department: "", grade_levels: [] });
-              setShowSubjectModal(true);
-            }}
-            className="rounded-xl border border-emerald-600 dark:border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition"
-          >
-            Register Subject
-          </button>
-          <button
-            onClick={() => {
-              setFormData({ class_id: "", subject_id: "", teacher_id: "", credit_hour: "3" });
-              setShowModal(true);
-            }}
-            className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
-          >
-            Assign Course
-          </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        {/* Total Subjects Card */}
+        <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t.totalSubjects}</p>
+              <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{totalSubjects}</p>
+            </div>
+            <div className="h-12 w-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+              <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+          </div>
         </div>
+
+        {/* Dynamic Department Cards */}
+        {departments.slice(0, 3).map((dept, index) => {
+          const colors = [
+            { light: 'bg-purple-100', dark: 'dark:bg-purple-900/30', text: 'text-purple-600', darkText: 'dark:text-purple-400' },
+            { light: 'bg-blue-100', dark: 'dark:bg-blue-900/30', text: 'text-blue-600', darkText: 'dark:text-blue-400' },
+            { light: 'bg-orange-100', dark: 'dark:bg-orange-900/30', text: 'text-orange-600', darkText: 'dark:text-orange-400' },
+          ];
+          const color = colors[index % colors.length];
+          const count = departmentStats[dept.name] || 0;
+
+          return (
+            <div key={dept.department_id} className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{dept.name}</p>
+                  <p className={`text-2xl font-bold ${color.text} ${color.darkText} mt-1`}>{count}</p>
+                </div>
+                <div className={`h-12 w-12 rounded-xl ${color.light} ${color.dark} flex items-center justify-center`}>
+                  <svg className={`w-6 h-6 ${color.text} ${color.darkText}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mb-6">
+        <button
+          onClick={() => {
+            setSubjectFormData({ subject_name: "", subject_code: "", credit_hour: "3", department: "", grade_levels: [] });
+            setShowSubjectModal(true);
+          }}
+          className="rounded-xl bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 transition shadow-lg shadow-emerald-200"
+        >
+          {t.registerSubject}
+        </button>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 dark:border-emerald-500 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-600 dark:border-orange-400 border-t-transparent" />
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Subjects List */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Registered Subjects</h2>
-            </div>
-            <div className="p-6 space-y-6">
-              {Object.keys(subjectsByDepartment).length === 0 ? (
-                <div className="text-center text-sm text-slate-400 dark:text-slate-500 py-12">
-                  No subjects registered yet. Register your first subject to get started.
-                </div>
-              ) : (
-                Object.entries(subjectsByDepartment).map(([department, deptSubjects]) => (
-                  <div key={department} className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div className="bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 border-b border-emerald-100 dark:border-emerald-800">
-                      <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-300">{department}</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full">
-                        <thead>
-                          <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-300">
-                            <th className="px-4 py-3">Subject Name</th>
-                            <th className="px-4 py-3">Subject Code</th>
-                            <th className="px-4 py-3">Credit Hour</th>
-                            <th className="px-4 py-3">Grade Level</th>
-                            <th className="px-4 py-3">Department</th>
-                            <th className="px-4 py-3">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                          {deptSubjects.map((subject) => (
-                            <tr key={subject.subject_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                              <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">{subject.subject_name}</td>
-                              <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-300">{subject.subject_code}</td>
-                              <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">{subject.credit_hour}</td>
-                              <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
-                                {subject.grade_levels && subject.grade_levels.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {subject.grade_levels.map((grade) => (
-                                      <span key={grade} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
-                                        Grade {grade}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  '-'
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{subject.department || getDepartmentFromSubject(subject.subject_name)}</td>
-                              <td className="px-4 py-3">
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => {
-                                      setSelectedSubject(subject);
-                                      setSubjectFormData({
-                                        subject_name: subject.subject_name,
-                                        subject_code: subject.subject_code,
-                                        credit_hour: subject.credit_hour.toString(),
-                                        department: subject.department || '',
-                                        grade_levels: subject.grade_levels || [],
-                                      });
-                                      setShowEditSubjectModal(true);
-                                    }}
-                                    className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteSubject(subject.subject_id)}
-                                    className="rounded-lg bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 transition"
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+        <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.registeredSubjects}</h2>
+            <input
+              type="text"
+              placeholder={t.searchSubjects}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-64 rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 dark:bg-slate-700 dark:text-white"
+            />
+          </div>
+          <div className="p-6 space-y-6">
+            {Object.keys(filteredSubjectsByDepartment).length === 0 ? (
+              <div className="text-center text-sm text-slate-400 dark:text-slate-500 py-12">
+                {searchQuery ? t.noSubjectsMatchSearch : t.noSubjectsRegistered}
+              </div>
+            ) : (
+              Object.entries(filteredSubjectsByDepartment).map(([department, deptSubjects]) => (
+                <div key={department} className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <div className="bg-orange-50 dark:bg-orange-900/30 px-4 py-3 border-b border-orange-100 dark:border-orange-800">
+                    <h3 className="text-sm font-semibold text-orange-900 dark:text-orange-300">{department}</h3>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Course Assignments */}
-          <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Course Assignments</h2>
-              <button
-                onClick={() => setCourseFilter({ class_id: "", subject_id: "", teacher_id: "", department: "" })}
-                className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
-              >
-                Clear Filters
-              </button>
-            </div>
-
-            {/* Filter Bar */}
-            <div className="px-6 py-4 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-300 mb-1">Class</label>
-                  <select
-                    value={courseFilter.class_id}
-                    onChange={(e) => setCourseFilter({ ...courseFilter, class_id: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  >
-                    <option value="">All Classes</option>
-                    {classes.map((cls) => (
-                      <option key={cls.class_id} value={cls.class_id}>
-                        {cls.class_name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                          <th className="px-6 py-4">{t.subjectName}</th>
+                          <th className="px-6 py-4">{t.subjectCode}</th>
+                          <th className="px-6 py-4">{t.creditHour}</th>
+                          <th className="px-6 py-4">{t.gradeLevel}</th>
+                          <th className="px-6 py-4">{t.department}</th>
+                          <th className="px-6 py-4 text-right">{t.actions}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                        {deptSubjects.map((subject) => (
+                          <tr key={subject.subject_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
+                            <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{subject.subject_name}</td>
+                            <td className="px-6 py-4">
+                              <span className="font-mono text-sm text-slate-600 dark:text-slate-400">{subject.subject_code}</span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{subject.credit_hour}</td>
+                            <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">
+                              {subject.grade_levels && subject.grade_levels.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {subject.grade_levels.map((grade) => (
+                                    <span key={grade} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
+                                      {t.grade} {grade}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                '-'
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{subject.department || getDepartmentFromSubject(subject.subject_name)}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex gap-2 justify-end">
+                                <button
+                                  onClick={() => {
+                                    setSelectedSubject(subject);
+                                    setSubjectFormData({
+                                      subject_name: subject.subject_name,
+                                      subject_code: subject.subject_code,
+                                      credit_hour: subject.credit_hour.toString(),
+                                      department: subject.department || '',
+                                      grade_levels: subject.grade_levels || [],
+                                    });
+                                    setShowEditSubjectModal(true);
+                                  }}
+                                  className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition"
+                                >
+                                  {t.edit}
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSubject(subject)}
+                                  className="rounded-lg bg-red-50 dark:bg-red-900/30 px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
+                                >
+                                  {t.delete}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-300 mb-1">Subject</label>
-                  <select
-                    value={courseFilter.subject_id}
-                    onChange={(e) => setCourseFilter({ ...courseFilter, subject_id: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  >
-                    <option value="">All Subjects</option>
-                    {subjects.map((subject) => (
-                      <option key={subject.subject_id} value={subject.subject_id}>
-                        {subject.subject_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-300 mb-1">Teacher</label>
-                  <select
-                    value={courseFilter.teacher_id}
-                    onChange={(e) => setCourseFilter({ ...courseFilter, teacher_id: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  >
-                    <option value="">All Teachers</option>
-                    {teachers.map((teacher) => (
-                      <option key={teacher.teacher_id} value={teacher.teacher_id}>
-                        {teacher.user.full_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-300 mb-1">Department</label>
-                  <select
-                    value={courseFilter.department}
-                    onChange={(e) => setCourseFilter({ ...courseFilter, department: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  >
-                    <option value="">All Departments</option>
-                    <option value="Natural">Natural</option>
-                    <option value="Social">Social</option>
-                    <option value="General">General</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-300">
-                    <th className="px-6 py-4">Class</th>
-                    <th className="px-6 py-4">Subject</th>
-                    <th className="px-6 py-4">Subject Code</th>
-                    <th className="px-6 py-4">Teacher</th>
-                    <th className="px-6 py-4">Academic Year</th>
-                    <th className="px-6 py-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                  {filteredClassSubjects.map((cs) => (
-                    <tr key={cs.class_subject_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{cs.school_class.class_name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{cs.subject.subject_name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{cs.subject.subject_code}</td>
-                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{cs.teacher?.user?.full_name || "Unassigned"}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{cs.school_class.academic_year}</td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleDelete(cs.class_subject_id)}
-                          className="rounded-lg bg-rose-50 dark:bg-rose-900/30 px-3 py-1.5 text-xs font-medium text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition"
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredClassSubjects.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
-                        No courses found matching the selected filters.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Assign Course Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Assign Course</h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Class</label>
-                <select
-                  required
-                  value={formData.class_id}
-                  onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                >
-                  <option value="">Select Class</option>
-                  {classes.map((cls) => (
-                    <option key={cls.class_id} value={cls.class_id}>
-                      {cls.class_name} ({cls.academic_year})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject</label>
-                <select
-                  required
-                  value={formData.subject_id}
-                  onChange={(e) => setFormData({ ...formData, subject_id: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                >
-                  <option value="">Select Subject</option>
-                  {subjects.map((subject) => (
-                    <option key={subject.subject_id} value={subject.subject_id}>
-                      {subject.subject_name} ({subject.subject_code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Teacher</label>
-                <select
-                  required
-                  value={formData.teacher_id}
-                  onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                >
-                  <option value="">Select Teacher</option>
-                  {teachers.map((teacher) => (
-                    <option key={teacher.teacher_id} value={teacher.teacher_id}>
-                      {teacher.user.full_name} {teacher.department ? `(${teacher.department})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Credit Hour</label>
-                <input
-                  type="number"
-                  required
-                  min="1"
-                  max="10"
-                  value={formData.credit_hour}
-                  onChange={(e) => setFormData({ ...formData, credit_hour: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
-                >
-                  Assign Course
-                </button>
-              </div>
-            </form>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -659,9 +427,9 @@ export default function CoursesPage() {
       {/* Register Subject Modal */}
       {showSubjectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Register Subject</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.registerSubject}</h2>
               <button
                 onClick={() => setShowSubjectModal(false)}
                 className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
@@ -674,33 +442,33 @@ export default function CoursesPage() {
 
             <form onSubmit={handleSubjectSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.subjectName} *</label>
                 <input
                   type="text"
                   required
                   minLength={2}
                   value={subjectFormData.subject_name}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  placeholder="e.g., Mathematics"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400"
+                  placeholder={t.subjectName}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject Code</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.subjectCode} *</label>
                 <input
                   type="text"
                   required
                   minLength={2}
                   value={subjectFormData.subject_code}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_code: e.target.value.toUpperCase() })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  placeholder="e.g., MATH101"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400"
+                  placeholder={t.subjectCode}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Credit Hour</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.creditHour} *</label>
                 <input
                   type="number"
                   required
@@ -708,25 +476,30 @@ export default function CoursesPage() {
                   max="10"
                   value={subjectFormData.credit_hour}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, credit_hour: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
-                <input
-                  type="text"
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.department}</label>
+                <select
                   value={subjectFormData.department}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, department: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  placeholder="e.g., Natural Science, Social Science"
-                />
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400"
+                >
+                  <option value="">{t.selectDepartment}</option>
+                  {departments.map((dept) => (
+                    <option key={dept.department_id} value={dept.name}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Grade Levels</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.gradeLevel} (Grades 9-12)</label>
                 <div className="grid grid-cols-4 gap-2">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => (
+                  {[9, 10, 11, 12].map((grade) => (
                     <label key={grade} className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -744,9 +517,9 @@ export default function CoursesPage() {
                             });
                           }
                         }}
-                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-orange-600 focus:ring-emerald-500"
                       />
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Grade {grade}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t.grade} {grade}</span>
                     </label>
                   ))}
                 </div>
@@ -756,15 +529,16 @@ export default function CoursesPage() {
                 <button
                   type="button"
                   onClick={() => setShowSubjectModal(false)}
-                  className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition"
+                  className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+                  disabled={isSubmitting}
+                  className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Register Subject
+                  {isSubmitting ? t.registering : t.registerSubject}
                 </button>
               </div>
             </form>
@@ -775,9 +549,9 @@ export default function CoursesPage() {
       {/* Edit Subject Modal */}
       {showEditSubjectModal && selectedSubject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Subject</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.editSubject}</h2>
               <button
                 onClick={() => {
                   setShowEditSubjectModal(false);
@@ -793,33 +567,33 @@ export default function CoursesPage() {
 
             <form onSubmit={handleEditSubjectSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.subjectName} *</label>
                 <input
                   type="text"
                   required
                   minLength={2}
                   value={subjectFormData.subject_name}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  placeholder="e.g., Mathematics"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400"
+                  placeholder={t.subjectName}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject Code</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.subjectCode} *</label>
                 <input
                   type="text"
                   required
                   minLength={2}
                   value={subjectFormData.subject_code}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_code: e.target.value.toUpperCase() })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  placeholder="e.g., MATH101"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400"
+                  placeholder={t.subjectCode}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Credit Hour</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.creditHour} *</label>
                 <input
                   type="number"
                   required
@@ -827,25 +601,30 @@ export default function CoursesPage() {
                   max="10"
                   value={subjectFormData.credit_hour}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, credit_hour: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
-                <input
-                  type="text"
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.department}</label>
+                <select
                   value={subjectFormData.department}
                   onChange={(e) => setSubjectFormData({ ...subjectFormData, department: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  placeholder="e.g., Natural Science, Social Science"
-                />
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400"
+                >
+                  <option value="">{t.selectDepartment}</option>
+                  {departments.map((dept) => (
+                    <option key={dept.department_id} value={dept.name}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Grade Levels</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.gradeLevelsRange}</label>
                 <div className="grid grid-cols-4 gap-2">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => (
+                  {[9, 10, 11, 12].map((grade) => (
                     <label key={grade} className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -863,9 +642,9 @@ export default function CoursesPage() {
                             });
                           }
                         }}
-                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-orange-600 focus:ring-emerald-500"
                       />
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Grade {grade}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t.grade} {grade}</span>
                     </label>
                   ))}
                 </div>
@@ -878,18 +657,88 @@ export default function CoursesPage() {
                     setShowEditSubjectModal(false);
                     setSelectedSubject(null);
                   }}
-                  className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition"
+                  className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+                  disabled={isSubmitting}
+                  className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Update Subject
+                  {isSubmitting ? t.updating : t.updateSubject}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedSubject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.deleteSubject}</h2>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedSubject(null);
+                }}
+                className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-base font-semibold text-slate-900 dark:text-white mb-2">
+                    {t.deleteSubjectConfirmation}
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                    {t.deleteSubjectImpact}
+                  </p>
+                  <div className="rounded-lg bg-slate-50 dark:bg-slate-700/50 p-3 border border-slate-200 dark:border-slate-600">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {selectedSubject.subject_name}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      {t.codeLabel}: {selectedSubject.subject_code}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedSubject(null);
+                }}
+                className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={confirmDeleteSubject}
+                disabled={isSubmitting}
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? t.deleting : t.deleteSubject}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -5,6 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { isAuthenticated, getUser, clearAuth } from "@/lib/auth";
 import ThemeToggle from "@/components/ThemeToggle";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAdministrationTranslations } from "@/translations/vp-administration";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
 
@@ -43,11 +46,57 @@ const navigation: NavItem[] = [
     ),
   },
   {
+    label: "Transport",
+    href: "/vp-administration/transport",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75h7.5m-10.5-3h13.5m-15-9.75h16.5l1.5 9.75h-19.5l1.5-9.75zM6.75 18.75a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm13.5 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM8.25 6V3.75h7.5V6" />
+      </svg>
+    ),
+  },
+  {
+    label: "Catering",
+    href: "/vp-administration/catering",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v6a3 3 0 006 0V3M6 3v18m12-18v18m0-18c-2.21 2.21-3 5.79-3 9h6c0-3.21-.79-6.79-3-9z" />
+      </svg>
+    ),
+  },
+  {
+    label: "Finance",
+    href: "/vp-administration/finance",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m3-9.75c0-1.24-1.34-2.25-3-2.25s-3 1.01-3 2.25 1.34 2.25 3 2.25 3 1.01 3 2.25-1.34 2.25-3 2.25-3-1.01-3-2.25m9-7.5H6a2.25 2.25 0 00-2.25 2.25v9A2.25 2.25 0 006 18.75h12a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0018 5.25z" />
+      </svg>
+    ),
+  },
+  {
     label: "Discipline",
     href: "/vp-administration/discipline",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+    ),
+  },
+  {
+    label: "Communications",
+    href: "/vp-administration/communications",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 9v.75a2.25 2.25 0 01-2.25 2.25h-1.5l-4.5 3v-3H7.5a3.75 3.75 0 01-3.75-3.75v-3A3.75 3.75 0 017.5 4.5h10.5A3.75 3.75 0 0121.75 8.25V9zM8.25 19.5h7.5" />
+      </svg>
+    ),
+  },
+  {
+    label: "Security",
+    href: "/vp-administration/security",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l8.25 3v5.25c0 5.25-3.75 8.25-8.25 9.75-4.5-1.5-8.25-4.5-8.25-9.75V6L12 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
       </svg>
     ),
   },
@@ -70,6 +119,25 @@ const navigation: NavItem[] = [
     ),
   },
   {
+    label: "Settings",
+    href: "/vp-administration/settings",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 3.75h3l.6 2.4a6.9 6.9 0 011.6.93l2.35-.75 1.5 2.6-1.75 1.72a7.2 7.2 0 010 1.85l1.75 1.72-1.5 2.6-2.35-.75a6.9 6.9 0 01-1.6.93l-.6 2.4h-3l-.6-2.4a6.9 6.9 0 01-1.6-.93l-2.35.75-1.5-2.6 1.75-1.72a7.2 7.2 0 010-1.85L4.45 8.93l1.5-2.6 2.35.75a6.9 6.9 0 011.6-.93l.6-2.4z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 11.25a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+      </svg>
+    ),
+  },
+  {
+    label: "Audit Logs",
+    href: "/vp-administration/audit-logs",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12m-12 5.25h12m-12 5.25h12M3.75 6.75h.008v.008H3.75V6.75zm0 5.25h.008v.008H3.75V12zm0 5.25h.008v.008H3.75v-.008z" />
+      </svg>
+    ),
+  },
+  {
     label: "Reports",
     href: "/vp-administration/reports",
     icon: (
@@ -82,6 +150,8 @@ const navigation: NavItem[] = [
 ];
 
 export default function VPAdministrationLayout({ children }: { children: React.ReactNode }) {
+  const { language } = useLanguage();
+  const t = vpAdministrationTranslations[language];
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -114,7 +184,7 @@ export default function VPAdministrationLayout({ children }: { children: React.R
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-navy-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
@@ -128,20 +198,18 @@ export default function VPAdministrationLayout({ children }: { children: React.R
       )}
 
       <aside
+        data-app-sidebar
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform transition-transform duration-200 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-700 px-6 py-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600 text-white">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-              </svg>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy-600 text-white overflow-hidden">
+              <img src="/school-logo.jpg" alt="School Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Smart School</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Yekatit 25/67</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">VP Admin Panel</p>
             </div>
             <button className="ml-auto lg:hidden" onClick={() => setSidebarOpen(false)}>
@@ -161,12 +229,12 @@ export default function VPAdministrationLayout({ children }: { children: React.R
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                      ? "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
-                  <span className={isActive ? "text-purple-600 dark:text-purple-400" : "text-slate-400 dark:text-slate-500"}>{item.icon}</span>
-                  {item.label}
+                  <span className={isActive ? "text-teal-600 dark:text-teal-400" : "text-slate-400 dark:text-slate-500"}>{item.icon}</span>
+                  {item.href === "/vp-administration/staff" ? t.staffNavigation : item.label}
                 </Link>
               );
             })}
@@ -174,7 +242,7 @@ export default function VPAdministrationLayout({ children }: { children: React.R
 
           <div className="border-t border-slate-200 dark:border-slate-700 px-4 py-4">
             <div className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-700 px-3 py-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-sm font-bold">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-sm font-bold">
                 {vpUser?.full_name?.charAt(0)?.toUpperCase() || "V"}
               </div>
               <div className="flex-1 min-w-0">
@@ -192,7 +260,7 @@ export default function VPAdministrationLayout({ children }: { children: React.R
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-6">
+        <header data-app-navbar className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-6">
           <button className="lg:hidden" onClick={() => setSidebarOpen(true)}>
             <svg className="w-6 h-6 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -200,6 +268,7 @@ export default function VPAdministrationLayout({ children }: { children: React.R
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
+            <LanguageToggle />
             <ThemeToggle />
             <span className="hidden sm:inline text-xs text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
           </div>

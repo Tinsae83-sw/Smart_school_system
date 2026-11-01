@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAdministrationTranslations } from "@/translations/vp-administration";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
 
@@ -40,6 +42,8 @@ type FoodTransaction = {
 };
 
 export default function CateringPage() {
+  const { language } = useLanguage();
+  const t = vpAdministrationTranslations[language].cateringPage;
   const [activeTab, setActiveTab] = useState<"plans" | "inventory" | "transactions">("plans");
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [inventory, setInventory] = useState<FoodInventory[]>([]);
@@ -70,6 +74,33 @@ export default function CateringPage() {
   const foodCategories = ["GRAINS", "VEGETABLES", "FRUITS", "DAIRY", "PROTEINS", "BEVERAGES", "SNACKS"];
   const units = ["KG", "LITERS", "PIECES", "PACKS", "BOXES"];
   const transactionTypes = ["RESTOCK", "USAGE", "WASTE", "ADJUSTMENT"];
+
+  function translateValue(value: string) {
+    const labels: Record<string, string> = {
+      STANDARD: t.standard,
+      VEGETARIAN: t.vegetarian,
+      HALAL: t.halal,
+      KOSHER: t.kosher,
+      SPECIAL_DIET: t.specialDiet,
+      GRAINS: t.grains,
+      VEGETABLES: t.vegetables,
+      FRUITS: t.fruits,
+      DAIRY: t.dairy,
+      PROTEINS: t.proteins,
+      BEVERAGES: t.beverages,
+      SNACKS: t.snacks,
+      KG: t.kilograms,
+      LITERS: t.liters,
+      PIECES: t.pieces,
+      PACKS: t.packs,
+      BOXES: t.boxes,
+      RESTOCK: t.restock,
+      USAGE: t.usage,
+      WASTE: t.waste,
+      ADJUSTMENT: t.adjustment,
+    };
+    return labels[value] ?? value.replace(/_/g, " ");
+  }
 
   async function fetchData() {
     setLoading(true);
@@ -178,12 +209,12 @@ export default function CateringPage() {
   function getStockLevelColor(item: FoodInventory) {
     if (item.quantity <= 0) return "bg-rose-50 text-rose-700";
     if (item.quantity <= item.reorder_level) return "bg-amber-50 text-amber-700";
-    return "bg-emerald-50 text-emerald-700";
+    return "bg-orange-50 text-orange-700";
   }
 
   function getTransactionTypeColor(type: string) {
     switch (type) {
-      case "RESTOCK": return "bg-emerald-50 text-emerald-700";
+      case "RESTOCK": return "bg-orange-50 text-orange-700";
       case "USAGE": return "bg-blue-50 text-blue-700";
       case "WASTE": return "bg-rose-50 text-rose-700";
       case "ADJUSTMENT": return "bg-amber-50 text-amber-700";
@@ -195,8 +226,8 @@ export default function CateringPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Catering Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage meal plans, food inventory, and transactions</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t.title}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t.subtitle}</p>
         </div>
       </div>
 
@@ -210,7 +241,7 @@ export default function CateringPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Meal Plans ({mealPlans.length})
+            {t.mealPlans} ({mealPlans.length})
           </button>
           <button
             onClick={() => setActiveTab("inventory")}
@@ -220,7 +251,7 @@ export default function CateringPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Food Inventory ({inventory.length})
+            {t.foodInventory} ({inventory.length})
           </button>
           <button
             onClick={() => setActiveTab("transactions")}
@@ -230,49 +261,49 @@ export default function CateringPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Transactions ({transactions.length})
+            {t.transactions} ({transactions.length})
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading...</div>
+          <div className="text-slate-500">{t.loading}</div>
         </div>
       ) : (
         <>
           {activeTab === "plans" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Meal Plans</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.mealPlans}</h3>
                 <button
                   onClick={() => openModal("plan")}
                   className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 transition"
                 >
-                  Add Meal Plan
+                  {t.addMealPlan}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Plan Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Daily Cost</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Description</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.planName}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.type}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.dailyCost}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.description}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {mealPlans.map((plan) => (
                       <tr key={plan.plan_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{plan.plan_name}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{plan.plan_type}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{translateValue(plan.plan_type)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">ETB {plan.daily_cost.toFixed(2)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600 max-w-xs truncate">{plan.description || "-"}</td>
                         <td className="px-6 py-3">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${plan.is_active ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
-                            {plan.is_active ? "Active" : "Inactive"}
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${plan.is_active ? "bg-orange-50 text-orange-700" : "bg-rose-50 text-rose-700"}`}>
+                            {plan.is_active ? t.active : t.inactive}
                           </span>
                         </td>
                       </tr>
@@ -280,7 +311,7 @@ export default function CateringPage() {
                     {mealPlans.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No meal plans found. Click "Add Meal Plan" to get started.
+                          {t.noMealPlans}
                         </td>
                       </tr>
                     )}
@@ -293,39 +324,39 @@ export default function CateringPage() {
           {activeTab === "inventory" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Food Inventory</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.foodInventory}</h3>
                 <button
                   onClick={() => openModal("inventory")}
                   className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 transition"
                 >
-                  Add Inventory Item
+                  {t.addInventoryItem}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Item Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Quantity</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Unit Cost</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Reorder Level</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Expiry Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.itemName}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.category}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.quantity}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.unitCost}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.reorderLevel}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.expiryDate}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {inventory.map((item) => (
                       <tr key={item.inventory_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{item.item_name}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{item.category}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{item.quantity} {item.unit}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{translateValue(item.category)}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{item.quantity} {translateValue(item.unit)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">ETB {item.unit_cost.toFixed(2)}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{item.reorder_level} {item.unit}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{item.reorder_level} {translateValue(item.unit)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{item.expiry_date || "-"}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStockLevelColor(item)}`}>
-                            {item.quantity <= item.reorder_level ? "Low Stock" : "OK"}
+                            {item.quantity <= item.reorder_level ? t.lowStock : t.ok}
                           </span>
                         </td>
                       </tr>
@@ -333,7 +364,7 @@ export default function CateringPage() {
                     {inventory.length === 0 && (
                       <tr>
                         <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No inventory items found. Click "Add Inventory Item" to get started.
+                          {t.noInventory}
                         </td>
                       </tr>
                     )}
@@ -346,24 +377,24 @@ export default function CateringPage() {
           {activeTab === "transactions" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Food Transactions</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{t.foodTransactions}</h3>
                 <button
                   onClick={() => openModal("transaction")}
                   className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 transition"
                 >
-                  Record Transaction
+                  {t.submit}
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Item</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Quantity</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Total Cost</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Reference</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.date}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.item}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.type}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.quantity}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.totalCost}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{t.reference}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -373,7 +404,7 @@ export default function CateringPage() {
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{trans.item_name}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getTransactionTypeColor(trans.transaction_type)}`}>
-                            {trans.transaction_type}
+                            {translateValue(trans.transaction_type)}
                           </span>
                         </td>
                         <td className="px-6 py-3 text-sm text-slate-600">{trans.quantity}</td>
@@ -384,7 +415,7 @@ export default function CateringPage() {
                     {transactions.length === 0 && (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No transactions recorded.
+                          {t.noTransactions}
                         </td>
                       </tr>
                     )}
@@ -401,9 +432,9 @@ export default function CateringPage() {
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {modalType === "plan" && "Add Meal Plan"}
-                {modalType === "inventory" && "Add Inventory Item"}
-                {modalType === "transaction" && "Record Transaction"}
+                {modalType === "plan" && t.addPlanModal}
+                {modalType === "inventory" && t.inventoryModal}
+                {modalType === "transaction" && t.transactionModal}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -419,7 +450,7 @@ export default function CateringPage() {
               {modalType === "plan" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Plan Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.planNameRequired}</label>
                     <input
                       type="text"
                       name="plan_name"
@@ -430,7 +461,7 @@ export default function CateringPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Plan Type *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.planTypeRequired}</label>
                     <select
                       name="plan_type"
                       value={formData.plan_type}
@@ -439,12 +470,12 @@ export default function CateringPage() {
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                     >
                       {planTypes.map(type => (
-                        <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
+                        <option key={type} value={type}>{translateValue(type)}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Daily Cost (ETB) *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.dailyCostRequired}</label>
                     <input
                       type="number"
                       name="daily_cost"
@@ -456,7 +487,7 @@ export default function CateringPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.description}</label>
                     <textarea
                       name="description"
                       value={formData.description}
@@ -472,7 +503,7 @@ export default function CateringPage() {
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Item Name *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.itemNameRequired}</label>
                       <input
                         type="text"
                         name="item_name"
@@ -483,7 +514,7 @@ export default function CateringPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.categoryRequired}</label>
                       <select
                         name="category"
                         value={formData.category}
@@ -492,14 +523,14 @@ export default function CateringPage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                       >
                         {foodCategories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
+                          <option key={cat} value={cat}>{translateValue(cat)}</option>
                         ))}
                       </select>
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Quantity *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.quantityRequired}</label>
                       <input
                         type="number"
                         name="quantity"
@@ -512,7 +543,7 @@ export default function CateringPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Unit *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.unitRequired}</label>
                       <select
                         name="unit"
                         value={formData.unit}
@@ -521,14 +552,14 @@ export default function CateringPage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                       >
                         {units.map(unit => (
-                          <option key={unit} value={unit}>{unit}</option>
+                          <option key={unit} value={unit}>{translateValue(unit)}</option>
                         ))}
                       </select>
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Unit Cost (ETB) *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.unitCostRequired}</label>
                       <input
                         type="number"
                         name="unit_cost"
@@ -540,7 +571,7 @@ export default function CateringPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Reorder Level *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.reorderRequired}</label>
                       <input
                         type="number"
                         name="reorder_level"
@@ -555,7 +586,7 @@ export default function CateringPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Supplier</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.supplier}</label>
                       <input
                         type="text"
                         name="supplier"
@@ -565,7 +596,7 @@ export default function CateringPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Expiry Date</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.expiryDate}</label>
                       <input
                         type="date"
                         name="expiry_date"
@@ -581,7 +612,7 @@ export default function CateringPage() {
               {modalType === "transaction" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Item Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.itemNameRequired}</label>
                     <input
                       type="text"
                       name="item_name"
@@ -593,7 +624,7 @@ export default function CateringPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Transaction Type *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.transactionTypeRequired}</label>
                       <select
                         name="transaction_type"
                         value={formData.transaction_type}
@@ -602,12 +633,12 @@ export default function CateringPage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                       >
                         {transactionTypes.map(type => (
-                          <option key={type} value={type}>{type}</option>
+                          <option key={type} value={type}>{translateValue(type)}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Quantity *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.quantityRequired}</label>
                       <input
                         type="number"
                         name="quantity"
@@ -622,7 +653,7 @@ export default function CateringPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Unit Cost (ETB) *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.unitCostRequired}</label>
                       <input
                         type="number"
                         name="unit_cost"
@@ -634,7 +665,7 @@ export default function CateringPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Reference</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{t.reference}</label>
                       <input
                         type="text"
                         name="reference"
@@ -645,7 +676,7 @@ export default function CateringPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.notes}</label>
                     <textarea
                       name="notes"
                       value={formData.notes}
@@ -663,13 +694,13 @@ export default function CateringPage() {
                   onClick={() => setShowModal(false)}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
                   className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 transition"
                 >
-                  Submit
+                  {t.recordTransaction}
                 </button>
               </div>
             </form>

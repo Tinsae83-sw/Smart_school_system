@@ -119,7 +119,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-navy-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
@@ -138,7 +138,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     >
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
         {/* Top bar */}
-        <header className="fixed top-0 left-0 right-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+        <header data-app-navbar className="fixed top-0 left-0 right-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
           <div className="flex items-center justify-between px-4 h-16">
             <div className="flex items-center gap-3">
               <button
@@ -150,13 +150,14 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                 </svg>
               </button>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-sky-700 rounded-lg flex items-center justify-center shadow">
+                <div className="w-8 h-8 bg-gradient-to-br from-navy-500 to-teal-700 rounded-lg flex items-center justify-center shadow overflow-hidden">
+                  <img src="/school-logo.jpg" alt="School Logo" className="w-full h-full object-cover" />
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                   </svg>
                 </div>
-                <span className="text-lg font-bold text-slate-900 dark:text-slate-100 hidden sm:block">EduConnect</span>
+                <span className="text-lg font-bold text-slate-900 dark:text-slate-100 hidden sm:block">Yekatit 25/67</span>
               </div>
             </div>
 
@@ -166,7 +167,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile?.full_name || "Student"}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{profile?.student_number || ""}</p>
               </div>
-              <div className="w-9 h-9 rounded-full bg-sky-100 dark:bg-sky-900 flex items-center justify-center text-sky-700 dark:text-sky-300 font-bold text-sm">
+              <div className="w-9 h-9 rounded-full bg-teal-100 dark:bg-teal-900 flex items-center justify-center text-teal-700 dark:text-teal-300 font-bold text-sm">
                 {profile?.full_name?.charAt(0) || "S"}
               </div>
               <button
@@ -185,6 +186,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
         {/* Sidebar */}
         <aside
+          data-app-sidebar
           className={`fixed top-16 left-0 bottom-0 z-40 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 overflow-y-auto transition-transform duration-200 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } lg:translate-x-0`}
@@ -199,7 +201,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition ${
                     isActive
-                      ? "bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-100 dark:border-sky-800"
+                      ? "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-100 dark:border-teal-800"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >

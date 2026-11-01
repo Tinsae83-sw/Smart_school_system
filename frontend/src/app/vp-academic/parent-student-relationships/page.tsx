@@ -56,7 +56,7 @@ export default function ParentStudentRelationshipsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -71,7 +71,7 @@ export default function ParentStudentRelationshipsPage() {
             placeholder="Search by parent name, email, or student name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full max-w-md rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="w-full max-w-md rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
           />
         </div>
 
@@ -85,7 +85,7 @@ export default function ParentStudentRelationshipsPage() {
             {/* Statistics */}
             <div className="grid gap-4 sm:grid-cols-3 mb-8">
               <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
-                <div className="text-2xl font-bold text-emerald-600">{relationships.length}</div>
+                <div className="text-2xl font-bold text-orange-600">{relationships.length}</div>
                 <div className="text-sm text-slate-600">Total Parents</div>
               </div>
               <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
@@ -115,7 +115,7 @@ export default function ParentStudentRelationshipsPage() {
                     className="rounded-xl bg-white shadow-sm border border-slate-200 overflow-hidden"
                   >
                     {/* Parent Information */}
-                    <div className="bg-gradient-to-r from-emerald-50 to-blue-50 px-6 py-4 border-b border-slate-200">
+                    <div className="bg-gradient-to-r from-orange-50 to-blue-50 px-6 py-4 border-b border-slate-200">
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="text-lg font-semibold text-slate-900">{parent.parent_name}</h3>
@@ -140,7 +140,7 @@ export default function ParentStudentRelationshipsPage() {
                             )}
                           </div>
                         </div>
-                        <div className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">
+                        <div className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
                           {parent.students.length} {parent.students.length === 1 ? 'Student' : 'Students'}
                         </div>
                       </div>

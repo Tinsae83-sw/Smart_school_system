@@ -3,7 +3,7 @@ const prisma = require('../config/prisma');
 // Configuration
 const PERIODS_PER_DAY = 7;
 const DAYS_PER_WEEK = 5;
-const PERIOD_DURATION_MINUTES = 45;
+const PERIOD_DURATION_MINUTES = 42;
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 /**
@@ -25,7 +25,21 @@ async function generateTimetable(req, res) {
     });
 
     if (classSubjects.length === 0) {
-      return res.status(400).json({ error: 'No class-subject assignments found. Please assign subjects to classes first.' });
+      return res.status(400).json({ 
+        error: 'No class-subject assignments found. Please assign subjects to classes first.' 
+      });
+    }
+
+    // Check if any class-subject assignments lack teachers
+    const assignmentsWithoutTeachers = classSubjects.filter(cs => !cs.teacher_id);
+    if (assignmentsWithoutTeachers.length > 0) {
+      return res.status(400).json({ 
+        error: `${assignmentsWithoutTeachers.length} class-subject assignments are missing teachers. Please assign teachers to all class-subject combinations before generating the timetable.`,
+        details: assignmentsWithoutTeachers.map(cs => ({
+          class: cs.school_class?.class_name || 'Unknown',
+          subject: cs.subject?.subject_name || 'Unknown'
+        }))
+      });
     }
 
     // Clear existing schedules
@@ -102,16 +116,22 @@ function generateTimetableAlgorithm(classSubjects) {
   });
 
   // Calculate required periods for each class-subject
-  const subjectRequirements = classSubjects.map(cs => ({
-    class_id: cs.class_id,
-    class_name: cs.school_class.class_name,
-    subject_id: cs.subject_id,
-    subject_name: cs.subject.subject_name,
-    teacher_id: cs.teacher_id,
-    teacher_name: cs.teacher.user.full_name,
-    credit_hour: cs.subject.credit_hour || 3,
-    required_periods: cs.subject.credit_hour || 3
-  }));
+  // Formula: (Credit Hours × 60) ÷ 42 = Number of Periods
+  const subjectRequirements = classSubjects.map(cs => {
+    const creditHour = cs.subject.credit_hour || 3;
+    const requiredPeriods = Math.ceil((creditHour * 60) / PERIOD_DURATION_MINUTES);
+    
+    return {
+      class_id: cs.class_id,
+      class_name: cs.school_class.class_name,
+      subject_id: cs.subject_id,
+      subject_name: cs.subject.subject_name,
+      teacher_id: cs.teacher_id,
+      teacher_name: cs.teacher.user.full_name,
+      credit_hour: creditHour,
+      required_periods: requiredPeriods
+    };
+  });
 
   // Calculate total required periods vs available slots
   const totalRequiredPeriods = subjectRequirements.reduce((sum, req) => sum + req.required_periods, 0);

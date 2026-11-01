@@ -657,6 +657,85 @@ async function exportCurriculumGuide(req, res) {
   }
 }
 
+// ==================== SEMESTER EVENTS MANAGEMENT ====================
+
+/**
+ * Get All Semester Events
+ * GET /api/vp-academic/semester-events
+ */
+async function getSemesterEvents(req, res) {
+  try {
+    // Check if the table exists by attempting to query
+    const events = await prisma.semesterEvent.findMany({
+      orderBy: { event_date: 'asc' }
+    }).catch(() => []);
+
+    return res.json(events);
+  } catch (error) {
+    console.error('Get semester events error:', error);
+    return res.json([]); // Return empty array if table doesn't exist yet
+  }
+}
+
+/**
+ * Create Semester Event
+ * POST /api/vp-academic/semester-events
+ */
+async function createSemesterEvent(req, res) {
+  try {
+    const {
+      event_type,
+      title,
+      description,
+      event_date,
+      start_time,
+      end_time,
+      class_name,
+      subject_name,
+      location
+    } = req.body;
+
+    const event = await prisma.semesterEvent.create({
+      data: {
+        event_type,
+        title,
+        description: description || null,
+        event_date: new Date(event_date),
+        start_time,
+        end_time,
+        class_name: class_name || null,
+        subject_name: subject_name || null,
+        location: location || null,
+        is_active: true
+      }
+    });
+
+    return res.status(201).json(event);
+  } catch (error) {
+    console.error('Create semester event error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
+ * Delete Semester Event
+ * DELETE /api/vp-academic/semester-events/:id
+ */
+async function deleteSemesterEvent(req, res) {
+  try {
+    const { id } = req.params;
+
+    await prisma.semesterEvent.delete({
+      where: { event_id: parseInt(id) }
+    });
+
+    return res.json({ message: 'Event deleted successfully' });
+  } catch (error) {
+    console.error('Delete semester event error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 // ==================== TIMETABLE & SCHEDULING MANAGEMENT ====================
 
 /**
@@ -1384,7 +1463,11 @@ async function getAllTeachersPerformance(req, res) {
     const teachers = await prisma.teacher.findMany({
       include: {
         user: true,
-        class_subjects: true
+        class_subjects: {
+          include: {
+            subject: true
+          }
+        }
       }
     });
 
@@ -1406,26 +1489,19 @@ async function getAllTeachersPerformance(req, res) {
           ? grades.reduce((sum, g) => sum + Number(g.score), 0) / grades.length
           : 0;
 
-        const attendanceRecords = await prisma.attendanceRecord.findMany({
-          where: { recorded_by: teacher.teacher_id }
-        });
+        const passCount = grades.filter(g => Number(g.score) >= 60).length;
+        const passRate = grades.length > 0 ? (passCount / grades.length) * 100 : 0;
 
-        const peerEvaluations = await prisma.peerEvaluation.findMany({
-          where: { evaluatee_id: teacher.teacher_id }
-        });
+        const totalStudents = grades.length;
 
         return {
           teacher_id: teacher.teacher_id,
           teacher_name: teacher.user?.full_name || 'Unknown',
-          email: teacher.user?.email || '',
           department: teacher.department || 'Unassigned',
-          average_grade: parseFloat(averageScore.toFixed(2)),
-          total_grades_recorded: grades.length,
-          attendance_records_count: attendanceRecords.length,
-          peer_evaluations_count: peerEvaluations.length,
-          overall_peer_score: peerEvaluations.length > 0
-            ? parseFloat((peerEvaluations.reduce((sum, e) => sum + Number(e.overall_score), 0) / peerEvaluations.length).toFixed(2))
-            : 0
+          average_student_grade: parseFloat(averageScore.toFixed(2)),
+          pass_rate: parseFloat(passRate.toFixed(2)),
+          total_students: totalStudents,
+          subjects_taught: teacher.class_subjects.length
         };
       })
     );
@@ -2539,38 +2615,80 @@ async function generateNationalExamResults(req, res) {
  */
 async function compareExamResults(req, res) {
   try {
-    const { subject_id, years } = req.query;
-
-    const yearArray = years ? years.split(',') : ['2023-2024', '2024-2025'];
-
-    const comparison = {};
-    for (const year of yearArray) {
-      const results = await prisma.examResult.findMany({
-        where: {
-          exam: {
-            class_subject: {
-              subject_id: parseInt(subject_id)
-            },
-            created_at: {
-              gte: new Date(year.split('-')[0], 0, 1),
-              lte: new Date(year.split('-')[1], 11, 31)
+    // Get all grades for trend analysis
+    const grades = await prisma.grade.findMany({
+      include: {
+        submission: {
+          include: {
+            assignment: {
+              include: {
+                class_subject: {
+                  include: {
+                    subject: true
+                  }
+                }
+              }
             }
           }
         }
-      });
+      }
+    });
 
-      const scores = results.map(r => Number(r.score));
-      const average = scores.length > 0 
-        ? scores.reduce((sum, s) => sum + s, 0) / scores.length 
-        : 0;
+    // Get attendance records
+    const attendanceRecords = await prisma.attendanceRecord.findMany();
 
-      comparison[year] = {
-        average: average.toFixed(2),
-        total_exams: results.length
+    // Group by month for trend data
+    const monthlyData = {};
+    const now = new Date();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${months[date.getMonth()]} ${date.getFullYear()}`;
+      monthlyData[key] = {
+        period: key,
+        grades: [],
+        attendanceRecords: []
       };
     }
 
-    return res.json(comparison);
+    // Populate data
+    grades.forEach(g => {
+      const gradeDate = new Date(g.graded_at);
+      const key = `${months[gradeDate.getMonth()]} ${gradeDate.getFullYear()}`;
+      if (monthlyData[key]) {
+        monthlyData[key].grades.push(Number(g.score));
+      }
+    });
+
+    attendanceRecords.forEach(ar => {
+      const attendanceDate = new Date(ar.date);
+      const key = `${months[attendanceDate.getMonth()]} ${attendanceDate.getFullYear()}`;
+      if (monthlyData[key]) {
+        monthlyData[key].attendanceRecords.push(ar);
+      }
+    });
+
+    // Calculate averages
+    const trendData = Object.values(monthlyData).map(data => {
+      const avgGrade = data.grades.length > 0
+        ? data.grades.reduce((sum, g) => sum + g, 0) / data.grades.length
+        : 0;
+
+      const presentCount = data.attendanceRecords.filter(r => r.status === 'PRESENT').length;
+      const attendanceRate = data.attendanceRecords.length > 0
+        ? (presentCount / data.attendanceRecords.length) * 100
+        : 0;
+
+      return {
+        period: data.period,
+        average_grade: parseFloat(avgGrade.toFixed(2)),
+        attendance_rate: parseFloat(attendanceRate.toFixed(2))
+      };
+    });
+
+    return res.json(trendData);
   } catch (error) {
     console.error('Compare exam results error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -2765,8 +2883,6 @@ async function getReportsOverview(req, res) {
  */
 async function getSchoolWideGrades(req, res) {
   try {
-    const { grade_level, subject_id } = req.query;
-
     const grades = await prisma.grade.findMany({
       include: {
         submission: {
@@ -2790,19 +2906,76 @@ async function getSchoolWideGrades(req, res) {
       }
     });
 
-    let filtered = grades;
-    if (grade_level) {
-      filtered = filtered.filter(g => 
-        g.submission.student.current_class?.class_name.includes(grade_level.toString())
-      );
-    }
-    if (subject_id) {
-      filtered = filtered.filter(g => 
-        g.submission.assignment.class_subject.subject_id === parseInt(subject_id)
-      );
-    }
+    // Get all attendance records upfront
+    const allAttendanceRecords = await prisma.attendanceRecord.findMany({
+      include: {
+        school_class: true
+      }
+    });
 
-    return res.json(filtered);
+    // Group by class
+    const classData = {};
+    grades.forEach(g => {
+      const className = g.submission.student.current_class?.class_name || 'Unassigned';
+      if (!classData[className]) {
+        classData[className] = {
+          class_name: className,
+          grades: [],
+          studentIds: new Set()
+        };
+      }
+      classData[className].grades.push(Number(g.score));
+      classData[className].studentIds.add(g.submission.student_id);
+    });
+
+    // Calculate performance metrics per class
+    const performanceData = Object.values(classData).map(cls => {
+      const scores = cls.grades;
+      const averageGrade = scores.length > 0
+        ? scores.reduce((sum, s) => sum + s, 0) / scores.length
+        : 0;
+
+      // Get attendance rate for this class from pre-fetched data
+      const classAttendance = allAttendanceRecords.filter(ar =>
+        ar.school_class?.class_name === cls.class_name
+      );
+
+      const presentCount = classAttendance.filter(r => r.status === 'PRESENT').length;
+      const attendanceRate = classAttendance.length > 0
+        ? (presentCount / classAttendance.length) * 100
+        : 0;
+
+      // Find top and weak performing subjects
+      const subjectScores = {};
+      grades.forEach(g => {
+        if (g.submission.student.current_class?.class_name === cls.class_name) {
+          const subjectName = g.submission.assignment.class_subject.subject.subject_name;
+          if (!subjectScores[subjectName]) {
+            subjectScores[subjectName] = [];
+          }
+          subjectScores[subjectName].push(Number(g.score));
+        }
+      });
+
+      const subjectAverages = {};
+      Object.keys(subjectScores).forEach(subject => {
+        subjectAverages[subject] = subjectScores[subject].reduce((sum, s) => sum + s, 0) / subjectScores[subject].length;
+      });
+
+      const topSubject = Object.entries(subjectAverages).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+      const weakSubject = Object.entries(subjectAverages).sort((a, b) => a[1] - b[1])[0]?.[0] || 'N/A';
+
+      return {
+        class_name: cls.class_name,
+        average_grade: parseFloat(averageGrade.toFixed(2)),
+        attendance_rate: parseFloat(attendanceRate.toFixed(2)),
+        total_students: cls.studentIds.size,
+        top_performing_subject: topSubject,
+        needs_improvement_subject: weakSubject
+      };
+    });
+
+    return res.json(performanceData);
   } catch (error) {
     console.error('Get school-wide grades error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -2815,19 +2988,69 @@ async function getSchoolWideGrades(req, res) {
  */
 async function getGradeDistribution(req, res) {
   try {
-    const grades = await prisma.grade.findMany();
-
-    const distribution = { A: 0, B: 0, C: 0, D: 0, F: 0 };
-    grades.forEach(g => {
-      const score = Number(g.score);
-      if (score >= 90) distribution.A++;
-      else if (score >= 80) distribution.B++;
-      else if (score >= 70) distribution.C++;
-      else if (score >= 60) distribution.D++;
-      else distribution.F++;
+    const grades = await prisma.grade.findMany({
+      include: {
+        submission: {
+          include: {
+            assignment: {
+              include: {
+                class_subject: {
+                  include: {
+                    subject: true,
+                    school_class: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     });
 
-    return res.json(distribution);
+    // Group by subject
+    const subjectData = {};
+    grades.forEach(g => {
+      const subjectName = g.submission.assignment.class_subject.subject.subject_name;
+      if (!subjectData[subjectName]) {
+        subjectData[subjectName] = {
+          subject_name: subjectName,
+          scores: [],
+          total_students: 0
+        };
+      }
+      subjectData[subjectName].scores.push(Number(g.score));
+      subjectData[subjectName].total_students++;
+    });
+
+    // Calculate performance metrics per subject
+    const performanceData = Object.values(subjectData).map(subject => {
+      const scores = subject.scores;
+      const averageScore = scores.length > 0
+        ? scores.reduce((sum, s) => sum + s, 0) / scores.length
+        : 0;
+
+      const gradeDistribution = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+      scores.forEach(score => {
+        if (score >= 90) gradeDistribution.A++;
+        else if (score >= 80) gradeDistribution.B++;
+        else if (score >= 70) gradeDistribution.C++;
+        else if (score >= 60) gradeDistribution.D++;
+        else gradeDistribution.F++;
+      });
+
+      const passCount = scores.filter(s => s >= 60).length;
+      const passRate = scores.length > 0 ? (passCount / scores.length) * 100 : 0;
+
+      return {
+        subject_name: subject.subject_name,
+        average_score: parseFloat(averageScore.toFixed(2)),
+        pass_rate: parseFloat(passRate.toFixed(2)),
+        total_students: subject.total_students,
+        grade_distribution: gradeDistribution
+      };
+    });
+
+    return res.json(performanceData);
   } catch (error) {
     console.error('Get grade distribution error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -3578,7 +3801,12 @@ module.exports = {
   mapSubjectToDepartment,
   getCurriculumCompliance,
   exportCurriculumGuide,
-  
+
+  // Semester Events
+  getSemesterEvents,
+  createSemesterEvent,
+  deleteSemesterEvent,
+
   // Timetable
   createMasterTimetable,
   assignTeacherToClass,

@@ -1,6 +1,23 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAcademicTranslations } from "@/translations/vp-academic";
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
 
@@ -44,6 +61,8 @@ type TrendData = {
 };
 
 export default function AnalyticsPage() {
+  const { language } = useLanguage();
+  const t = vpAcademicTranslations[language];
   const [activeTab, setActiveTab] = useState<"subjects" | "teachers" | "classes" | "trends">("subjects");
   const [subjectPerformance, setSubjectPerformance] = useState<SubjectPerformance[]>([]);
   const [teacherPerformance, setTeacherPerformance] = useState<TeacherPerformance[]>([]);
@@ -121,7 +140,7 @@ export default function AnalyticsPage() {
   function getGradeColor(grade: string) {
     switch (grade) {
       case "A":
-        return "bg-emerald-500";
+        return "bg-orange-500";
       case "B":
         return "bg-sky-500";
       case "C":
@@ -136,17 +155,49 @@ export default function AnalyticsPage() {
   }
 
   function getPerformanceColor(score: number) {
-    if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
+    if (score >= 80) return "text-orange-600 dark:text-orange-400";
     if (score >= 60) return "text-sky-600 dark:text-sky-400";
     if (score >= 40) return "text-amber-600 dark:text-amber-400";
     return "text-rose-600 dark:text-rose-400";
   }
 
+  const COLORS = {
+    A: "#f97316",
+    B: "#0ea5e9",
+    C: "#f59e0b",
+    D: "#f97316",
+    F: "#ef4444"
+  };
+
+  const gradeChartData = subjectPerformance.map(subject => ({
+    name: subject.subject_name,
+    average: subject.average_score,
+    passRate: subject.pass_rate
+  }));
+
+  const teacherChartData = teacherPerformance.map(teacher => ({
+    name: teacher.teacher_name,
+    averageGrade: teacher.average_student_grade,
+    passRate: teacher.pass_rate
+  }));
+
+  const classGradeChartData = classPerformance.map(cls => ({
+    name: cls.class_name,
+    averageGrade: cls.average_grade,
+    attendanceRate: cls.attendance_rate
+  }));
+
+  const trendChartData = trendData.map(trend => ({
+    period: trend.period,
+    averageGrade: trend.average_grade,
+    attendanceRate: trend.attendance_rate
+  }));
+
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Performance Analytics</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Comprehensive analysis of academic performance metrics</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.performanceAnalyticsTitle}</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{t.comprehensiveAnalysis}</p>
       </div>
 
       <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
@@ -155,206 +206,284 @@ export default function AnalyticsPage() {
             onClick={() => setActiveTab("subjects")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "subjects"
-                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                ? "border-b-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400"
                 : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
-            Subject Performance
+            {t.subjectPerformance}
           </button>
           <button
             onClick={() => setActiveTab("teachers")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "teachers"
-                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                ? "border-b-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400"
                 : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
-            Teacher Performance
+            {t.teacherPerformance}
           </button>
           <button
             onClick={() => setActiveTab("classes")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "classes"
-                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                ? "border-b-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400"
                 : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
-            Class Performance
+            {t.classPerformance}
           </button>
           <button
             onClick={() => setActiveTab("trends")}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === "trends"
-                ? "border-b-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400"
+                ? "border-b-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400"
                 : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
-            Trends & Comparisons
+            {t.trendsComparisons}
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-600 border-t-transparent" />
         </div>
       ) : (
         <div className="space-y-6">
           {activeTab === "subjects" && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              {subjectPerformance.map((subject) => (
-                <div key={subject.subject_name} className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{subject.subject_name}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-300">{subject.total_students} students</p>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2 mb-4">
-                    <div>
-                      <p className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wide">Average Score</p>
-                      <p className={`text-2xl font-bold ${getPerformanceColor(subject.average_score)}`}>
-                        {(subject.average_score ?? 0).toFixed(1)}%
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wide">Pass Rate</p>
-                      <p className={`text-2xl font-bold ${getPerformanceColor(subject.pass_rate)}`}>
-                        {(subject.pass_rate ?? 0).toFixed(1)}%
-                      </p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-2">Grade Distribution</p>
-                    <div className="flex gap-1 h-8">
-                      {Object.entries(subject.grade_distribution).map(([grade, count]) => (
-                        <div
-                          key={grade}
-                          className={`${getGradeColor(grade)} rounded-sm`}
-                          style={{ width: `${(count / subject.total_students) * 100}%` }}
-                          title={`${grade}: ${count} students`}
-                        />
-                      ))}
-                    </div>
-                    <div className="flex gap-4 mt-2 text-xs text-slate-600 dark:text-slate-400">
-                      {Object.entries(subject.grade_distribution).map(([grade, count]) => (
-                        <span key={grade}>
-                          {grade}: {count}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+            <div className="space-y-6">
+              {subjectPerformance.length > 0 && (
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t.subjectPerformanceOverview}</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={gradeChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+                      <XAxis dataKey="name" className="text-xs text-slate-600 dark:text-slate-400" />
+                      <YAxis className="text-xs text-slate-600 dark:text-slate-400" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgb(255 255 255)",
+                          border: "1px solid rgb(226 232 240)",
+                          borderRadius: "8px"
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="average" fill="#10b981" name={`${t.averageScore} (%)`} />
+                      <Bar dataKey="passRate" fill="#0ea5e9" name={`${t.passRateLabel} (%)`} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
+              )}
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                {subjectPerformance.map((subject) => (
+                  <div key={subject.subject_name} className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{subject.subject_name}</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-300">{subject.total_students} {t.studentsLabel.toLowerCase()}</p>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2 mb-4">
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wide">{t.averageScore}</p>
+                        <p className={`text-2xl font-bold ${getPerformanceColor(subject.average_score)}`}>
+                          {(subject.average_score ?? 0).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wide">{t.passRateLabel}</p>
+                        <p className={`text-2xl font-bold ${getPerformanceColor(subject.pass_rate)}`}>
+                          {(subject.pass_rate ?? 0).toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-2">{t.gradeDistribution}</p>
+                      <ResponsiveContainer width="100%" height={150}>
+                        <PieChart>
+                          <Pie
+                            data={Object.entries(subject.grade_distribution).map(([grade, count]) => ({
+                              name: grade,
+                              value: count
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={60}
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {Object.keys(subject.grade_distribution).map((grade) => (
+                              <Cell key={grade} fill={COLORS[grade as keyof typeof COLORS]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                ))}
+              </div>
               {subjectPerformance.length === 0 && (
-                <div className="col-span-2 rounded-2xl bg-white dark:bg-slate-800 p-12 text-center text-sm text-slate-400 dark:text-slate-500">
-                  No subject performance data available.
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-12 text-center text-sm text-slate-400 dark:text-slate-500">
+                  {t.noSubjectPerformanceData}
                 </div>
               )}
             </div>
           )}
 
           {activeTab === "teachers" && (
-            <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-300">
-                      <th className="px-6 py-4">Teacher</th>
-                      <th className="px-6 py-4">Department</th>
-                      <th className="px-6 py-4">Students</th>
-                      <th className="px-6 py-4">Subjects</th>
-                      <th className="px-6 py-4">Avg Grade</th>
-                      <th className="px-6 py-4">Pass Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                    {teacherPerformance.map((teacher) => (
-                      <tr key={teacher.teacher_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                        <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{teacher.teacher_name}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teacher.department}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teacher.total_students}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teacher.subjects_taught}</td>
-                        <td className="px-6 py-4">
-                          <span className={`text-sm font-semibold ${getPerformanceColor(teacher.average_student_grade)}`}>
-                            {(teacher.average_student_grade ?? 0).toFixed(1)}%
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-sm font-semibold ${getPerformanceColor(teacher.pass_rate)}`}>
-                            {(teacher.pass_rate ?? 0).toFixed(1)}%
-                          </span>
-                        </td>
+            <div className="space-y-6">
+              {teacherPerformance.length > 0 && (
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t.teacherPerformanceOverview}</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={teacherChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+                      <XAxis dataKey="name" className="text-xs text-slate-600 dark:text-slate-400" />
+                      <YAxis className="text-xs text-slate-600 dark:text-slate-400" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgb(255 255 255)",
+                          border: "1px solid rgb(226 232 240)",
+                          borderRadius: "8px"
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="averageGrade" fill="#10b981" name={`${t.avgGrade} (%)`} />
+                      <Bar dataKey="passRate" fill="#0ea5e9" name={`${t.passRateLabel} (%)`} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              <div className="rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-300">
+                        <th className="px-6 py-4">{t.teacherLabel}</th>
+                        <th className="px-6 py-4">{t.departmentLabel}</th>
+                        <th className="px-6 py-4">{t.studentsLabel}</th>
+                        <th className="px-6 py-4">{t.subjects}</th>
+                        <th className="px-6 py-4">{t.avgGrade}</th>
+                        <th className="px-6 py-4">{t.passRateLabel}</th>
                       </tr>
-                    ))}
-                    {teacherPerformance.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
-                          No teacher performance data available.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                      {teacherPerformance.map((teacher) => (
+                        <tr key={teacher.teacher_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                          <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{teacher.teacher_name}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teacher.department}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teacher.total_students}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{teacher.subjects_taught}</td>
+                          <td className="px-6 py-4">
+                            <span className={`text-sm font-semibold ${getPerformanceColor(teacher.average_student_grade)}`}>
+                              {(teacher.average_student_grade ?? 0).toFixed(1)}%
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`text-sm font-semibold ${getPerformanceColor(teacher.pass_rate)}`}>
+                              {(teacher.pass_rate ?? 0).toFixed(1)}%
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      {teacherPerformance.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
+                            {t.noTeacherPerformanceData}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
 
           {activeTab === "classes" && (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {classPerformance.map((cls) => (
-                <div key={cls.class_name} className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{cls.class_name}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-300">{cls.total_students} students</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-slate-500 dark:text-slate-300">Average Grade</p>
-                        <p className={`text-sm font-semibold ${getPerformanceColor(cls.average_grade)}`}>
-                          {(cls.average_grade ?? 0).toFixed(1)}%
-                        </p>
-                      </div>
-                      <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
-                        <div
-                          className={`h-2 rounded-full ${(cls.average_grade ?? 0) >= 60 ? "bg-emerald-500" : "bg-rose-500"}`}
-                          style={{ width: `${cls.average_grade ?? 0}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-slate-500 dark:text-slate-300">Attendance Rate</p>
-                        <p className={`text-sm font-semibold ${getPerformanceColor(cls.attendance_rate)}`}>
-                          {(cls.attendance_rate ?? 0).toFixed(1)}%
-                        </p>
-                      </div>
-                      <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
-                        <div
-                          className={`h-2 rounded-full ${(cls.attendance_rate ?? 0) >= 75 ? "bg-emerald-500" : "bg-amber-500"}`}
-                          style={{ width: `${cls.attendance_rate ?? 0}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-100 dark:border-slate-700">
-                      <p className="text-xs text-slate-500 dark:text-slate-300 mb-1">Top Subject</p>
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">{cls.top_performing_subject}</p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs text-slate-500 dark:text-slate-300 mb-1">Needs Improvement</p>
-                      <p className="text-sm font-medium text-rose-700 dark:text-rose-300">{cls.needs_improvement_subject}</p>
-                    </div>
-                  </div>
+            <div className="space-y-6">
+              {classPerformance.length > 0 && (
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t.classPerformanceOverview}</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={classGradeChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+                      <XAxis dataKey="name" className="text-xs text-slate-600 dark:text-slate-400" />
+                      <YAxis className="text-xs text-slate-600 dark:text-slate-400" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgb(255 255 255)",
+                          border: "1px solid rgb(226 232 240)",
+                          borderRadius: "8px"
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="averageGrade" fill="#10b981" name={`${t.averageGrade} (%)`} />
+                      <Bar dataKey="attendanceRate" fill="#0ea5e9" name={`${t.attendanceRateLabel} (%)`} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
+              )}
+
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {classPerformance.map((cls) => (
+                  <div key={cls.class_name} className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{cls.class_name}</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-300">{cls.total_students} {t.studentsLabel.toLowerCase()}</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-300">{t.averageGrade}</p>
+                          <p className={`text-sm font-semibold ${getPerformanceColor(cls.average_grade)}`}>
+                            {(cls.average_grade ?? 0).toFixed(1)}%
+                          </p>
+                        </div>
+                        <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+                          <div
+                            className={`h-2 rounded-full ${(cls.average_grade ?? 0) >= 60 ? "bg-orange-500" : "bg-rose-500"}`}
+                            style={{ width: `${cls.average_grade ?? 0}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-300">{t.attendanceRateLabel}</p>
+                          <p className={`text-sm font-semibold ${getPerformanceColor(cls.attendance_rate)}`}>
+                            {(cls.attendance_rate ?? 0).toFixed(1)}%
+                          </p>
+                        </div>
+                        <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+                          <div
+                            className={`h-2 rounded-full ${(cls.attendance_rate ?? 0) >= 75 ? "bg-orange-500" : "bg-amber-500"}`}
+                            style={{ width: `${cls.attendance_rate ?? 0}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-700">
+                        <p className="text-xs text-slate-500 dark:text-slate-300 mb-1">{t.topSubject}</p>
+                        <p className="text-sm font-medium text-orange-700 dark:text-orange-300">{cls.top_performing_subject}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-300 mb-1">{t.needsImprovementSubject}</p>
+                        <p className="text-sm font-medium text-rose-700 dark:text-rose-300">{cls.needs_improvement_subject}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
               {classPerformance.length === 0 && (
-                <div className="col-span-3 rounded-2xl bg-white dark:bg-slate-800 p-12 text-center text-sm text-slate-400 dark:text-slate-500">
-                  No class performance data available.
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-12 text-center text-sm text-slate-400 dark:text-slate-500">
+                  {t.noClassPerformanceData}
                 </div>
               )}
             </div>
@@ -362,70 +491,60 @@ export default function AnalyticsPage() {
 
           {activeTab === "trends" && (
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Performance Trends Over Time</h3>
-                {trendData.length > 0 ? (
-                  <div className="space-y-4">
-                    {trendData.map((trend, index) => (
-                      <div key={index} className="flex items-center gap-4">
-                        <div className="w-24 text-sm text-slate-600 dark:text-slate-400">{trend.period}</div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="flex-1 h-6 rounded-full bg-slate-200 dark:bg-slate-700">
-                              <div
-                                className="h-6 rounded-full bg-emerald-500"
-                                style={{ width: `${trend.average_grade ?? 0}%` }}
-                              />
-                            </div>
-                            <span className="text-sm font-medium text-slate-900 dark:text-white w-16 text-right">
-                              {(trend.average_grade ?? 0).toFixed(1)}%
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-4 rounded-full bg-slate-200 dark:bg-slate-700">
-                              <div
-                                className="h-4 rounded-full bg-sky-500"
-                                style={{ width: `${trend.attendance_rate ?? 0}%` }}
-                              />
-                            </div>
-                            <span className="text-xs text-slate-600 dark:text-slate-400 w-16 text-right">
-                              {(trend.attendance_rate ?? 0).toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-8">No trend data available.</p>
-                )}
-              </div>
+              {trendData.length > 0 && (
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t.performanceTrendsOverTime}</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={trendChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+                      <XAxis dataKey="period" className="text-xs text-slate-600 dark:text-slate-400" />
+                      <YAxis className="text-xs text-slate-600 dark:text-slate-400" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgb(255 255 255)",
+                          border: "1px solid rgb(226 232 240)",
+                          borderRadius: "8px"
+                        }}
+                      />
+                      <Legend />
+                      <Line type="monotone" dataKey="averageGrade" stroke="#10b981" strokeWidth={2} name={`${t.averageGrade} (%)`} />
+                      <Line type="monotone" dataKey="attendanceRate" stroke="#0ea5e9" strokeWidth={2} name={`${t.attendanceRateLabel} (%)`} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
 
               <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Key Insights</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t.keyInsights}</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 p-4">
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">Best Performing Period</p>
-                    <p className="text-lg font-bold text-emerald-900 dark:text-emerald-300">
+                  <div className="rounded-xl bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 p-4">
+                    <p className="text-xs text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-1">{t.bestPerformingPeriod}</p>
+                    <p className="text-lg font-bold text-orange-900 dark:text-orange-300">
                       {trendData.length > 0
                         ? trendData.reduce((best, current) =>
                             current.average_grade > best.average_grade ? current : best
                           ).period
-                        : "N/A"}
+                        : t.notProvided}
                     </p>
                   </div>
                   <div className="rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 p-4">
-                    <p className="text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">Needs Attention</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">{t.needsAttention}</p>
                     <p className="text-lg font-bold text-amber-900 dark:text-amber-300">
                       {trendData.length > 0
                         ? trendData.reduce((worst, current) =>
                             current.average_grade < worst.average_grade ? current : worst
                           ).period
-                        : "N/A"}
+                        : t.notProvided}
                     </p>
                   </div>
                 </div>
               </div>
+
+              {trendData.length === 0 && (
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-12 text-center text-sm text-slate-400 dark:text-slate-500">
+                  {t.noTrendData}
+                </div>
+              )}
             </div>
           )}
         </div>

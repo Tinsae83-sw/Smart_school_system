@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -9,8 +10,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "EduConnect | Premium School Management",
-  description: "Modern, attractive school dashboard and management system.",
+  title: "Yekatit 25/67 Secondary School | School Management System",
+  description: "Modern school management system for Yekatit 25/67 Secondary School.",
 };
 
 export default function RootLayout({
@@ -36,9 +37,11 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${outfit.variable} font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 selection:bg-indigo-200 selection:text-indigo-900 overflow-x-hidden`}>
+      <body className={`${outfit.variable} font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 selection:bg-teal-200 selection:text-teal-900 overflow-x-hidden`}>
         <ThemeProvider>
-          {children}
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

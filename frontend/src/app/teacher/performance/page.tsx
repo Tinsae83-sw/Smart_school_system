@@ -77,8 +77,8 @@ export default function PerformancePage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
-              <svg className="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-navy-100 dark:bg-navy-900/30 rounded-xl">
+              <svg className="w-6 h-6 text-navy-600 dark:text-navy-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
@@ -119,15 +119,15 @@ export default function PerformancePage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 hover:shadow-md transition">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-2 bg-navy-100 dark:bg-navy-900/30 rounded-lg">
+                <svg className="w-5 h-5 text-navy-600 dark:text-navy-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Average</span>
             </div>
             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Class Average</h3>
-            <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{performanceData?.average_grade || performanceData?.average || "N/A"}</p>
+            <p className="text-3xl font-bold text-navy-600 dark:text-navy-400">{performanceData?.average_grade || performanceData?.average || "N/A"}</p>
           </div>
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 hover:shadow-md transition">
             <div className="flex items-center justify-between mb-4">

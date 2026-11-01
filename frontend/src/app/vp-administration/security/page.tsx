@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translateVpAdministrationOperation } from "@/translations/vp-administration-operations";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
 
@@ -56,6 +58,8 @@ type CCTVCamera = {
 };
 
 export default function SecurityPage() {
+  const { language } = useLanguage();
+  const tr = (value: string) => translateVpAdministrationOperation(value, language);
   const [activeTab, setActiveTab] = useState<"personnel" | "visitors" | "equipment" | "cctv">("personnel");
   const [personnel, setPersonnel] = useState<SecurityPersonnel[]>([]);
   const [visitors, setVisitors] = useState<VisitorLog[]>([]);
@@ -226,8 +230,8 @@ export default function SecurityPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Security & Safety Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage security personnel, visitors, safety equipment, and surveillance</p>
+          <h1 className="text-2xl font-bold text-slate-900">{tr("Security & Safety Management")}</h1>
+          <p className="mt-1 text-sm text-slate-500">{tr("Manage security personnel, visitors, safety equipment, and surveillance")}</p>
         </div>
       </div>
 
@@ -241,7 +245,7 @@ export default function SecurityPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Security Personnel ({personnel.length})
+            {tr("Security Personnel (")}{personnel.length})
           </button>
           <button
             onClick={() => setActiveTab("visitors")}
@@ -251,7 +255,7 @@ export default function SecurityPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Visitor Log ({visitors.length})
+            {tr("Visitor Log (")}{visitors.length})
           </button>
           <button
             onClick={() => setActiveTab("equipment")}
@@ -261,7 +265,7 @@ export default function SecurityPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Safety Equipment ({equipment.length})
+            {tr("Safety Equipment (")}{equipment.length})
           </button>
           <button
             onClick={() => setActiveTab("cctv")}
@@ -271,14 +275,14 @@ export default function SecurityPage() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            CCTV Cameras ({cctv.length})
+            {tr("CCTV Cameras (")}{cctv.length})
           </button>
         </nav>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading...</div>
+          <div className="text-slate-500">{tr("Loading...")}</div>
         </div>
       ) : (
         <>
@@ -288,18 +292,18 @@ export default function SecurityPage() {
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Employee ID</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Shift</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Patrol Route</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Assigned Area</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Employee ID")}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Shift")}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Patrol Route")}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Assigned Area")}</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Status")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {personnel.map((person) => (
                       <tr key={person.security_id} className="hover:bg-slate-50">
                         <td className="px-6 py-4 text-sm font-medium text-slate-900">{person.employee_id}</td>
-                        <td className="px-6 py-4 text-sm text-slate-600">{person.shift}</td>
+                        <td className="px-6 py-4 text-sm text-slate-600">{tr(person.shift)}</td>
                         <td className="px-6 py-4 text-sm text-slate-600">{person.patrol_route || "-"}</td>
                         <td className="px-6 py-4 text-sm text-slate-600">{person.assigned_area || "-"}</td>
                         <td className="px-6 py-4">
@@ -312,8 +316,7 @@ export default function SecurityPage() {
                     {personnel.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No security personnel found.
-                        </td>
+                          {tr("No security personnel found.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -325,32 +328,31 @@ export default function SecurityPage() {
           {activeTab === "visitors" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Visitor Log</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{tr("Visitor Log")}</h3>
                 <button
                   onClick={() => openModal("visitor")}
                   className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition"
                 >
-                  Register Visitor
-                </button>
+                  {tr("Register Visitor")}</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Purpose</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Visiting</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Check In</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Check Out</th>
-                      <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Name")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Type")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Purpose")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Visiting")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Check In")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Check Out")}</th>
+                      <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {visitors.map((visitor) => (
                       <tr key={visitor.visitor_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{visitor.visitor_name}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{visitor.visitor_type}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{tr(visitor.visitor_type)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600 max-w-xs truncate">{visitor.purpose}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{visitor.person_to_visit}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{new Date(visitor.check_in_time).toLocaleString()}</td>
@@ -361,8 +363,7 @@ export default function SecurityPage() {
                               onClick={() => handleVisitorCheckout(visitor.visitor_id)}
                               className="rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition"
                             >
-                              Check Out
-                            </button>
+                              {tr("Check Out")}</button>
                           )}
                         </td>
                       </tr>
@@ -370,8 +371,7 @@ export default function SecurityPage() {
                     {visitors.length === 0 && (
                       <tr>
                         <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No visitors logged. Click "Register Visitor" to get started.
-                        </td>
+                          {tr("No visitors logged. Click \"Register Visitor\" to get started.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -383,35 +383,34 @@ export default function SecurityPage() {
           {activeTab === "equipment" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Safety Equipment</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{tr("Safety Equipment")}</h3>
                 <button
                   onClick={() => openModal("equipment")}
                   className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition"
                 >
-                  Add Equipment
-                </button>
+                  {tr("Add Equipment")}</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Location</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Next Inspection</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Name")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Type")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Location")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Next Inspection")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Status")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {equipment.map((eq) => (
                       <tr key={eq.equipment_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{eq.equipment_name}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{eq.equipment_type.replace(/_/g, " ")}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{tr(eq.equipment_type.replace(/_/g, " "))}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{eq.location}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{eq.next_inspection || "-"}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(eq.status)}`}>
-                            {eq.status}
+                            {tr(eq.status)}
                           </span>
                         </td>
                       </tr>
@@ -419,8 +418,7 @@ export default function SecurityPage() {
                     {equipment.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No safety equipment found.
-                        </td>
+                          {tr("No safety equipment found.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -432,23 +430,22 @@ export default function SecurityPage() {
           {activeTab === "cctv" && (
             <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
               <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">CCTV Cameras</h3>
+                <h3 className="text-sm font-semibold text-slate-700">{tr("CCTV Cameras")}</h3>
                 <button
                   onClick={() => openModal("cctv")}
                   className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition"
                 >
-                  Add Camera
-                </button>
+                  {tr("Add Camera")}</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Camera Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Location</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">IP Address</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Camera Name")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Location")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Type")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("IP Address")}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">{tr("Status")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -456,11 +453,12 @@ export default function SecurityPage() {
                       <tr key={camera.camera_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{camera.camera_name}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{camera.location}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{camera.camera_type}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{tr(camera.camera_type)}
+                        </td>
                         <td className="px-6 py-3 text-sm text-slate-600">{camera.ip_address || "-"}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(camera.status)}`}>
-                            {camera.status}
+                            {tr(camera.status)}
                           </span>
                         </td>
                       </tr>
@@ -468,8 +466,7 @@ export default function SecurityPage() {
                     {cctv.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400">
-                          No CCTV cameras found.
-                        </td>
+                          {tr("No CCTV cameras found.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -485,9 +482,9 @@ export default function SecurityPage() {
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {modalType === "visitor" && "Register Visitor"}
-                {modalType === "equipment" && "Add Safety Equipment"}
-                {modalType === "cctv" && "Add CCTV Camera"}
+                {modalType === "visitor" && tr("Register Visitor")}
+                {modalType === "equipment" && tr("Add Safety Equipment")}
+                {modalType === "cctv" && tr("Add CCTV Camera")}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -503,7 +500,7 @@ export default function SecurityPage() {
               {modalType === "visitor" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Visitor Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Visitor Name *")}</label>
                     <input
                       type="text"
                       name="visitor_name"
@@ -515,7 +512,7 @@ export default function SecurityPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Visitor Type *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Visitor Type *")}</label>
                       <select
                         name="visitor_type"
                         value={formData.visitor_type}
@@ -524,12 +521,12 @@ export default function SecurityPage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       >
                         {visitorTypes.map(type => (
-                          <option key={type} value={type}>{type}</option>
+                          <option key={type} value={type}>{tr(type)}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Person to Visit *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Person to Visit *")}</label>
                       <input
                         type="text"
                         name="person_to_visit"
@@ -541,7 +538,7 @@ export default function SecurityPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Purpose *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Purpose *")}</label>
                     <textarea
                       name="purpose"
                       value={formData.purpose}
@@ -553,21 +550,21 @@ export default function SecurityPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">ID Type</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("ID Type")}</label>
                       <select
                         name="id_type"
                         value={formData.id_type}
                         onChange={handleInputChange}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       >
-                        <option value="">Select ID type</option>
+                        <option value="">{tr("Select ID type")}</option>
                         {idTypes.map(type => (
-                          <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
+                          <option key={type} value={type}>{tr(type.replace(/_/g, " "))}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">ID Number</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("ID Number")}</label>
                       <input
                         type="text"
                         name="id_number"
@@ -579,7 +576,7 @@ export default function SecurityPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Phone Number")}</label>
                       <input
                         type="tel"
                         name="phone_number"
@@ -589,7 +586,7 @@ export default function SecurityPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle Plate</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Vehicle Plate")}</label>
                       <input
                         type="text"
                         name="vehicle_plate"
@@ -606,7 +603,7 @@ export default function SecurityPage() {
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Equipment Type *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Equipment Type *")}</label>
                       <select
                         name="equipment_type"
                         value={formData.equipment_type}
@@ -615,12 +612,12 @@ export default function SecurityPage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       >
                         {equipmentTypes.map(type => (
-                          <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
+                          <option key={type} value={type}>{tr(type.replace(/_/g, " "))}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Equipment Name *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Equipment Name *")}</label>
                       <input
                         type="text"
                         name="equipment_name"
@@ -632,7 +629,7 @@ export default function SecurityPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Location *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Location *")}</label>
                     <input
                       type="text"
                       name="location"
@@ -643,7 +640,7 @@ export default function SecurityPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Status *")}</label>
                     <select
                       name="status"
                       value={formData.status}
@@ -652,12 +649,12 @@ export default function SecurityPage() {
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
                       {equipmentStatuses.map(status => (
-                        <option key={status} value={status}>{status.replace(/_/g, " ")}</option>
+                        <option key={status} value={status}>{tr(status.replace(/_/g, " "))}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Notes")}</label>
                     <textarea
                       name="notes"
                       value={formData.notes}
@@ -672,7 +669,7 @@ export default function SecurityPage() {
               {modalType === "cctv" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Camera Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Camera Name *")}</label>
                     <input
                       type="text"
                       name="camera_name"
@@ -683,7 +680,7 @@ export default function SecurityPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Location *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Location *")}</label>
                     <input
                       type="text"
                       name="location"
@@ -695,7 +692,7 @@ export default function SecurityPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Camera Type *</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Camera Type *")}</label>
                       <select
                         name="camera_type"
                         value={formData.camera_type}
@@ -704,12 +701,12 @@ export default function SecurityPage() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       >
                         {cameraTypes.map(type => (
-                          <option key={type} value={type}>{type}</option>
+                          <option key={type} value={type}>{tr(type)}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">IP Address</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{tr("IP Address")}</label>
                       <input
                         type="text"
                         name="ip_address"
@@ -720,7 +717,7 @@ export default function SecurityPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Status *")}</label>
                     <select
                       name="status"
                       value={formData.status}
@@ -729,12 +726,12 @@ export default function SecurityPage() {
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
                       {cameraStatuses.map(status => (
-                        <option key={status} value={status}>{status}</option>
+                        <option key={status} value={status}>{tr(status)}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Notes")}</label>
                     <textarea
                       name="notes"
                       value={formData.notes}
@@ -752,14 +749,12 @@ export default function SecurityPage() {
                   onClick={() => setShowModal(false)}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
-                </button>
+                  {tr("Cancel")}</button>
                 <button
                   type="submit"
                   className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
                 >
-                  Submit
-                </button>
+                  {tr("Submit")}</button>
               </div>
             </form>
           </div>

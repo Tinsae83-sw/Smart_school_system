@@ -5,18 +5,21 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { isAuthenticated, getUser, clearAuth } from "@/lib/auth";
 import ThemeToggle from "@/components/ThemeToggle";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { vpAcademicTranslations } from "@/translations/vp-academic";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
 
 type NavItem = {
-  label: string;
+  labelKey: keyof typeof vpAcademicTranslations.en;
   href: string;
   icon: React.ReactNode;
 };
 
-const navigation: NavItem[] = [
+const navigationItems: NavItem[] = [
   {
-    label: "Dashboard",
+    labelKey: "dashboard",
     href: "/vp-academic",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -25,7 +28,7 @@ const navigation: NavItem[] = [
     ),
   },
   {
-    label: "Teachers",
+    labelKey: "teachers",
     href: "/vp-academic/teachers",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -34,25 +37,17 @@ const navigation: NavItem[] = [
     ),
   },
   {
-    label: "Students",
+    labelKey: "students",
     href: "/vp-academic/students",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0a50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
       </svg>
     ),
   },
+
   {
-    label: "Add Class",
-    href: "/vp-academic/classes",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-      </svg>
-    ),
-  },
-  {
-    label: "Courses",
+    labelKey: "courses",
     href: "/vp-academic/courses",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -61,7 +56,7 @@ const navigation: NavItem[] = [
     ),
   },
   {
-    label: "Timetables",
+    labelKey: "timetables",
     href: "/vp-academic/timetables",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -70,7 +65,7 @@ const navigation: NavItem[] = [
     ),
   },
   {
-    label: "Exams",
+    labelKey: "exams",
     href: "/vp-academic/exams",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -79,7 +74,7 @@ const navigation: NavItem[] = [
     ),
   },
   {
-    label: "Academic Reports",
+    labelKey: "academicReports",
     href: "/vp-academic/reports",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -89,7 +84,7 @@ const navigation: NavItem[] = [
     ),
   },
   {
-    label: "Attendance",
+    labelKey: "attendance",
     href: "/vp-academic/attendance",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -98,7 +93,7 @@ const navigation: NavItem[] = [
     ),
   },
   {
-    label: "Performance Analytics",
+    labelKey: "performanceAnalytics",
     href: "/vp-academic/analytics",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -111,9 +106,12 @@ const navigation: NavItem[] = [
 export default function VPAcademicLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { language } = useLanguage();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [vpUser, setVpUser] = useState<{ full_name: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const t = vpAcademicTranslations[language];
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -141,8 +139,8 @@ export default function VPAcademicLayout({ children }: { children: React.ReactNo
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400">Loading...</p>
+          <div className="w-12 h-12 border-4 border-navy-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">{t.loading}</p>
         </div>
       </div>
     );
@@ -157,21 +155,19 @@ export default function VPAcademicLayout({ children }: { children: React.ReactNo
 
       {/* Sidebar */}
       <aside
+        data-app-sidebar
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform transition-transform duration-200 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-700 px-6 py-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-              </svg>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy-600 text-white overflow-hidden">
+              <img src="/school-logo.jpg" alt="School Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Smart School</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">VP Academic Panel</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Yekatit 25/67</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t.vpAcademicPanel}</p>
             </div>
             <button className="ml-auto lg:hidden" onClick={() => setSidebarOpen(false)}>
               <svg className="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -181,7 +177,7 @@ export default function VPAcademicLayout({ children }: { children: React.ReactNo
           </div>
 
           <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
-            {navigation.map((item) => {
+            {navigationItems.map((item) => {
               const isActive = pathname === item.href || (item.href !== "/vp-academic" && pathname.startsWith(item.href));
               return (
                 <Link
@@ -190,27 +186,27 @@ export default function VPAcademicLayout({ children }: { children: React.ReactNo
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                      ? "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
-                  <span className={isActive ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"}>{item.icon}</span>
-                  {item.label}
+                  <span className={isActive ? "text-teal-600 dark:text-teal-400" : "text-slate-400 dark:text-slate-500"}>{item.icon}</span>
+                  {t[item.labelKey]}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 px-4 py-4">
-            <div className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-700 px-3 py-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 text-sm font-bold">
+          <div className="border-t border-slate-200 dark:border-slate-700 dark:border-slate-700 px-4 py-4">
+            <div className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-700 dark:bg-slate-700 px-3 py-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-sm font-bold">
                 {vpUser?.full_name?.charAt(0)?.toUpperCase() || "V"}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{vpUser?.full_name || "VP Academic"}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{vpUser?.role || "VP_ACADEMIC"}</p>
               </div>
-              <button onClick={handleLogout} title="Sign out" className="text-slate-400 dark:text-slate-500 hover:text-rose-500 transition">
+              <button onClick={handleLogout} title={t.signOut} className="text-slate-400 dark:text-slate-500 hover:text-rose-500 transition">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                 </svg>
@@ -222,7 +218,7 @@ export default function VPAcademicLayout({ children }: { children: React.ReactNo
 
       {/* Main content */}
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-6">
+        <header data-app-navbar className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-6">
           <button className="lg:hidden" onClick={() => setSidebarOpen(true)}>
             <svg className="w-6 h-6 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -230,12 +226,13 @@ export default function VPAcademicLayout({ children }: { children: React.ReactNo
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
+            <LanguageToggle />
             <ThemeToggle />
-            <span className="hidden sm:inline text-xs text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
+            <span className="hidden sm:inline text-xs text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString(language === 'am' ? 'am-ET' : 'en-US', { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
           </div>
         </header>
 
-        <main className="p-6">{children}</main>
+        <main data-app-content className="p-6">{children}</main>
       </div>
     </div>
   );

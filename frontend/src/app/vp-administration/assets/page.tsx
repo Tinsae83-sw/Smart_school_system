@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { vpAdminApi } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translateVpAdministrationOperation } from "@/translations/vp-administration-operations";
 
 type Asset = {
   asset_id: number;
@@ -26,6 +28,8 @@ type Asset = {
 };
 
 export default function AssetsPage() {
+  const { language } = useLanguage();
+  const tr = (value: string) => translateVpAdministrationOperation(value, language);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -123,16 +127,16 @@ export default function AssetsPage() {
       } else {
         const errorData = await res.json();
         console.error("Server error:", errorData);
-        alert(`Failed to save asset: ${errorData.error || 'Unknown error'}`);
+        alert(`${tr("Failed to save asset: ")}${errorData.error || tr("Unknown error")}`);
       }
     } catch (error) {
       console.error("Failed to save asset:", error);
-      alert("Failed to save asset. Please try again.");
+      alert(tr("Failed to save asset. Please try again."));
     }
   }
 
   async function handleDelete(assetId: number) {
-    if (!confirm("Are you sure you want to delete this asset?")) return;
+    if (!confirm(tr("Are you sure you want to delete this asset?"))) return;
     try {
       const res = await vpAdminApi.delete(`/assets/${assetId}`);
       if (res.ok) {
@@ -212,11 +216,11 @@ export default function AssetsPage() {
       } else {
         const errorData = await res.json();
         console.error("Server error:", errorData);
-        alert(`Failed to assign asset: ${errorData.error || 'Unknown error'}`);
+        alert(`${tr("Failed to assign asset: ")}${errorData.error || tr("Unknown error")}`);
       }
     } catch (error) {
       console.error("Failed to assign asset:", error);
-      alert("Failed to assign asset. Please try again.");
+      alert(tr("Failed to assign asset. Please try again."));
     }
   }
 
@@ -235,11 +239,11 @@ export default function AssetsPage() {
       } else {
         const errorData = await res.json();
         console.error("Server error:", errorData);
-        alert(`Failed to schedule maintenance: ${errorData.error || 'Unknown error'}`);
+        alert(`${tr("Failed to schedule maintenance: ")}${errorData.error || tr("Unknown error")}`);
       }
     } catch (error) {
       console.error("Failed to schedule maintenance:", error);
-      alert("Failed to schedule maintenance. Please try again.");
+      alert(tr("Failed to schedule maintenance. Please try again."));
     }
   }
 
@@ -267,20 +271,19 @@ export default function AssetsPage() {
     <div>
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Asset Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage school assets and equipment</p>
+          <h1 className="text-2xl font-bold text-slate-900">{tr("Asset Management")}</h1>
+          <p className="mt-1 text-sm text-slate-500">{tr("Manage school assets and equipment")}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
           className="rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition w-full sm:w-auto"
         >
-          Add New Asset
-        </button>
+          {tr("Add New Asset")}</button>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-500">Loading assets...</div>
+          <div className="text-slate-500">{tr("Loading assets...")}</div>
         </div>
       ) : (
         <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
@@ -288,22 +291,22 @@ export default function AssetsPage() {
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Code</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Name</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Category</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Qty</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Cost</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Purchased</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Location</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Condition</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Status</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Assigned</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Serial</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Brand</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Model</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Warranty</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">Supplier</th>
-                  <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">Actions</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Code")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Name")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Category")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Qty")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Cost")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Purchased")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Location")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Condition")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Status")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Assigned")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Serial")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Brand")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Model")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Warranty")}</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Supplier")}</th>
+                  <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-600">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -311,19 +314,19 @@ export default function AssetsPage() {
                   <tr key={asset.asset_id} className="hover:bg-slate-50">
                     <td className="px-3 py-2 text-xs font-medium text-slate-900">{asset.asset_code}</td>
                     <td className="px-3 py-2 text-xs text-slate-700">{asset.asset_name}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600">{asset.category}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600">{tr(asset.category.replace(/_/g, " "))}</td>
                     <td className="px-3 py-2 text-xs text-slate-600">{asset.quantity}</td>
                     <td className="px-3 py-2 text-xs text-slate-600">{asset.unit_cost ? `ETB ${asset.unit_cost}` : "-"}</td>
                     <td className="px-3 py-2 text-xs text-slate-600">{asset.purchase_date || "-"}</td>
                     <td className="px-3 py-2 text-xs text-slate-600">{asset.location || "-"}</td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getConditionColor(asset.condition)}`}>
-                        {asset.condition}
+                        {tr(asset.condition)}
                       </span>
                     </td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getStatusColor(asset.status)}`}>
-                        {asset.status}
+                        {tr(asset.status)}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-xs text-slate-600">{asset.assigned_to || "-"}</td>
@@ -338,26 +341,22 @@ export default function AssetsPage() {
                           onClick={() => openEditModal(asset)}
                           className="rounded bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 hover:bg-blue-100 transition"
                         >
-                          Edit
-                        </button>
+                          {tr("Edit")}</button>
                         <button
                           onClick={() => openAssignmentModal(asset)}
                           className="rounded bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 hover:bg-emerald-100 transition"
                         >
-                          Assign
-                        </button>
+                          {tr("Assign")}</button>
                         <button
                           onClick={() => openMaintenanceModal(asset)}
                           className="rounded bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700 hover:bg-amber-100 transition"
                         >
-                          Maintain
-                        </button>
+                          {tr("Maintain")}</button>
                         <button
                           onClick={() => handleDelete(asset.asset_id)}
                           className="rounded bg-red-50 px-2 py-1 text-[10px] font-medium text-red-700 hover:bg-red-100 transition"
                         >
-                          Delete
-                        </button>
+                          {tr("Delete")}</button>
                       </div>
                     </td>
                   </tr>
@@ -365,8 +364,7 @@ export default function AssetsPage() {
                 {assets.length === 0 && (
                   <tr>
                     <td colSpan={16} className="px-3 py-12 text-center text-xs text-slate-400">
-                      No assets found. Click "Add New Asset" to get started.
-                    </td>
+                      {tr("No assets found. Click \"Add New Asset\" to get started.")}</td>
                   </tr>
                 )}
               </tbody>
@@ -380,7 +378,7 @@ export default function AssetsPage() {
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {editingAsset ? "Edit Asset" : "Add New Asset"}
+                {tr(editingAsset ? "Edit Asset" : "Add New Asset")}
               </h2>
               <button
                 onClick={closeModal}
@@ -399,30 +397,29 @@ export default function AssetsPage() {
                   <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Basic Information
-                </h3>
+                  {tr("Basic Information")}</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Asset Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Asset Name *")}</label>
                     <input
                       type="text"
                       name="asset_name"
                       value={formData.asset_name}
                       onChange={handleInputChange}
                       required
-                      placeholder="e.g., Dell Latitude Laptop"
+                      placeholder={tr("e.g., Dell Latitude Laptop")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Asset Code *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Asset Code *")}</label>
                     <input
                       type="text"
                       name="asset_code"
                       value={formData.asset_code}
                       onChange={handleInputChange}
                       required
-                      placeholder="e.g., AST-2024-001"
+                      placeholder={tr("e.g., AST-2024-001")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
@@ -435,11 +432,10 @@ export default function AssetsPage() {
                   <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
-                  Classification
-                </h3>
+                  {tr("Classification")}</h3>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Category *")}</label>
                     <select
                       name="category"
                       value={formData.category}
@@ -447,14 +443,14 @@ export default function AssetsPage() {
                       required
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     >
-                      <option value="">Select category</option>
+                      <option value="">{tr("Select category")}</option>
                       {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat.replace(/_/g, " ")}</option>
+                        <option key={cat} value={cat}>{tr(cat.replace(/_/g, " "))}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Quantity *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Quantity *")}</label>
                     <input
                       type="number"
                       name="quantity"
@@ -467,7 +463,7 @@ export default function AssetsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Condition *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Condition *")}</label>
                     <select
                       name="condition"
                       value={formData.condition}
@@ -476,7 +472,7 @@ export default function AssetsPage() {
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     >
                       {conditions.map(cond => (
-                        <option key={cond} value={cond}>{cond}</option>
+                        <option key={cond} value={cond}>{tr(cond)}</option>
                       ))}
                     </select>
                   </div>
@@ -489,11 +485,10 @@ export default function AssetsPage() {
                   <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Financial Information
-                </h3>
+                  {tr("Financial Information")}</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Unit Cost (ETB)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Unit Cost (ETB)")}</label>
                     <input
                       type="number"
                       name="unit_cost"
@@ -505,7 +500,7 @@ export default function AssetsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Purchase Date</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Purchase Date")}</label>
                     <input
                       type="date"
                       name="purchase_date"
@@ -523,44 +518,43 @@ export default function AssetsPage() {
                   <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                   </svg>
-                  Product Details
-                </h3>
+                  {tr("Product Details")}</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Brand</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Brand")}</label>
                     <input
                       type="text"
                       name="brand"
                       value={formData.brand}
                       onChange={handleInputChange}
-                      placeholder="e.g., Dell, HP, Samsung"
+                      placeholder={tr("e.g., Dell, HP, Samsung")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Model</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Model")}</label>
                     <input
                       type="text"
                       name="model"
                       value={formData.model}
                       onChange={handleInputChange}
-                      placeholder="e.g., Latitude 5420"
+                      placeholder={tr("e.g., Latitude 5420")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Serial Number</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Serial Number")}</label>
                     <input
                       type="text"
                       name="serial_number"
                       value={formData.serial_number}
                       onChange={handleInputChange}
-                      placeholder="e.g., SN123456789"
+                      placeholder={tr("e.g., SN123456789")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Warranty Expiry</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Warranty Expiry")}</label>
                     <input
                       type="date"
                       name="warranty_expiry"
@@ -578,16 +572,15 @@ export default function AssetsPage() {
                   <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
-                  Supplier Information
-                </h3>
+                  {tr("Supplier Information")}</h3>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Supplier/Vendor</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Supplier/Vendor")}</label>
                   <input
                     type="text"
                     name="supplier"
                     value={formData.supplier}
                     onChange={handleInputChange}
-                    placeholder="e.g., ABC Technology Solutions"
+                    placeholder={tr("e.g., ABC Technology Solutions")}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
@@ -600,33 +593,32 @@ export default function AssetsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  Location & Assignment
-                </h3>
+                  {tr("Location & Assignment")}</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Location")}</label>
                     <input
                       type="text"
                       name="location"
                       value={formData.location}
                       onChange={handleInputChange}
-                      placeholder="e.g., Computer Lab 1, Room 201"
+                      placeholder={tr("e.g., Computer Lab 1, Room 201")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Assigned To</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Assigned To")}</label>
                     <input
                       type="text"
                       name="assigned_to"
                       value={formData.assigned_to}
                       onChange={handleInputChange}
-                      placeholder="e.g., John Doe or IT Department"
+                      placeholder={tr("e.g., John Doe or IT Department")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Status *")}</label>
                     <select
                       name="status"
                       value={formData.status}
@@ -635,7 +627,7 @@ export default function AssetsPage() {
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     >
                       {statuses.map(stat => (
-                        <option key={stat} value={stat}>{stat.replace(/_/g, " ")}</option>
+                        <option key={stat} value={stat}>{tr(stat.replace(/_/g, " "))}</option>
                       ))}
                     </select>
                   </div>
@@ -648,28 +640,27 @@ export default function AssetsPage() {
                   <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  Description & Notes
-                </h3>
+                  {tr("Description & Notes")}</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Description")}</label>
                     <textarea
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
                       rows={3}
-                      placeholder="Provide a detailed description of the asset..."
+                      placeholder={tr("Provide a detailed description of the asset...")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Additional Notes</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Additional Notes")}</label>
                     <textarea
                       name="notes"
                       value={formData.notes}
                       onChange={handleInputChange}
                       rows={2}
-                      placeholder="Any additional information or special instructions..."
+                      placeholder={tr("Any additional information or special instructions...")}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
@@ -682,13 +673,12 @@ export default function AssetsPage() {
                   onClick={closeModal}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
-                </button>
+                  {tr("Cancel")}</button>
                 <button
                   type="submit"
                   className="rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
                 >
-                  {editingAsset ? "Update Asset" : "Add Asset"}
+                  {tr(editingAsset ? "Update Asset" : "Add Asset")}
                 </button>
               </div>
             </form>
@@ -700,7 +690,7 @@ export default function AssetsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Assign Asset</h2>
+              <h2 className="text-xl font-bold text-slate-900">{tr("Assign Asset")}</h2>
               <button
                 onClick={() => setShowAssignmentModal(false)}
                 className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
@@ -712,20 +702,20 @@ export default function AssetsPage() {
             </div>
 
             <div className="mb-4 p-4 bg-slate-50 rounded-lg">
-              <p className="text-sm text-slate-600"><strong>Asset:</strong> {selectedAsset.asset_name}</p>
-              <p className="text-sm text-slate-600"><strong>Code:</strong> {selectedAsset.asset_code}</p>
+              <p className="text-sm text-slate-600"><strong>{tr("Asset:")}</strong> {selectedAsset.asset_name}</p>
+              <p className="text-sm text-slate-600"><strong>{tr("Code:")}</strong> {selectedAsset.asset_code}</p>
             </div>
 
             <form onSubmit={handleAssignment} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Assign To *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Assign To *")}</label>
                 <input
                   type="text"
                   name="assigned_to"
                   value={formData.assigned_to}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter staff name or department"
+                  placeholder={tr("Enter staff name or department")}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
@@ -736,14 +726,12 @@ export default function AssetsPage() {
                   onClick={() => setShowAssignmentModal(false)}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
-                </button>
+                  {tr("Cancel")}</button>
                 <button
                   type="submit"
                   className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
                 >
-                  Assign Asset
-                </button>
+                  {tr("Assign Asset")}</button>
               </div>
             </form>
           </div>
@@ -754,7 +742,7 @@ export default function AssetsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Schedule Maintenance</h2>
+              <h2 className="text-xl font-bold text-slate-900">{tr("Schedule Maintenance")}</h2>
               <button
                 onClick={() => setShowMaintenanceModal(false)}
                 className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
@@ -766,25 +754,25 @@ export default function AssetsPage() {
             </div>
 
             <div className="mb-4 p-4 bg-slate-50 rounded-lg">
-              <p className="text-sm text-slate-600"><strong>Asset:</strong> {selectedAsset.asset_name}</p>
-              <p className="text-sm text-slate-600"><strong>Code:</strong> {selectedAsset.asset_code}</p>
-              <p className="text-sm text-slate-600"><strong>Current Condition:</strong> {selectedAsset.condition}</p>
+              <p className="text-sm text-slate-600"><strong>{tr("Asset:")}</strong> {selectedAsset.asset_name}</p>
+              <p className="text-sm text-slate-600"><strong>{tr("Code:")}</strong> {selectedAsset.asset_code}</p>
+              <p className="text-sm text-slate-600"><strong>{tr("Current Condition:")}</strong> {tr(selectedAsset.condition)}</p>
             </div>
 
             <form onSubmit={handleMaintenance} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Description")}</label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={3}
-                  placeholder="Describe the maintenance needed"
+                  placeholder={tr("Describe the maintenance needed")}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Scheduled Date</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{tr("Scheduled Date")}</label>
                 <input
                   type="date"
                   name="purchase_date"
@@ -800,14 +788,12 @@ export default function AssetsPage() {
                   onClick={() => setShowMaintenanceModal(false)}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  Cancel
-                </button>
+                  {tr("Cancel")}</button>
                 <button
                   type="submit"
                   className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition"
                 >
-                  Schedule Maintenance
-                </button>
+                  {tr("Schedule Maintenance")}</button>
               </div>
             </form>
           </div>

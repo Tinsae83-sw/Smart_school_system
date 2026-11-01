@@ -176,7 +176,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-navy-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
@@ -199,7 +199,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
     >
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
         {/* Top bar */}
-        <header className="fixed top-0 left-0 right-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+        <header data-app-navbar className="fixed top-0 left-0 right-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
           <div className="flex items-center justify-between px-4 h-16">
             <div className="flex items-center gap-3">
               <button
@@ -211,13 +211,14 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
                 </svg>
               </button>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-lg flex items-center justify-center shadow">
+                <div className="w-8 h-8 bg-gradient-to-br from-navy-500 to-teal-700 rounded-lg flex items-center justify-center shadow overflow-hidden">
+                  <img src="/school-logo.jpg" alt="School Logo" className="w-full h-full object-cover" />
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                   </svg>
                 </div>
-                <span className="text-lg font-bold text-slate-900 dark:text-slate-100 hidden sm:block">EduConnect</span>
+                <span className="text-lg font-bold text-slate-900 dark:text-slate-100 hidden sm:block">Yekatit 25/67</span>
               </div>
             </div>
 
@@ -229,7 +230,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
                     <select
                       value={selectedChildId || ""}
                       onChange={(e) => setSelectedChildId(Number(e.target.value))}
-                      className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     >
                       {linkedChildren.map((child) => (
                         <option key={child.student_id} value={child.student_id}>
@@ -242,7 +243,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile?.full_name || "Parent"}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">{profile?.relationship || ""}</p>
                   </div>
-                  <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold text-sm">
+                  <div className="w-9 h-9 rounded-full bg-teal-100 dark:bg-teal-900 flex items-center justify-center text-teal-700 dark:text-teal-300 font-bold text-sm">
                     {profile?.full_name?.charAt(0) || "P"}
                   </div>
                   <button
@@ -255,7 +256,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
               ) : (
                 <button
                   onClick={() => router.push('/login')}
-                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+                  className="rounded-xl bg-navy-600 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-700 transition"
                 >
                   Login
                 </button>
@@ -270,21 +271,22 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
         {/* Sidebar */}
         <aside
+          data-app-sidebar
           className={`fixed top-16 left-0 bottom-0 z-40 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 overflow-y-auto transition-transform duration-200 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } lg:translate-x-0`}
         >
           {token && selectedChild && (
             <div className="p-4 border-b border-slate-100 dark:border-slate-700">
-              <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 p-4">
+              <div className="rounded-2xl bg-teal-50 dark:bg-teal-900/30 border border-teal-100 dark:border-teal-800 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-200 dark:bg-emerald-800 flex items-center justify-center text-emerald-800 dark:text-emerald-200 font-bold text-sm">
+                  <div className="w-10 h-10 rounded-full bg-teal-200 dark:bg-teal-800 flex items-center justify-center text-teal-800 dark:text-teal-200 font-bold text-sm">
                     {selectedChild.full_name.charAt(0)}
                   </div>
                   <div>
                     <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{selectedChild.full_name}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">{selectedChild.class_name}</p>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400">{selectedChild.school_name}</p>
+                    <p className="text-xs text-teal-600 dark:text-teal-400">{selectedChild.school_name}</p>
                   </div>
                 </div>
               </div>
@@ -301,7 +303,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition ${
                     isActive
-                      ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800"
+                      ? "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-100 dark:border-teal-800"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >

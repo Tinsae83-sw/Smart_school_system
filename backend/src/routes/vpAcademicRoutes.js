@@ -62,6 +62,18 @@ router.get('/curriculum/export', vpAcademicController.exportCurriculumGuide);
 
 // ==================== TIMETABLE & SCHEDULING MANAGEMENT ====================
 
+// Semester Events Management
+// GET /api/vp-academic/semester-events
+router.get('/semester-events', vpAcademicController.getSemesterEvents);
+
+// Create Semester Event
+// POST /api/vp-academic/semester-events
+router.post('/semester-events', vpAcademicController.createSemesterEvent);
+
+// Delete Semester Event
+// DELETE /api/vp-academic/semester-events/:id
+router.delete('/semester-events/:id', vpAcademicController.deleteSemesterEvent);
+
 // Automatic Timetable Generation
 // POST /api/vp-academic/timetable/auto-generate
 router.post('/timetable/auto-generate', timetableGeneratorController.generateTimetable);

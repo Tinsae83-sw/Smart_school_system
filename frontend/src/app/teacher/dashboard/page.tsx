@@ -45,7 +45,7 @@ export default function TeacherDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-12 h-12 border-4 border-indigo-200 dark:border-indigo-800 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-navy-200 dark:border-navy-800 border-t-navy-600 dark:border-t-navy-400 rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -62,8 +62,8 @@ export default function TeacherDashboardPage() {
               <p className="text-sm text-slate-600 dark:text-slate-400">Total Classes</p>
               <p className="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">{dashboard?.stats?.totalClasses || 0}</p>
             </div>
-            <div className="h-12 w-12 rounded-xl bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-              <svg className="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+            <div className="h-12 w-12 rounded-xl bg-navy-100 dark:bg-navy-900 flex items-center justify-center">
+              <svg className="w-6 h-6 text-navy-600 dark:text-navy-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
             </div>
           </div>
         </div>
@@ -147,11 +147,11 @@ export default function TeacherDashboardPage() {
 
         <button
           onClick={() => router.push("/teacher/assignment")}
-          className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 text-left hover:border-indigo-500 transition group"
+          className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 text-left hover:border-navy-500 transition group"
         >
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800 transition">
-              <svg className="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <div className="h-12 w-12 rounded-xl bg-navy-100 dark:bg-navy-900 flex items-center justify-center group-hover:bg-navy-200 dark:group-hover:bg-navy-800 transition">
+              <svg className="w-6 h-6 text-navy-600 dark:text-navy-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             </div>
             <div>
               <p className="font-semibold text-slate-900 dark:text-slate-100">Manage Assignments</p>

@@ -44,7 +44,7 @@ export default function OnlineClassesPage() {
               <p className="text-slate-600 dark:text-slate-300 mt-2">Scheduled: {new Date(meeting.scheduled_at).toLocaleString()}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Provider: {meeting.provider} | Status: {meeting.status}</p>
               {meeting.link && (
-                <a href={meeting.link} target="_blank" rel="noopener" className="inline-block mt-3 text-indigo-600 dark:text-indigo-400 hover:underline">
+                <a href={meeting.link} target="_blank" rel="noopener" className="inline-block mt-3 text-navy-600 dark:text-navy-400 hover:underline">
                   Join Meeting
                 </a>
               )}

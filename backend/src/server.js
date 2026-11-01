@@ -36,6 +36,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads');
 const materialsDir = path.join(uploadsDir, 'materials');
+const messagesDir = path.join(uploadsDir, 'messages');
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -43,11 +44,18 @@ if (!fs.existsSync(uploadsDir)) {
 if (!fs.existsSync(materialsDir)) {
   fs.mkdirSync(materialsDir, { recursive: true });
 }
+if (!fs.existsSync(messagesDir)) {
+  fs.mkdirSync(messagesDir, { recursive: true });
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, materialsDir);
+    if (req.originalUrl?.includes('/messages') || req.url?.includes('/messages')) {
+      cb(null, messagesDir);
+    } else {
+      cb(null, materialsDir);
+    }
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -73,6 +81,13 @@ const upload = multer({
       'image/jpeg',
       'image/png',
       'image/gif',
+      'image/webp',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/zip',
+      'application/x-zip-compressed',
+      'text/plain',
+      'text/csv',
       'video/mp4',
       'video/mpeg',
       'video/quicktime'

@@ -1,10 +1,69 @@
 "use client";
 
-import { useEffect, useState, useMemo, FormEvent, useRef } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useParent } from "../ParentContext";
 import { io, Socket } from "socket.io-client";
 import MessageNotification from "@/components/MessageNotification";
+
+interface Attachment {
+  url: string;
+  originalName: string;
+  size: number;
+  mimeType: string;
+}
+
+function getFileIcon(mimeType: string) {
+  if (mimeType.startsWith("image/")) return "🖼️";
+  if (mimeType === "application/pdf") return "📄";
+  if (mimeType.includes("word")) return "📝";
+  if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return "📊";
+  if (mimeType.includes("powerpoint") || mimeType.includes("presentation")) return "📑";
+  if (mimeType.startsWith("video/")) return "🎬";
+  return "📎";
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function AttachmentPreview({ url, isMine }: { url: string; isMine: boolean }) {
+  const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
+  const fullUrl = url.startsWith("http") ? url : `${backendUrl}${url}`;
+  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+  const filename = url.split("/").pop() || "attachment";
+
+  if (isImage) {
+    return (
+      <a href={fullUrl} target="_blank" rel="noopener noreferrer">
+        <img
+          src={fullUrl}
+          alt="attachment"
+          className="max-w-[200px] max-h-[150px] rounded-lg object-cover mt-2 border border-white/20"
+        />
+      </a>
+    );
+  }
+
+  return (
+    <a
+      href={fullUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`flex items-center gap-2 mt-2 px-3 py-2 rounded-lg border text-xs font-medium transition hover:opacity-80 ${
+        isMine
+          ? "border-white/30 text-white"
+          : "border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300"
+      }`}
+    >
+      <span className="text-base">📎</span>
+      <span className="truncate max-w-[150px]">{filename}</span>
+      <span className="shrink-0">↗</span>
+    </a>
+  );
+}
 
 export default function MessagePage() {
   const router = useRouter();
@@ -17,7 +76,6 @@ export default function MessagePage() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [attachmentName, setAttachmentName] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showCompose, setShowCompose] = useState(false);
   const [composeForm, setComposeForm] = useState({
@@ -29,13 +87,20 @@ export default function MessagePage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
+  // File attachment state
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     loadContacts();
     loadAllMessages();
 
     // Set up Socket.IO connection
     if (token) {
-      const newSocket = io('http://localhost:5000');
+      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+      const newSocket = io(socketUrl);
       setSocket(newSocket);
 
       // Get user ID from token and join room
@@ -100,24 +165,11 @@ export default function MessagePage() {
 
   async function loadChatMessages(contactId: number) {
     try {
-      console.log("Loading chat messages for contact:", contactId, "Type:", typeof contactId);
-      const allMessages = await authFetch("/api/parent/messages", {});
-      console.log("All messages from API:", allMessages);
-      const messagesArray = Array.isArray(allMessages) ? allMessages : [];
-      console.log("Messages array length:", messagesArray.length);
-      
-      console.log("Checking each message for contact match:");
-      messagesArray.forEach((msg: any) => {
-        console.log(`Message ${msg.message_id}: sender_id=${msg.sender_id} (${typeof msg.sender_id}), receiver_id=${msg.receiver_id} (${typeof msg.receiver_id}), contactId=${contactId} (${typeof contactId})`);
-        console.log(`Match check: ${msg.sender_id} === ${contactId} = ${msg.sender_id === contactId}, ${msg.receiver_id} === ${contactId} = ${msg.receiver_id === contactId}`);
-      });
-      
+      const allMsgs = await authFetch("/api/parent/messages", {});
+      const messagesArray = Array.isArray(allMsgs) ? allMsgs : [];
       const contactMessages = messagesArray.filter((msg: any) => 
         (msg.sender_id === contactId || msg.receiver_id === contactId)
       );
-      console.log("Filtered contact messages:", contactMessages);
-      console.log("Filtered count:", contactMessages.length);
-      
       setChatMessages(contactMessages.sort((a: any, b: any) => 
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       ));
@@ -128,15 +180,11 @@ export default function MessagePage() {
   }
 
   function handleContactClick(contact: any) {
-    console.log("Contact clicked:", contact);
-    console.log("Contact user_id:", contact.user_id, "Type:", typeof contact.user_id);
-    console.log("Current allMessages:", allMessages);
     setSelectedContact(contact);
     loadChatMessages(contact.user_id);
     
     if (Array.isArray(allMessages)) {
       allMessages.forEach((msg: any) => {
-        console.log("Message check:", msg.message_id, "sender_id:", msg.sender_id, "receiver_id:", msg.receiver_id, "contact_id:", contact.user_id);
         if (msg.sender_id === contact.user_id && !msg.is_read) {
           handleMarkAsRead(msg.message_id);
         }
@@ -183,7 +231,10 @@ export default function MessagePage() {
     );
     if (contactMessages.length === 0) return "No messages yet";
     const lastMsg = contactMessages[contactMessages.length - 1];
-    return lastMsg.content.substring(0, 30) + (lastMsg.content.length > 30 ? "..." : "");
+    const preview = lastMsg.attachment && !lastMsg.content?.trim()
+      ? "📎 Attachment"
+      : lastMsg.content?.substring(0, 30) + (lastMsg.content?.length > 30 ? "..." : "");
+    return preview || "No messages yet";
   }
 
   function isUnread(contactId: number) {
@@ -193,23 +244,78 @@ export default function MessagePage() {
     );
   }
 
+  // File handling
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      alert("File size must be under 50MB");
+      return;
+    }
+    setAttachmentFile(file);
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setAttachmentPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setAttachmentPreview(null);
+    }
+  }
+
+  function removeAttachment() {
+    setAttachmentFile(null);
+    setAttachmentPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   // Send messages to contact
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
-    if (!draft.trim() || !selectedContact) return;
+    if (!draft.trim() && !attachmentFile) return;
+    if (!selectedContact) return;
     
+    setSending(true);
+    let attachmentUrl: string | undefined;
+
     try {
+      if (attachmentFile) {
+        setUploading(true);
+        const formData = new FormData();
+        formData.append("attachment", attachmentFile);
+        const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
+        const uploadRes = await fetch(`${backendUrl}/api/parent/messages/upload-attachment`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        setUploading(false);
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json();
+          throw new Error(err.error || "File upload failed");
+        }
+        const uploaded: Attachment = await uploadRes.json();
+        attachmentUrl = uploaded.url;
+      }
+
       await authFetch("/api/parent/messages", {
         method: "POST",
         body: JSON.stringify({
           receiver_id: selectedContact.user_id,
-          content: draft
+          content: draft || " ",
+          attachment: attachmentUrl,
         })
       });
       setDraft("");
+      removeAttachment();
       loadChatMessages(selectedContact.user_id);
       loadAllMessages();
-    } catch (e) { console.error(e); }
+    } catch (e: any) {
+      console.error(e);
+      alert(e.message || "Failed to send message");
+    } finally {
+      setSending(false);
+      setUploading(false);
+    }
   }
 
   async function handleComposeMessage(e: React.FormEvent) {
@@ -227,13 +333,6 @@ export default function MessagePage() {
       setMessage("Failed to send message");
       console.error(e);
     }
-  }
-
-  // File attachment simulation
-  function handleFileSelect() {
-    const filenames = ["homework-help.pdf", "question-about-grade.docx", "medical-certificate.jpg", "permission-slip.png"];
-    const randomFile = filenames[Math.floor(Math.random() * filenames.length)];
-    setAttachmentName(randomFile);
   }
 
   return (
@@ -330,31 +429,87 @@ export default function MessagePage() {
                   <p>No messages yet. Start the conversation!</p>
                 </div>
               ) : (
-                chatMessages.map((msg: any) => (
-                  <div
-                    key={msg.message_id}
-                    className={`flex ${msg.sender_id === selectedContact.user_id ? 'justify-start' : 'justify-end'}`}
-                  >
-                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      msg.sender_id === selectedContact.user_id
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white'
-                        : 'bg-emerald-500 text-white'
-                    }`}>
-                      <p className="text-sm">{msg.content}</p>
-                      <p className={`text-xs mt-2 ${
-                        msg.sender_id === selectedContact.user_id ? 'text-slate-400 dark:text-slate-500' : 'text-emerald-100'
+                chatMessages.map((msg: any) => {
+                  const isMine = msg.sender_id !== selectedContact.user_id;
+                  return (
+                    <div
+                      key={msg.message_id}
+                      className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                        isMine
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white'
                       }`}>
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                        {/* Text content */}
+                        {msg.content && msg.content.trim() && msg.content !== " " && (
+                          <p className="text-sm">{msg.content}</p>
+                        )}
+                        {/* Attachment */}
+                        {msg.attachment && (
+                          <AttachmentPreview url={msg.attachment} isMine={isMine} />
+                        )}
+                        <p className={`text-xs mt-2 ${
+                          isMine ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'
+                        }`}>
+                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Message Input */}
             <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
+              {/* Attachment preview strip */}
+              {attachmentFile && (
+                <div className="mb-2 flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-600">
+                  {attachmentPreview ? (
+                    <img src={attachmentPreview} alt="preview" className="w-10 h-10 rounded-lg object-cover" />
+                  ) : (
+                    <span className="text-2xl">{getFileIcon(attachmentFile.type)}</span>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{attachmentFile.name}</p>
+                    <p className="text-[10px] text-slate-400">{formatFileSize(attachmentFile.size)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeAttachment}
+                    className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition text-slate-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+
               <form onSubmit={handleSendMessage} className="flex gap-3">
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.jpg,.jpeg,.png,.gif,.webp,.mp4,.mpeg,.mov,.zip"
+                  onChange={handleFileSelect}
+                />
+
+                {/* Attachment button */}
+                <button
+                  type="button"
+                  title="Attach file"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-600 transition"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                </button>
+
                 <input
                   type="text"
                   value={draft}
@@ -364,10 +519,10 @@ export default function MessagePage() {
                 />
                 <button
                   type="submit"
-                  disabled={sending || !draft.trim()}
+                  disabled={sending || uploading || (!draft.trim() && !attachmentFile)}
                   className="px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition font-semibold disabled:bg-slate-300 disabled:cursor-not-allowed"
                 >
-                  {sending ? "Sending..." : "Send"}
+                  {uploading ? "Uploading..." : sending ? "Sending..." : "Send"}
                 </button>
               </form>
             </div>

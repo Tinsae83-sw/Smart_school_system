@@ -196,6 +196,21 @@ router.post('/notifications/read', parentController.markNotificationRead);
 // ============================================
 router.get('/contacts', parentController.getParentContacts);
 router.get('/messages', parentController.getParentMessages);
+router.post('/messages/upload-attachment', (req, res) => {
+  const upload = req.upload;
+  if (!upload) return res.status(500).json({ error: 'Upload middleware not configured' });
+  upload.single('attachment')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const fileUrl = `/uploads/messages/${req.file.filename}`;
+    res.json({
+      url: fileUrl,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimeType: req.file.mimetype
+    });
+  });
+});
 router.post('/messages', parentController.sendParentMessage);
 router.put('/messages/:messageId/read', parentController.markParentMessageRead);
 

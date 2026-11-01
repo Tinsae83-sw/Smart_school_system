@@ -324,6 +324,7 @@ model Student {
   teacher_evaluations TeacherEvaluation[]
   evaluation_links    EvaluationLink[]
   student_marks       StudentMark[]
+  attendance_submissions StudentAttendanceSubmission[]
 
   @@index([user_id])
   @@index([current_class_id])
@@ -362,6 +363,8 @@ model SchoolClass {
   attendance_records  AttendanceRecord[]
   announcements       Announcement[]
   class_schedules     ClassSchedule[]
+  attendance_sessions AttendanceSession[]
+  attendance_submissions StudentAttendanceSubmission[]
 
   @@index([class_id])
   @@index([homeroom_teacher_id])
@@ -444,6 +447,44 @@ model AttendanceRecord {
   @@index([date, status])
   @@map("attendance_records")
 }
+
+model AttendanceSession {
+  session_id        Int       @id @default(autoincrement()) @map("session_id")
+  class_id          Int       @map("class_id")
+  class_subject_id  Int?      @map("class_subject_id")
+  date              DateTime  @db.Date
+  allow_student_mark Boolean  @default(false) @map("allow_student_mark")
+  is_locked         Boolean   @default(false) @map("is_locked")
+  give_mark         Boolean   @default(false) @map("give_mark")
+  mark_value        Decimal?  @db.Decimal(5, 2) @map("mark_value")
+  created_by        Int       @map("created_by")
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  school_class      SchoolClass @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
+  submissions       StudentAttendanceSubmission[]
+
+  @@unique([class_id, date])
+  @@map("attendance_sessions")
+}
+
+model StudentAttendanceSubmission {
+  submission_id Int       @id @default(autoincrement()) @map("submission_id")
+  session_id    Int?      @map("session_id")
+  student_id    Int       @map("student_id")
+  class_id      Int       @map("class_id")
+  date          DateTime  @db.Date
+  status        AttendanceStatus @default(PRESENT)
+  marked_at     DateTime  @default(now())
+
+  session       AttendanceSession? @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+  student       Student            @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  school_class  SchoolClass        @relation(fields: [class_id], references: [class_id], onDelete: Cascade)
+
+  @@unique([student_id, class_id, date])
+  @@map("student_attendance_submissions")
+}
+
 
 // ----------------------------
 // 5. ASSIGNMENTS & SUBMISSIONS & GRADES

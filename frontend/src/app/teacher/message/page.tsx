@@ -1,32 +1,123 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/auth";
-import { authFetch } from "../shared";
+import { authFetch, formatDisplayDateTime, Toast } from "../shared";
 import { io, Socket } from "socket.io-client";
-import MessageNotification from "@/components/MessageNotification";
+
+interface Contact {
+  user_id: number;
+  full_name: string;
+  email?: string;
+  phone_number?: string;
+  class_name?: string;
+  student_number?: string;
+  relationship?: string;
+  type: "STUDENT" | "PARENT";
+}
+
+interface Attachment {
+  url: string;
+  originalName: string;
+  size: number;
+  mimeType: string;
+}
+
+interface Message {
+  message_id: number;
+  sender_id: number;
+  receiver_id: number;
+  content: string;
+  timestamp: string;
+  is_read: boolean;
+  attachment?: string | null;
+  sender?: { user_id: number; full_name: string; profile_picture_url?: string };
+  receiver?: { user_id: number; full_name: string; profile_picture_url?: string };
+}
+
+function getFileIcon(mimeType: string) {
+  if (mimeType.startsWith("image/")) return "🖼️";
+  if (mimeType === "application/pdf") return "📄";
+  if (mimeType.includes("word")) return "📝";
+  if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return "📊";
+  if (mimeType.includes("powerpoint") || mimeType.includes("presentation")) return "📑";
+  if (mimeType.startsWith("video/")) return "🎬";
+  if (mimeType === "text/plain" || mimeType === "text/csv") return "📃";
+  return "📎";
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function AttachmentPreview({ url, className }: { url: string; className?: string }) {
+  const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
+  const fullUrl = url.startsWith("http") ? url : `${backendUrl}${url}`;
+  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+  const filename = url.split("/").pop() || "attachment";
+
+  if (isImage) {
+    return (
+      <a href={fullUrl} target="_blank" rel="noopener noreferrer" className={className}>
+        <img
+          src={fullUrl}
+          alt="attachment"
+          className="max-w-[200px] max-h-[150px] rounded-lg object-cover border border-white/20 mt-2"
+        />
+      </a>
+    );
+  }
+
+  return (
+    <a
+      href={fullUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`flex items-center gap-2 mt-2 px-3 py-2 rounded-lg border text-xs font-medium transition hover:opacity-80 ${className}`}
+    >
+      <span className="text-base">📎</span>
+      <span className="truncate max-w-[150px]">{filename}</span>
+      <span className="shrink-0">↗</span>
+    </a>
+  );
+}
 
 export default function MessagePage() {
   const router = useRouter();
   const [token, setToken] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedContact, setSelectedContact] = useState<any>(null);
-  const [showCompose, setShowCompose] = useState(false);
-  const [message, setMessage] = useState("");
-  const [composeForm, setComposeForm] = useState({
-    receiver_id: 0,
-    content: "",
-    attachment: ""
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+  const [contacts, setContacts] = useState<{ students: Contact[]; parents: Contact[] }>({
+    students: [],
+    parents: [],
   });
-  const [messageText, setMessageText] = useState("");
-  const [contacts, setContacts] = useState<{ students: any[], parents: any[] }>({ students: [], parents: [] });
-  const [loadingContacts, setLoadingContacts] = useState(true);
-  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
-  const [notification, setNotification] = useState<{ message: string; senderName: string } | null>(null);
+
+  // Filters & input
+  const [contactFilter, setContactFilter] = useState<"ALL" | "STUDENT" | "PARENT">("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [inputContent, setInputContent] = useState("");
+  const [sending, setSending] = useState(false);
+  const [toast, setToast] = useState<Toast | null>(null);
+
+  // File attachment state
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const showToast = (text: string, type: Toast["type"]) => {
+    setToast({ text, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   useEffect(() => {
     const savedToken = getToken("TEACHER");
@@ -35,406 +126,535 @@ export default function MessagePage() {
       return;
     }
     setToken(savedToken);
-    loadMessages(savedToken);
-    loadContacts(savedToken);
 
-    // Set up Socket.IO connection
-    const newSocket = io('http://localhost:5000');
+    try {
+      const decoded: any = JSON.parse(atob(savedToken.split(".")[1]));
+      setCurrentUserId(decoded.userId || decoded.id);
+    } catch {
+      // Fallback
+    }
+
+    loadInitialData(savedToken);
+  }, [router]);
+
+  async function loadInitialData(tok: string) {
+    try {
+      const [contactsData, messagesData] = await Promise.all([
+        authFetch("/api/teacher/contacts", {}, tok),
+        authFetch("/api/teacher/messages", {}, tok),
+      ]);
+
+      const cData = contactsData || { students: [], parents: [] };
+      setContacts({
+        students: Array.isArray(cData.students) ? cData.students : [],
+        parents: Array.isArray(cData.parents) ? cData.parents : [],
+      });
+
+      const mData = Array.isArray(messagesData) ? messagesData : [];
+      setMessages(mData);
+
+      // Select first contact if available
+      const all = [...(cData.students || []), ...(cData.parents || [])];
+      if (all.length > 0) {
+        setSelectedContact(all[0]);
+      }
+    } catch (e: any) {
+      showToast(e.message || "Failed to load communication portal", "error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Socket.IO real-time connection for teacher
+  useEffect(() => {
+    if (!token || !currentUserId) return;
+
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
+    const newSocket = io(socketUrl);
     setSocket(newSocket);
 
-    // Get user ID from token and join room
-    const decodedToken = JSON.parse(atob(savedToken.split('.')[1]));
-    const currentUserId = decodedToken.userId;
-    setUserId(currentUserId);
+    // Join teacher's personal room based on user_id
+    newSocket.emit("join", currentUserId);
 
-    newSocket.emit('join', currentUserId);
-
-    // Listen for new messages
-    newSocket.on('new_message', (message) => {
-      console.log('New message received:', message);
-      setMessages(prev => [message, ...prev]);
-      
-      // Show notification if message is from someone else
-      if (message.sender_id !== currentUserId) {
-        setNotification({
-          message: message.content,
-          senderName: message.sender?.full_name || 'Unknown'
-        });
-      }
-      
-      // Update chat messages if it's for the current contact
-      if (selectedContact && 
-          (message.sender_id === selectedContact.user_id || message.receiver_id === selectedContact.user_id)) {
-        setChatMessages(prev => [...prev, message].sort((a, b) => 
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        ));
-      }
+    // Listen for new messages in real time
+    newSocket.on("new_message", (incomingMessage: Message) => {
+      setMessages((prev) => {
+        // Prevent duplicate addition
+        if (prev.some((m) => m.message_id === incomingMessage.message_id)) {
+          return prev;
+        }
+        return [incomingMessage, ...prev];
+      });
     });
 
-    // Listen for message read updates
-    newSocket.on('message_read', (messageId) => {
-      console.log('Message marked as read:', messageId);
-      setMessages(prev => prev.map(msg => 
-        msg.message_id === messageId ? { ...msg, is_read: true } : msg
-      ));
+    // Listen for read receipts in real time
+    newSocket.on("message_read", (messageId: number) => {
+      setMessages((prev) =>
+        prev.map((m) => (m.message_id === messageId ? { ...m, is_read: true } : m))
+      );
     });
 
     return () => {
       newSocket.disconnect();
     };
-  }, [router, selectedContact]);
+  }, [token, currentUserId]);
 
-  async function loadMessages(token: string) {
-    try {
-      const data = await authFetch("/api/teacher/messages", {}, token);
-      setMessages(data || []);
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  }
+  // Scroll to bottom when conversation messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, selectedContact]);
 
-  async function loadContacts(token: string) {
-    try {
-      console.log("Loading contacts...");
-      const data = await authFetch("/api/teacher/contacts", {}, token);
-      console.log("Contacts data received:", data);
-      setContacts(data || { students: [], parents: [] });
-    } catch (e) { 
-      console.error("Error loading contacts:", e); 
-      setContacts({ students: [], parents: [] });
+  // Mark unread messages as read when viewing conversation with a contact
+  useEffect(() => {
+    if (!selectedContact || !token) return;
+
+    const unreadMessages = messages.filter(
+      (m) =>
+        m.sender_id === selectedContact.user_id &&
+        !m.is_read
+    );
+
+    if (unreadMessages.length > 0) {
+      unreadMessages.forEach(async (m) => {
+        try {
+          await authFetch(`/api/teacher/messages/${m.message_id}/read`, { method: "PUT" }, token);
+          setMessages((prev) =>
+            prev.map((item) => (item.message_id === m.message_id ? { ...item, is_read: true } : item))
+          );
+        } catch {
+          // ignore mark read errors
+        }
+      });
     }
-    setLoadingContacts(false);
+  }, [selectedContact, messages, token]);
+
+  // Handle file selection
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      showToast("File size must be under 50MB", "error");
+      return;
+    }
+    setAttachmentFile(file);
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setAttachmentPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setAttachmentPreview(null);
+    }
   }
 
-  async function loadChatMessages(contactId: number) {
-    try {
-      const allMessages = await authFetch("/api/teacher/messages", {}, token);
-      const contactMessages = allMessages.filter((msg: any) => 
-        (msg.sender_id === contactId || msg.receiver_id === contactId)
-      );
-      setChatMessages(contactMessages.sort((a: any, b: any) => 
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      ));
-    } catch (e) { console.error(e); }
+  function removeAttachment() {
+    setAttachmentFile(null);
+    setAttachmentPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  // Handle Send Message
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
-    if (!messageText.trim() || !selectedContact) return;
-    
-    try {
-      await authFetch("/api/teacher/messages", {
-        method: "POST",
-        body: JSON.stringify({
-          receiver_id: selectedContact.user_id,
-          content: messageText
-        })
-      }, token);
-      setMessageText("");
-      loadChatMessages(selectedContact.user_id);
-      loadMessages(token);
-    } catch (e) { console.error(e); }
-  }
-
-  async function handleComposeMessage(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      await authFetch("/api/teacher/messages", {
-        method: "POST",
-        body: JSON.stringify(composeForm)
-      }, token);
-      setMessage("Message sent successfully!");
-      setShowCompose(false);
-      setComposeForm({ receiver_id: 0, content: "", attachment: "" });
-      loadMessages(token);
-    } catch (e) {
-      setMessage("Failed to send message");
-      console.error(e);
+    if (!selectedContact) {
+      showToast("Please select a recipient from your contact list.", "error");
+      return;
     }
-  }
 
-  async function handleMarkAsRead(messageId: number) {
-    try {
-      await authFetch(`/api/teacher/messages/${messageId}/read`, {
-        method: "PUT"
-      }, token);
-      loadMessages(token);
-    } catch (e) { console.error(e); }
-  }
-
-  function getContactName(contact: any) {
-    return contact.full_name || "Unknown";
-  }
-
-  function getContactAvatar(contact: any) {
-    return contact.full_name?.charAt(0).toUpperCase() || "?";
-  }
-
-  function getContactInfo(contact: any) {
-    if (contact.type === 'STUDENT') {
-      return `${contact.class_name} - ${contact.student_number}`;
+    const trimmed = inputContent.trim();
+    if (!trimmed && !attachmentFile) {
+      showToast("Message body or attachment is required.", "error");
+      return;
     }
-    return contact.relationship || "Parent";
-  }
+    if (trimmed.length > 1000) {
+      showToast("Message cannot exceed 1000 characters.", "error");
+      return;
+    }
 
-  function getLastMessage(contactId: number) {
-    const contactMessages = messages.filter((msg: any) => 
-      msg.sender_id === contactId || msg.receiver_id === contactId
-    );
-    if (contactMessages.length === 0) return "No messages yet";
-    const lastMsg = contactMessages[contactMessages.length - 1];
-    return lastMsg.content.substring(0, 30) + (lastMsg.content.length > 30 ? "..." : "");
-  }
+    setSending(true);
+    let attachmentUrl: string | undefined;
 
-  function isUnread(contactId: number) {
-    return messages.some((msg: any) => 
-      msg.sender_id === contactId && !msg.is_read
-    );
-  }
-
-  function handleContactClick(contact: any) {
-    setSelectedContact(contact);
-    loadChatMessages(contact.user_id);
-    
-    // Mark messages as read
-    messages.forEach((msg: any) => {
-      if (msg.sender_id === contact.user_id && !msg.is_read) {
-        handleMarkAsRead(msg.message_id);
+    try {
+      // Upload file first if one is selected
+      if (attachmentFile) {
+        setUploading(true);
+        const formData = new FormData();
+        formData.append("attachment", attachmentFile);
+        const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
+        const uploadRes = await fetch(`${backendUrl}/api/teacher/messages/upload-attachment`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        setUploading(false);
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json();
+          throw new Error(err.error || "File upload failed");
+        }
+        const uploaded: Attachment = await uploadRes.json();
+        attachmentUrl = uploaded.url;
       }
-    });
+
+      const createdMessage = await authFetch(
+        "/api/teacher/messages",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            receiver_id: selectedContact.user_id,
+            content: trimmed || " ",
+            attachment: attachmentUrl,
+          }),
+        },
+        token
+      );
+
+      setMessages((prev) => {
+        if (prev.some((m) => m.message_id === createdMessage.message_id)) return prev;
+        return [createdMessage, ...prev];
+      });
+      setInputContent("");
+      removeAttachment();
+    } catch (e: any) {
+      showToast(e.message || "Failed to send message", "error");
+    } finally {
+      setSending(false);
+      setUploading(false);
+    }
   }
 
-  if (loading) {
-    return <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">Loading...</div>;
-  }
-
-  const allContacts = [
-    ...contacts.students.map(s => ({ ...s, type: 'STUDENT' })),
-    ...contacts.parents.map(p => ({ ...p, type: 'PARENT' }))
+  // Filtered contacts
+  const allContactsList = [
+    ...contacts.students.map((s) => ({ ...s, type: "STUDENT" as const })),
+    ...contacts.parents.map((p) => ({ ...p, type: "PARENT" as const })),
   ];
 
+  const filteredContacts = allContactsList.filter((c) => {
+    const matchesType = contactFilter === "ALL" || c.type === contactFilter;
+    const matchesSearch =
+      c.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.student_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.class_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesType && matchesSearch;
+  });
+
+  // Conversation thread for selected contact
+  const activeThread = selectedContact
+    ? messages
+        .filter(
+          (m) =>
+            (m.sender_id === selectedContact.user_id && m.receiver_id === currentUserId) ||
+            (m.sender_id === currentUserId && m.receiver_id === selectedContact.user_id) ||
+            // Fallback match if currentUserId not extracted from JWT
+            (m.sender_id === selectedContact.user_id || m.receiver_id === selectedContact.user_id)
+        )
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    : [];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-emerald-200 dark:border-slate-600 border-t-emerald-600 dark:border-t-emerald-400 rounded-full animate-spin" />
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Connecting to messaging center...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <main className="h-screen bg-slate-100 dark:bg-slate-900 flex overflow-hidden">
-      {/* Sidebar - Contact List */}
-      <div className="w-80 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Messages</h1>
-            <button
-              onClick={() => setShowCompose(!showCompose)}
-              className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-            >
-              <svg className="w-6 h-6 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+    <div className="space-y-4">
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed top-6 right-6 z-50 flex items-center gap-3 rounded-xl border px-5 py-4 shadow-lg max-w-sm animate-in slide-in-from-right-4 duration-300 ${
+            toast.type === "success"
+              ? "bg-emerald-50 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300"
+              : "bg-red-50 dark:bg-red-900/40 border-red-200 dark:border-red-700 text-red-800 dark:text-red-300"
+          }`}
+        >
+          <span className="text-sm font-medium">{toast.text}</span>
+        </div>
+      )}
+
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+          Teacher Communication
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">
+          Direct messaging with students and parents across your assigned classes
+        </p>
+      </div>
+
+      {/* 2-Panel Chat Workspace */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col md:flex-row h-[720px]">
+        {/* ── LEFT PANEL: CONTACTS DIRECTORY ──────────────────────────────── */}
+        <div className="w-full md:w-80 lg:w-96 border-r border-slate-200 dark:border-slate-700 flex flex-col bg-slate-50/50 dark:bg-slate-800/50">
+          {/* Search & Filter Bar */}
+          <div className="p-4 border-b border-slate-200 dark:border-slate-700 space-y-3">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search student or parent..."
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-            </button>
+            </div>
+
+            <div className="flex gap-1 bg-slate-200/60 dark:bg-slate-700 p-1 rounded-xl text-xs font-semibold">
+              {(["ALL", "STUDENT", "PARENT"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setContactFilter(tab)}
+                  className={`flex-1 py-1.5 rounded-lg transition ${
+                    contactFilter === tab
+                      ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                  }`}
+                >
+                  {tab === "ALL" ? "All" : tab === "STUDENT" ? "Students" : "Parents"}
+                </button>
+              ))}
+            </div>
           </div>
-          <input
-            type="text"
-            placeholder="Search contacts..."
-            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm text-slate-900 dark:text-white"
-          />
+
+          {/* Contact Scroll List */}
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
+            {filteredContacts.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-400">
+                No contacts found matching your query.
+              </div>
+            ) : (
+              filteredContacts.map((contact) => {
+                const isSelected = selectedContact?.user_id === contact.user_id;
+                const unreadCount = messages.filter(
+                  (m) => m.sender_id === contact.user_id && !m.is_read
+                ).length;
+
+                return (
+                  <button
+                    key={`${contact.type}-${contact.user_id}`}
+                    type="button"
+                    onClick={() => setSelectedContact(contact)}
+                    className={`w-full text-left p-4 flex items-start gap-3 transition ${
+                      isSelected
+                        ? "bg-emerald-50/70 dark:bg-emerald-950/30 border-l-4 border-emerald-500"
+                        : "hover:bg-slate-100/60 dark:hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+                      {contact.full_name?.charAt(0) || "U"}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                          {contact.full_name}
+                        </p>
+                        {unreadCount > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                            contact.type === "STUDENT"
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                              : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                          }`}
+                        >
+                          {contact.type}
+                        </span>
+                        {contact.class_name && (
+                          <span className="text-[11px] text-slate-400 truncate">
+                            {contact.class_name}
+                          </span>
+                        )}
+                        {contact.relationship && (
+                          <span className="text-[11px] text-slate-400 truncate">
+                            {contact.relationship}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
 
-        {/* Contact List */}
-        <div className="flex-1 overflow-y-auto">
-          {loadingContacts ? (
-            <div className="p-4 text-center text-slate-500 dark:text-slate-400">Loading contacts...</div>
-          ) : allContacts.length === 0 ? (
-            <div className="p-4 text-center text-slate-500 dark:text-slate-400">
-              <p className="mb-2">No contacts available</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
-                {contacts.students.length === 0 && contacts.parents.length === 0
-                  ? "No students or parents found. Check if you have classes assigned."
-                  : "Try refreshing the page"}
-              </p>
-            </div>
-          ) : (
-            allContacts.map((contact: any) => (
-              <div
-                key={contact.user_id}
-                onClick={() => handleContactClick(contact)}
-                className={`flex items-center p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition ${
-                  selectedContact?.user_id === contact.user_id ? 'bg-emerald-50 dark:bg-emerald-900/30' : ''
-                }`}
-              >
-                {/* Avatar */}
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold mr-3 ${
-                  contact.type === 'STUDENT' ? 'bg-blue-500' : 'bg-purple-500'
-                }`}>
-                  {getContactAvatar(contact)}
-                </div>
-
-                {/* Contact Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-slate-900 dark:text-white truncate">{getContactName(contact)}</h3>
-                    {isUnread(contact.user_id) && (
-                      <div className="ml-2 h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0"></div>
-                    )}
+        {/* ── RIGHT PANEL: MESSAGE THREAD ─────────────────────────────────── */}
+        <div className="flex-1 flex flex-col bg-white dark:bg-slate-800">
+          {selectedContact ? (
+            <>
+              {/* Active Contact Header */}
+              <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                    {selectedContact.full_name?.charAt(0) || "U"}
                   </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{getContactInfo(contact)}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-1">{getLastMessage(contact.user_id)}</p>
+                  <div>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                      {selectedContact.full_name}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {selectedContact.type === "STUDENT"
+                        ? `Student ID: ${selectedContact.student_number || "N/A"} · ${selectedContact.class_name || ""}`
+                        : `Parent / Guardian · ${selectedContact.relationship || "Guardian"}`}
+                    </p>
+                  </div>
                 </div>
               </div>
-            ))
+
+              {/* Message Stream */}
+              <div className="flex-1 p-6 overflow-y-auto space-y-4">
+                {activeThread.length === 0 ? (
+                  <div className="py-24 text-center">
+                    <svg className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949C3.752 19.622 1 18.474 1 16.5c0-.376.145-.73.41-1.02C2.428 14.282 3 12.586 3 11V9c0-4.418 4.03-8 9-8s9 3.582 9 8v2c0 1.586.572 3.282 1.59 4.48.265.29.41.644.41 1.02 0 1.974-2.752 3.122-6.745 3.551A9.863 9.863 0 0112 20" />
+                    </svg>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      No message history with {selectedContact.full_name}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Type your message below to start the conversation.
+                    </p>
+                  </div>
+                ) : (
+                  activeThread.map((msg) => {
+                    const isFromMe = msg.sender_id !== selectedContact.user_id;
+
+                    return (
+                      <div
+                        key={msg.message_id}
+                        className={`flex flex-col ${isFromMe ? "items-end" : "items-start"}`}
+                      >
+                        <div
+                          className={`max-w-md rounded-2xl px-4 py-3 text-sm shadow-sm ${
+                            isFromMe
+                              ? "bg-emerald-600 text-white rounded-br-none"
+                              : "bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-none"
+                          }`}
+                        >
+                          {/* Message text */}
+                          {msg.content && msg.content.trim() && msg.content !== " " && (
+                            <p className="whitespace-pre-line">{msg.content}</p>
+                          )}
+                          {/* Attachment */}
+                          {msg.attachment && (
+                            <AttachmentPreview
+                              url={msg.attachment}
+                              className={isFromMe ? "border-white/30 text-white" : "border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300"}
+                            />
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-400 mt-1 px-1">
+                          {formatDisplayDateTime(msg.timestamp)}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Message Composer */}
+              <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                {/* Attachment Preview Strip */}
+                {attachmentFile && (
+                  <div className="mb-2 flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-600">
+                    {attachmentPreview ? (
+                      <img src={attachmentPreview} alt="preview" className="w-10 h-10 rounded-lg object-cover" />
+                    ) : (
+                      <span className="text-2xl">{getFileIcon(attachmentFile.type)}</span>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{attachmentFile.name}</p>
+                      <p className="text-[10px] text-slate-400">{formatFileSize(attachmentFile.size)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeAttachment}
+                      className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
+                <form onSubmit={handleSendMessage} className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+                    <span>Press Enter to send · Shift+Enter for new line</span>
+                    <span className={inputContent.length > 1000 ? "text-red-500 font-bold" : ""}>
+                      {inputContent.length} / 1000 characters
+                    </span>
+                  </div>
+
+                  <div className="flex items-end gap-2">
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.jpg,.jpeg,.png,.gif,.webp,.mp4,.mpeg,.mov,.zip"
+                      onChange={handleFileSelect}
+                    />
+
+                    {/* Attachment button */}
+                    <button
+                      type="button"
+                      title="Attach file"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="shrink-0 p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                    </button>
+
+                    <textarea
+                      rows={2}
+                      maxLength={1000}
+                      value={inputContent}
+                      onChange={(e) => setInputContent(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage(e);
+                        }
+                      }}
+                      placeholder={`Write a message to ${selectedContact.full_name}...`}
+                      className="flex-1 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition resize-none"
+                    />
+
+                    <button
+                      type="submit"
+                      disabled={sending || uploading || (!inputContent.trim() && !attachmentFile)}
+                      className="rounded-xl bg-emerald-600 px-5 py-3 text-white text-xs font-semibold hover:bg-emerald-700 transition shadow-md shadow-emerald-600/20 disabled:opacity-50 shrink-0"
+                    >
+                      {uploading ? "Uploading..." : sending ? "..." : "Send"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center flex-1 text-slate-400 text-sm">
+              Select a student or parent contact from the left list to view conversation.
+            </div>
           )}
         </div>
       </div>
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-slate-100 dark:bg-slate-900">
-        {selectedContact ? (
-          <>
-            {/* Chat Header */}
-            <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold mr-3 ${
-                selectedContact.type === 'STUDENT' ? 'bg-blue-500' : 'bg-purple-500'
-              }`}>
-                {getContactAvatar(selectedContact)}
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900 dark:text-white">{getContactName(selectedContact)}</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{getContactInfo(selectedContact)}</p>
-              </div>
-            </div>
-
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {chatMessages.length === 0 ? (
-                <div className="text-center text-slate-500 dark:text-slate-400 mt-10">
-                  <p>No messages yet. Start the conversation!</p>
-                </div>
-              ) : (
-                chatMessages.map((msg: any) => (
-                  <div
-                    key={msg.message_id}
-                    className={`flex ${msg.sender_id === selectedContact.user_id ? 'justify-start' : 'justify-end'}`}
-                  >
-                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      msg.sender_id === selectedContact.user_id
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white'
-                        : 'bg-emerald-500 text-white'
-                    }`}>
-                      <p className="text-sm">{msg.content}</p>
-                      <p className={`text-xs mt-1 ${
-                        msg.sender_id === selectedContact.user_id ? 'text-slate-400 dark:text-slate-500' : 'text-emerald-100'
-                      }`}>
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Message Input */}
-            <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
-              <form onSubmit={handleSendMessage} className="flex gap-3">
-                <input
-                  type="text"
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white"
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition font-semibold"
-                >
-                  Send
-                </button>
-              </form>
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-slate-900">
-            <div className="text-center text-slate-500 dark:text-slate-400">
-              <svg className="w-16 h-16 mx-auto mb-4 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              <p className="text-lg">Select a contact to start messaging</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Compose Modal */}
-      {showCompose && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md mx-4 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">New Message</h2>
-              <button
-                onClick={() => setShowCompose(false)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition"
-              >
-                <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <form onSubmit={handleComposeMessage} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Recipient</label>
-                {loadingContacts ? (
-                  <div className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
-                    Loading contacts...
-                  </div>
-                ) : (
-                  <select
-                    value={composeForm.receiver_id || ''}
-                    onChange={(e) => setComposeForm({ ...composeForm, receiver_id: Number(e.target.value) })}
-                    required
-                    className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white"
-                  >
-                    <option value="">Select a recipient</option>
-                    <optgroup label="Students">
-                      {contacts.students.map((student: any) => (
-                        <option key={student.user_id} value={student.user_id}>
-                          {student.full_name} ({student.class_name} - {student.student_number})
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Parents">
-                      {contacts.parents.map((parent: any) => (
-                        <option key={parent.user_id} value={parent.user_id}>
-                          {parent.full_name} ({parent.relationship})
-                        </option>
-                      ))}
-                    </optgroup>
-                  </select>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Message</label>
-                <textarea
-                  value={composeForm.content}
-                  onChange={(e) => setComposeForm({ ...composeForm, content: e.target.value })}
-                  rows={4}
-                  required
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition font-semibold"
-              >
-                Send Message
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Message Notification */}
-      {notification && (
-        <MessageNotification
-          message={notification.message}
-          senderName={notification.senderName}
-          onClose={() => setNotification(null)}
-        />
-      )}
-    </main>
+    </div>
   );
 }

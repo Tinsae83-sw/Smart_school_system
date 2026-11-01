@@ -17,6 +17,9 @@ const {
   getStudentTranscript,
   getStudentAttendance,
   getStudentAttendanceSummary,
+  getStudentAttendanceSession,
+  markStudentAttendance,
+  getStudentLessonPlans,
   getStudentConduct,
   getStudentConductHistory,
   getStudentMaterials,
@@ -35,7 +38,10 @@ const {
   getStudentContacts,
   getStudentMessages,
   sendStudentMessage,
-  markStudentMessageRead
+  markStudentMessageRead,
+  getStudentExamSchedule,
+  getStudentExamResults,
+  aiQueryBook
 } = require('../controllers/studentController');
 
 // ============================================================
@@ -102,6 +108,9 @@ router.get('/attendance', authenticateStudent, getStudentAttendance);
 
 // GET /api/student/attendance/summary - Get student attendance summary
 router.get('/attendance/summary', authenticateStudent, getStudentAttendanceSummary);
+router.get('/attendance/session', authenticateStudent, getStudentAttendanceSession);
+router.post('/attendance/mark', authenticateStudent, markStudentAttendance);
+router.get('/lesson-plans', authenticateStudent, getStudentLessonPlans);
 
 // ============================================================
 // CONDUCT & PEER EVALUATIONS
@@ -150,6 +159,19 @@ router.post('/books/:bookId/access', authenticateStudent, accessBook);
 // GET /api/student/books/access-log - Get book access log
 router.get('/books/access-log', authenticateStudent, getBookAccessLog);
 
+// POST /api/student/books/:bookId/ai-query - AI interactive book assistant
+router.post('/books/:bookId/ai-query', authenticateStudent, aiQueryBook);
+
+// ============================================================
+// EXAM MANAGEMENT & SCHEDULE
+// ============================================================
+
+// GET /api/student/exams/schedule - Get student exam timetable & schedule
+router.get('/exams/schedule', authenticateStudent, getStudentExamSchedule);
+
+// GET /api/student/exams/results - Get student personal exam results
+router.get('/exams/results', authenticateStudent, getStudentExamResults);
+
 // POST /api/student/evaluation/:token - Submit teacher evaluation using one-time link
 router.get('/evaluation/:token', getTeacherEvaluationByToken);
 router.post('/evaluation/:token', submitTeacherEvaluation);
@@ -159,6 +181,21 @@ router.post('/evaluation/:token', submitTeacherEvaluation);
 // ============================================================
 router.get('/contacts', authenticateStudent, getStudentContacts);
 router.get('/messages', authenticateStudent, getStudentMessages);
+router.post('/messages/upload-attachment', authenticateStudent, (req, res) => {
+  const upload = req.upload;
+  if (!upload) return res.status(500).json({ error: 'Upload middleware not configured' });
+  upload.single('attachment')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const fileUrl = `/uploads/messages/${req.file.filename}`;
+    res.json({
+      url: fileUrl,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimeType: req.file.mimetype
+    });
+  });
+});
 router.post('/messages', authenticateStudent, sendStudentMessage);
 router.put('/messages/:messageId/read', authenticateStudent, markStudentMessageRead);
 

@@ -5,18 +5,16 @@ const { Pool } = require("pg");
 // Load environment variables
 require("dotenv").config();
 
-// Create PostgreSQL connection pool with optimized settings for Neon
+// Create PostgreSQL connection pool optimised for Neon serverless.
+// Neon has a cold-start latency of 3-7 s; all timeouts must be larger than that.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 20, // Increased max connections for better performance
-  min: 5, // Increased min connections to reduce connection overhead
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 20000, // Increased timeout for connection establishment
-  statement_timeout: 30000, // 30s statement timeout
-  query_timeout: 30000, // 30s query timeout
-  // Add connection retry settings
-  retryConnection: true,
-  retryDelay: 2000,
+  max: 10,                        // Neon free tier: keep connections low to avoid exhaustion
+  min: 0,                         // Allow pool to drain when idle (Neon scales to zero)
+  idleTimeoutMillis: 10000,       // Release idle clients quickly
+  connectionTimeoutMillis: 30000, // Up to 30 s to establish a connection (covers cold start)
+  statement_timeout: 60000,       // 60 s per statement – cold start + query must fit here
+  query_timeout: 60000,           // 60 s pool-level query timeout
 });
 
 // Create adapter with pool

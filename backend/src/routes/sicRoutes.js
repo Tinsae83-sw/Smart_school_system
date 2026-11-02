@@ -1,6 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const sicController = require('../controllers/sicController');
+const {
+  validateSIPFeedback,
+  validateSIPAmendment,
+  validateAgendaItem,
+  validateResolutionVote,
+  validateNeedsAssessment,
+  validatePartnerSuggestion,
+  validateAnnualReport,
+  validateRecommendation,
+  validateSICAnnouncement,
+  validateTrainingCompletion
+} = require('../middleware/sicValidators');
 
 /**
  * SIC (School Improvement Committee) MEMBER ROUTES
@@ -29,11 +41,11 @@ router.get('/sip/feedback', sicController.getSIPFeedback);
 
 // Submit SIP Feedback
 // POST /api/sic/sip/feedback
-router.post('/sip/feedback', sicController.submitSIPFeedback);
+router.post('/sip/feedback', validateSIPFeedback, sicController.submitSIPFeedback);
 
 // Propose SIP Amendment
 // POST /api/sic/sip/amendments
-router.post('/sip/amendments', sicController.proposeSIPAmendment);
+router.post('/sip/amendments', validateSIPAmendment, sicController.proposeSIPAmendment);
 
 // ==================== MONITORING & EVALUATION ====================
 
@@ -65,11 +77,11 @@ router.get('/meetings/:meetingId/minutes', sicController.getMeetingMinutes);
 
 // Submit Agenda Item
 // POST /api/sic/meetings/agenda-items
-router.post('/meetings/agenda-items', sicController.submitAgendaItem);
+router.post('/meetings/agenda-items', validateAgendaItem, sicController.submitAgendaItem);
 
 // Vote on Resolution
 // POST /api/sic/meetings/resolutions/:resolutionId/vote
-router.post('/meetings/resolutions/:resolutionId/vote', sicController.voteOnResolution);
+router.post('/meetings/resolutions/:resolutionId/vote', validateResolutionVote, sicController.voteOnResolution);
 
 // ==================== NEEDS ASSESSMENT & SURVEYS ====================
 
@@ -79,7 +91,7 @@ router.get('/needs-assessments', sicController.getNeedsAssessments);
 
 // Create Needs Assessment
 // POST /api/sic/needs-assessments
-router.post('/needs-assessments', sicController.createNeedsAssessment);
+router.post('/needs-assessments', validateNeedsAssessment, sicController.createNeedsAssessment);
 
 // Get School Self-Assessment
 // GET /api/sic/self-assessment
@@ -97,7 +109,7 @@ router.get('/partnerships/:partnershipId/tracking', sicController.getPartnership
 
 // Suggest New Partner
 // POST /api/sic/partnerships/suggest
-router.post('/partnerships/suggest', sicController.suggestPartner);
+router.post('/partnerships/suggest', validatePartnerSuggestion, sicController.suggestPartner);
 
 // ==================== ACCOUNTABILITY & TRANSPARENCY ====================
 
@@ -111,7 +123,7 @@ router.get('/inspection-reports', sicController.getInspectionReports);
 
 // Submit Annual SIC Report
 // POST /api/sic/annual-report
-router.post('/annual-report', sicController.submitAnnualReport);
+router.post('/annual-report', validateAnnualReport, sicController.submitAnnualReport);
 
 // ==================== COMMUNICATION ====================
 
@@ -121,7 +133,7 @@ router.get('/recommendations', sicController.getRecommendations);
 
 // Submit Recommendation
 // POST /api/sic/recommendations
-router.post('/recommendations', sicController.submitRecommendation);
+router.post('/recommendations', validateRecommendation, sicController.submitRecommendation);
 
 // Get School Announcements
 // GET /api/sic/announcements
@@ -129,7 +141,7 @@ router.get('/announcements', sicController.getAnnouncements);
 
 // Post SIC Announcement
 // POST /api/sic/announcements
-router.post('/announcements', sicController.postAnnouncement);
+router.post('/announcements', validateSICAnnouncement, sicController.postAnnouncement);
 
 // ==================== TRAINING & CAPACITY BUILDING ====================
 
@@ -139,7 +151,7 @@ router.get('/training', sicController.getTraining);
 
 // Mark Training as Completed
 // POST /api/sic/training/:trainingId/complete
-router.post('/training/:trainingId/complete', sicController.completeTraining);
+router.post('/training/:trainingId/complete', validateTrainingCompletion, sicController.completeTraining);
 
 // ==================== SETTINGS & PROFILE ====================
 

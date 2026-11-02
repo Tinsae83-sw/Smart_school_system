@@ -560,6 +560,28 @@ async function main() {
     }
   });
 
+  // Seed Registration Officer (registers students into the system)
+  await prisma.user.upsert({
+    where: { email: 'registration@school.edu' },
+    update: {
+      full_name: 'Ms. Sara Tesfaye',
+      phone_number: '+251911000016',
+      password_hash,
+      role: 'REGISTRATION',
+      is_active: true,
+      preferred_language: 'en'
+    },
+    create: {
+      full_name: 'Ms. Sara Tesfaye',
+      email: 'registration@school.edu',
+      phone_number: '+251911000016',
+      password_hash,
+      role: 'REGISTRATION',
+      is_active: true,
+      preferred_language: 'en'
+    }
+  });
+
   // Seed SIC Member
   const sicMemberUser = await prisma.user.upsert({
     where: { email: 'sic.member@school.edu' },

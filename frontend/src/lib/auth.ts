@@ -12,6 +12,7 @@ export type UserRole =
   | 'DEPARTMENT_HEAD'
   | 'PTSA_REPRESENTATIVE'
   | 'SIC_MEMBER'
+  | 'REGISTRATION'
   | 'ADMIN';
 
 export interface AuthConfig {
@@ -75,6 +76,12 @@ export const AUTH_CONFIGS: Record<UserRole, AuthConfig> = {
     userKey: 'sic_member_user',
     loginPath: '/sic-member/login',
     dashboardPath: '/sic-member',
+  },
+  REGISTRATION: {
+    tokenKey: 'registration_token',
+    userKey: 'registration_user',
+    loginPath: '/registration/login',
+    dashboardPath: '/registration',
   },
   ADMIN: {
     tokenKey: 'admin_token',

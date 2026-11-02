@@ -935,7 +935,8 @@ async function createMeeting(req, res) {
         title,
         description,
         scheduled_date: new Date(date),
-        scheduled_time: time,
+        // @db.Time column: Prisma expects a DateTime, not a "HH:MM" string
+        scheduled_time: new Date(`1970-01-01T${String(time).trim()}:00`),
         location,
         created_by: user.user_id,
         status: 'SCHEDULED'

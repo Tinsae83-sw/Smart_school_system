@@ -52,6 +52,19 @@ const {
   createDiscussion,
   sendDiscussionMessage
 } = require('../controllers/ptsaController');
+const {
+  validateMeetingCreation,
+  validateMeetingMinutes,
+  validateBudgetAdvisory,
+  validateFeedbackItem,
+  validateAnnouncement,
+  validateSurveyCreation,
+  validatePolicyProposal,
+  validateSIPFeedback,
+  validateDiscussionCreation,
+  validateDiscussionMessage,
+  validateIdParam
+} = require('../middleware/ptsaValidators');
 
 // ============================================================
 // DASHBOARD & OVERVIEW
@@ -80,13 +93,13 @@ router.get('/meetings/minutes', getMeetingMinutes);
 router.get('/meetings/attendance', getMeetingAttendance);
 
 // POST /api/ptsa/meetings - Create new meeting
-router.post('/meetings', createMeeting);
+router.post('/meetings', validateMeetingCreation, createMeeting);
 
 // POST /api/ptsa/meetings/minutes - Upload meeting minutes
-router.post('/meetings/minutes', uploadMeetingMinutes);
+router.post('/meetings/minutes', validateMeetingMinutes, uploadMeetingMinutes);
 
 // POST /api/ptsa/meetings/:id/invite - Send meeting invitations
-router.post('/meetings/:id/invite', sendMeetingInvitations);
+router.post('/meetings/:id/invite', validateIdParam, sendMeetingInvitations);
 
 // GET /api/ptsa/feedback - Get PTSA feedback
 router.get('/feedback', getPtsaFeedback);
@@ -130,7 +143,7 @@ router.get('/financial/ptsa-funds', getPTSAFunds);
 router.get('/financial/procurement-reports', getProcurementReports);
 
 // POST /api/ptsa/financial/budget-advisory - Submit budget advisory
-router.post('/financial/budget-advisory', submitBudgetAdvisory);
+router.post('/financial/budget-advisory', validateBudgetAdvisory, submitBudgetAdvisory);
 
 // ============================================================
 // SCHOOL IMPROVEMENT COMMITTEE (SIC)
@@ -149,7 +162,7 @@ router.get('/sic/meeting-minutes', getSICMeetingMinutes);
 router.get('/sic/annual-reports', getAnnualReports);
 
 // POST /api/ptsa/sic/feedback - Submit SIP feedback
-router.post('/sic/feedback', submitSIPFeedback);
+router.post('/sic/feedback', validateSIPFeedback, submitSIPFeedback);
 
 // ============================================================
 // REPORTS
@@ -178,13 +191,13 @@ router.get('/reports/:id/download', downloadReport);
 router.get('/feedback-items', getFeedbackItems);
 
 // POST /api/ptsa/feedback-items - Submit feedback
-router.post('/feedback-items', submitFeedbackItem);
+router.post('/feedback-items', validateFeedbackItem, submitFeedbackItem);
 
 // GET /api/ptsa/ptsa-announcements - Get PTSA announcements
 router.get('/ptsa-announcements', getAnnouncements);
 
 // POST /api/ptsa/ptsa-announcements - Post announcement
-router.post('/ptsa-announcements', postAnnouncement);
+router.post('/ptsa-announcements', validateAnnouncement, postAnnouncement);
 
 // ============================================================
 // GRIEVANCES
@@ -214,10 +227,10 @@ router.get('/surveys', getSurveys);
 router.get('/surveys/results', getSurveyResults);
 
 // POST /api/ptsa/surveys - Create survey
-router.post('/surveys', createSurvey);
+router.post('/surveys', validateSurveyCreation, createSurvey);
 
 // POST /api/ptsa/surveys/:id/send - Send survey
-router.post('/surveys/:id/send', sendSurvey);
+router.post('/surveys/:id/send', validateIdParam, sendSurvey);
 
 // ============================================================
 // COMPLIANCE
@@ -233,6 +246,22 @@ router.get('/compliance/public-metrics', getPublicMetrics);
 router.get('/compliance/policy-proposals', getPolicyProposals);
 
 // POST /api/ptsa/compliance/policy-proposals - Submit policy proposal
-router.post('/compliance/policy-proposals', submitPolicyProposal);
+router.post('/compliance/policy-proposals', validatePolicyProposal, submitPolicyProposal);
+
+// ============================================================
+// DISCUSSIONS
+// ============================================================
+
+// GET /api/ptsa/discussions - Get discussion threads
+router.get('/discussions', getDiscussions);
+
+// GET /api/ptsa/discussions/:id/messages - Get messages of a discussion
+router.get('/discussions/:id/messages', validateIdParam, getDiscussionMessages);
+
+// POST /api/ptsa/discussions - Create a discussion thread
+router.post('/discussions', validateDiscussionCreation, createDiscussion);
+
+// POST /api/ptsa/discussions/:id/messages - Post a message to a discussion
+router.post('/discussions/:id/messages', validateDiscussionMessage, sendDiscussionMessage);
 
 module.exports = router;

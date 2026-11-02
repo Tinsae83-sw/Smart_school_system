@@ -198,6 +198,11 @@ app.use('/api/ptsa', ptsaRoutes);
 const publicRoutes = require('./routes/publicRoutes');
 app.use('/api/public', publicRoutes);
 
+// Registration officer routes (registering students into the system)
+const { authenticateRegistration } = require('./middleware/registrationAuth');
+const registrationRoutes = require('./routes/registrationRoutes');
+app.use('/api/registration', authenticateRegistration, registrationRoutes);
+
 // app.use('/api/admin/classes', classRoutes);
 // app.use('/api/admin/attendance', attendanceRoutes);
 // etc.

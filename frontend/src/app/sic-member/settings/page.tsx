@@ -55,6 +55,19 @@ export default function SettingsPage() {
     profile_picture_url: ""
   });
 
+  const [showSuggestForm, setShowSuggestForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formMessage, setFormMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [suggestForm, setSuggestForm] = useState({
+    partner_name: "",
+    partner_type: "",
+    partnership_type: "COMMUNITY",
+    description: "",
+    contact_person: "",
+    contact_email: "",
+    contact_phone: ""
+  });
+
   async function fetchData() {
     setLoading(true);
     try {
@@ -108,6 +121,41 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error("Error updating profile:", error);
+    }
+  }
+
+  async function suggestPartner(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setFormMessage(null);
+    try {
+      const res = await fetch(`${API_BASE}/partnerships/suggest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(suggestForm)
+      });
+
+      if (res.ok) {
+        setFormMessage({ type: "success", text: "Partner suggested successfully. Pending approval." });
+        setSuggestForm({
+          partner_name: "",
+          partner_type: "",
+          partnership_type: "COMMUNITY",
+          description: "",
+          contact_person: "",
+          contact_email: "",
+          contact_phone: ""
+        });
+        fetchData();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setFormMessage({ type: "error", text: data.error || "Failed to suggest partner." });
+      }
+    } catch (error) {
+      console.error("Error suggesting partner:", error);
+      setFormMessage({ type: "error", text: "Failed to connect to the backend." });
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -324,7 +372,13 @@ export default function SettingsPage() {
           <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between gap-4 mb-5">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">School Partnerships</h2>
-              <button className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition">
+              <button
+                onClick={() => {
+                  setFormMessage(null);
+                  setShowSuggestForm(true);
+                }}
+                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition"
+              >
                 Suggest Partner
               </button>
             </div>
@@ -366,6 +420,153 @@ export default function SettingsPage() {
             <button className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
               View Tracking Reports
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Suggest Partner Modal */}
+      {showSuggestForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Suggest a Partner</h2>
+              <button
+                onClick={() => setShowSuggestForm(false)}
+                className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {formMessage && (
+              <div
+                className={`mb-4 rounded-lg px-4 py-3 text-sm ${
+                  formMessage.type === "success"
+                    ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                    : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300"
+                }`}
+              >
+                {formMessage.text}
+              </div>
+            )}
+
+            <form onSubmit={suggestPartner} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Partner Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={suggestForm.partner_name}
+                  onChange={(e) => setSuggestForm(prev => ({ ...prev, partner_name: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                  placeholder="e.g. Addis University"
+                  required
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Partner Type <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={suggestForm.partner_type}
+                    onChange={(e) => setSuggestForm(prev => ({ ...prev, partner_type: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                    required
+                  >
+                    <option value="">Select type</option>
+                    <option value="GOVERNMENT">Government</option>
+                    <option value="PRIVATE_SECTOR">Private Sector</option>
+                    <option value="NGO">NGO</option>
+                    <option value="COMMUNITY_ORGANIZATION">Community Organization</option>
+                    <option value="UNIVERSITY">University</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Partnership Type</label>
+                  <select
+                    value={suggestForm.partnership_type}
+                    onChange={(e) => setSuggestForm(prev => ({ ...prev, partnership_type: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                  >
+                    <option value="COMMUNITY">Community</option>
+                    <option value="ACADEMIC">Academic</option>
+                    <option value="FINANCIAL">Financial</option>
+                    <option value="TECHNICAL">Technical</option>
+                    <option value="MATERIAL">Material</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                <textarea
+                  value={suggestForm.description}
+                  onChange={(e) => setSuggestForm(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                  placeholder="Describe the potential collaboration..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Contact Person</label>
+                <input
+                  type="text"
+                  value={suggestForm.contact_person}
+                  onChange={(e) => setSuggestForm(prev => ({ ...prev, contact_person: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                  placeholder="Full name"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Contact Email</label>
+                  <input
+                    type="email"
+                    value={suggestForm.contact_email}
+                    onChange={(e) => setSuggestForm(prev => ({ ...prev, contact_email: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                    placeholder="contact@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Contact Phone</label>
+                  <input
+                    type="tel"
+                    value={suggestForm.contact_phone}
+                    onChange={(e) => setSuggestForm(prev => ({ ...prev, contact_phone: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                    placeholder="+251..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition disabled:opacity-50"
+                >
+                  {submitting ? "Submitting..." : "Submit Suggestion"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSuggestForm(false)}
+                  className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

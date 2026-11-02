@@ -36,7 +36,7 @@ async function getPtsaDashboard(req, res) {
     // Get upcoming PTSA meetings
     const upcomingMeetings = await prisma.pTSAMeeting.count({
       where: {
-        meeting_date: { gte: new Date() },
+        scheduled_date: { gte: new Date() },
         status: 'SCHEDULED'
       }
     });
@@ -79,16 +79,16 @@ async function getPtsaMeetings(req, res) {
   try {
     const meetings = await prisma.pTSAMeeting.findMany({
       where: {
-        meeting_date: { gte: new Date() }
+        scheduled_date: { gte: new Date() }
       },
-      orderBy: { meeting_date: 'asc' },
+      orderBy: { scheduled_date: 'asc' },
       take: 10
     });
 
     res.json(meetings.map(m => ({
-      meeting_id: m.ptsa_meeting_id,
+      meeting_id: m.meeting_id,
       title: m.title,
-      date: m.meeting_date,
+      date: m.scheduled_date,
       location: m.location || 'Main Hall',
       status: m.status === 'SCHEDULED' ? 'Upcoming' : 'Completed'
     })));
@@ -109,14 +109,14 @@ async function getPtsaFeedback(req, res) {
       orderBy: { submitted_at: 'desc' },
       take: 10,
       include: {
-        submitter: {
-          include: { user: true }
+        submitted_by_user: {
+          select: { user_id: true, full_name: true, email: true }
         }
       }
     });
 
     res.json(feedback.map(f => ({
-      feedback_id: f.ptsa_feedback_id,
+      feedback_id: f.feedback_id,
       subject: f.subject,
       category: f.category || 'General',
       status: f.status,

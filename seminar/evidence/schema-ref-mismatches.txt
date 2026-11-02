@@ -1,0 +1,58 @@
+﻿parsed 155 models, 1854 fields
+
+=== backend\src\controllers\parentController.js ===
+  L2139  ClassSubject.class                    in .findUnique()
+  L3260  PTSAAnnouncement.created_at               in .findMany()
+  L3355  StudentPeerEvaluation.evaluator                in .findMany()
+  L3362  StudentPeerEvaluation.evaluation_date          in .findMany()
+  L3924  User.password                 in .update()
+  L4253  PTSAMeeting.ptsa_meeting_id          in .findUnique()
+  L4314  PTSAAnnouncement.created_at               in .findMany()
+
+=== backend\src\controllers\principalController.js ===
+  L515   StaffPerformance.user                     in .findMany()
+  L1707  PTSAExecutive.user                     in .findMany()
+  L1733  Grievance.user                     in .findMany()
+  L1903  Grievance.user                     in .findMany()
+  L1963  DisciplinaryAction.student                  in .findMany()
+  L1968  DisciplinaryAction.recommended_by_user      in .findMany()
+  L1969  DisciplinaryAction.approved_by_user         in .findMany()
+  L2063  StaffLeaveRequest.user                     in .findMany()
+  L2117  StaffTransfer.user                     in .findMany()
+
+=== backend\src\controllers\ptsaController.js ===
+  L322   ConductGrade.student                  in .findMany()
+
+=== backend\src\controllers\sicController.js ===
+  L506   Student.enrollments              in .findMany()
+  L513   Student.enrollments              in .findMany()
+  L516   Submission.assessment               in .findMany()
+  L657   SICMeetingAttendee.user                     in .findMany()
+
+=== backend\src\controllers\studentController.js ===
+  L1861  Notification.message                  in .create()
+  L1863  Notification.read                     in .create()
+
+=== backend\src\controllers\teacherController.js ===
+  L1359  ConductGrade.student                  in .findMany()
+  L1364  ConductComment.teacher                  in .findMany()
+  L1471  ConductComment.teacher                  in .create()
+  L1881  CourseMaterial.uploaded_by              in .findFirst()
+
+=== backend\src\controllers\vpAcademicController.js ===
+  L2651  ComplianceReport.generated_at             in .findMany()
+
+=== backend\src\controllers\vpAdminController.js ===
+  L1123  SchoolAnnouncement.message                  in .create()
+  L1369  SecurityPersonnel.user                     in .findMany()
+  L1490  Vehicle.vehicle_name             in .findMany()
+  L1517  Vehicle.vehicle_name             in .findMany()
+  L1520  VehicleMaintenance.scheduled_date           in .findMany()
+  L1553  Vehicle.vehicle_name             in .findMany()
+  L1555  DriverAssignment.driver                   in .findMany()
+  L1600  Vehicle.vehicle_name             in .findMany()
+  L1603  TransportSchedule.departure_time           in .findMany()
+  L1721  FoodInventory.inventory_id             in .update()
+  L1722  FoodInventory.quantity                 in .update()
+
+TOTAL mismatched keys: 39  across 8 files

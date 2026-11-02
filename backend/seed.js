@@ -2049,8 +2049,8 @@ async function main() {
     data: {
       partnership_id: 1,
       contribution_type: 'ACADEMIC',
-      description: 'Conducted joint teacher training workshop',
-      contribution_value: '20 teachers trained',
+      impact_assessment: 'Conducted joint teacher training workshop - 20 teachers trained',
+      contribution_value: 0,
       tracking_date: new Date('2024-03-15'),
       tracked_by: sicMemberUser.user_id
     }
@@ -2060,8 +2060,8 @@ async function main() {
     data: {
       partnership_id: 1,
       contribution_type: 'FINANCIAL',
-      description: 'Provided textbooks and reference materials',
-      contribution_value: '500 books donated',
+      impact_assessment: 'Provided textbooks and reference materials - 500 books donated',
+      contribution_value: 0,
       tracking_date: new Date('2024-05-20'),
       tracked_by: principalUser.user_id
     }

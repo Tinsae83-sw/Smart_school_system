@@ -1,0 +1,78 @@
+backend\src\controllers\parentController.js | L2139 | ClassSubject.class
+    class: true
+backend\src\controllers\parentController.js | L3260 | PTSAAnnouncement.created_at
+    orderBy: { created_at: 'desc' },
+backend\src\controllers\parentController.js | L3355 | StudentPeerEvaluation.evaluator
+    evaluator: {
+backend\src\controllers\parentController.js | L3362 | StudentPeerEvaluation.evaluation_date
+    evaluation_date: 'desc'
+backend\src\controllers\parentController.js | L3924 | User.password
+    password: newPassword
+backend\src\controllers\parentController.js | L4253 | PTSAMeeting.ptsa_meeting_id
+    where: { ptsa_meeting_id: parseInt(meetingId) },
+backend\src\controllers\parentController.js | L4314 | PTSAAnnouncement.created_at
+    orderBy: { created_at: 'desc' },
+backend\src\controllers\principalController.js | L515 | StaffPerformance.user
+    user: true
+backend\src\controllers\principalController.js | L1707 | PTSAExecutive.user
+    user: true
+backend\src\controllers\principalController.js | L1733 | Grievance.user
+    user: true,
+backend\src\controllers\principalController.js | L1903 | Grievance.user
+    user: true
+backend\src\controllers\principalController.js | L1963 | DisciplinaryAction.student
+    student: {
+backend\src\controllers\principalController.js | L1968 | DisciplinaryAction.recommended_by_user
+    recommended_by_user: true,
+backend\src\controllers\principalController.js | L1969 | DisciplinaryAction.approved_by_user
+    approved_by_user: true
+backend\src\controllers\principalController.js | L2063 | StaffLeaveRequest.user
+    user: true
+backend\src\controllers\principalController.js | L2117 | StaffTransfer.user
+    user: true
+backend\src\controllers\ptsaController.js | L322 | ConductGrade.student
+    student: true
+backend\src\controllers\sicController.js | L506 | Student.enrollments
+    enrollments: {
+backend\src\controllers\sicController.js | L513 | Student.enrollments
+    enrollments: true
+backend\src\controllers\sicController.js | L516 | Submission.assessment
+    assessment: {
+backend\src\controllers\sicController.js | L657 | SICMeetingAttendee.user
+    user: {
+backend\src\controllers\studentController.js | L1861 | Notification.message
+    message: `${evaluationLink.student.user.full_name} has submitted an evaluation for ${evaluationLink.teacher.user.full_name}.`,
+backend\src\controllers\studentController.js | L1863 | Notification.read
+    read: false
+backend\src\controllers\teacherController.js | L1359 | ConductGrade.student
+    student: {
+backend\src\controllers\teacherController.js | L1364 | ConductComment.teacher
+    teacher: {
+backend\src\controllers\teacherController.js | L1471 | ConductComment.teacher
+    teacher: {
+backend\src\controllers\teacherController.js | L1881 | CourseMaterial.uploaded_by
+    uploaded_by: teacherId
+backend\src\controllers\vpAcademicController.js | L2651 | ComplianceReport.generated_at
+    orderBy: { generated_at: 'desc' },
+backend\src\controllers\vpAdminController.js | L1123 | SchoolAnnouncement.message
+    message: req.body.content,
+backend\src\controllers\vpAdminController.js | L1369 | SecurityPersonnel.user
+    user: {
+backend\src\controllers\vpAdminController.js | L1490 | Vehicle.vehicle_name
+    orderBy: { vehicle_name: 'asc' },
+backend\src\controllers\vpAdminController.js | L1517 | Vehicle.vehicle_name
+    select: { vehicle_name: true },
+backend\src\controllers\vpAdminController.js | L1520 | VehicleMaintenance.scheduled_date
+    orderBy: { scheduled_date: 'desc' },
+backend\src\controllers\vpAdminController.js | L1553 | Vehicle.vehicle_name
+    select: { vehicle_name: true },
+backend\src\controllers\vpAdminController.js | L1555 | DriverAssignment.driver
+    driver: {
+backend\src\controllers\vpAdminController.js | L1600 | Vehicle.vehicle_name
+    select: { vehicle_name: true },
+backend\src\controllers\vpAdminController.js | L1603 | TransportSchedule.departure_time
+    orderBy: { departure_time: 'asc' },
+backend\src\controllers\vpAdminController.js | L1721 | FoodInventory.inventory_id
+    where: { inventory_id: inventory.inventory_id },
+backend\src\controllers\vpAdminController.js | L1722 | FoodInventory.quantity
+    data: { quantity: newQuantity },

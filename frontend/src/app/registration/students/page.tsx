@@ -90,7 +90,7 @@ export default function StudentRegisterPage() {
         />
         <button
           type="submit"
-          className="rounded-xl bg-navy-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-700 transition"
+          className="flex-1 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 transition"
         >
           Search
         </button>

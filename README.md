@@ -18,19 +18,21 @@ This system digitizes the administrative, academic, and communication workflows 
 4. Teacher (Execution)
 5. Student & Parent (End-Users/Beneficiaries)
 6. PTSA & SIC (Oversight/Advisory)
+7. Registration Officer (Enrolment)
 
 ---
 
 ## 2. Role-Based Access Control (RBAC) Matrix
 *Developers: This matrix outlines which actions each role can perform across the system.*
 
-| Feature / Module | Principal | VP Acad | VP Admin | Dept Head | Teacher | Student | Parent | PTSA | SIC |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| Feature / Module | Principal | VP Acad | VP Admin | Dept Head | Teacher | Student | Parent | PTSA | SIC | Reg |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Register Senior Staff (VPs/Heads) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Register Teachers | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Register Students/Parents | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Register Non-Academic Staff/Assets | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Register TAs (within dept) | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Register TAs (within dept) | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Register Students (Enrolment) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | View All Student Data | ✅ | ✅ | ❌ | ✅ (Dept) | ✅ (Class) | ❌ | ❌ | ❌ | ❌ |
 | View Own Child's Data | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 | Modify Grades | ✅ (Appeals) | ✅ (Oversight) | ❌ | ❌ | ✅ (Class) | ❌ | ❌ | ❌ | ❌ |
@@ -128,12 +130,21 @@ This system digitizes the administrative, academic, and communication workflows 
 - Resource Mobilization: Suggest partnerships and view resource utilization for improvement projects.
 - Accountability: Submit SIC annual activity reports to the Principal/Board.
 
+### 3.10 Registration Officer
+*Role: Enrolment & Student Records Officer.*
+- Student Registration: Register new students (create user account + student record), assign classes, generate student numbers in format STU-YYYY-XXXX.
+- Enrolment Management: Maintain the student register, search/filter by name, email, or student number, and paginate large cohorts.
+- Validation: Enforce data integrity at the API boundary (full name, email, student number format, enrolment date, class existence) and return all validation errors at once.
+- Reporting: Provide enrolment statistics (total students, new this year/month, per-class counts, recent registrations).
+- Access: Authenticated via the REGISTRATION role; only this role may create student accounts through /api/registration/*.
+
 ---
 
 ## 4. Key Business Rules & Constraints (Critical for Devs)
 *Developers must enforce these rules at the backend/database level.*
 
 1.  Hierarchical Registration: Users can only create accounts for roles directly below them in the hierarchy (e.g., Principal creates VPs, VP Academic creates Teachers).
+6.  Registration Office: The dedicated REGISTRATION role is the only role authorised to create student accounts (User + Student record) through /api/registration/students; it validates input at the API boundary and never duplicates the registration logic.
 2.  Data Isolation: Teachers only see students enrolled in their specific classes. Parents only see their own children. Students only see themselves.
 3.  Read-Only vs. Write Access: PTSA and SIC have read-only access to operational data (grades, attendance) and write access only to specific fields like surveys or feedback forms.
 4.  Departmental Boundaries: Department Heads cannot access or manage teachers/students outside their specific department.

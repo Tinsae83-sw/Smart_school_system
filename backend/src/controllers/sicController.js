@@ -503,19 +503,16 @@ async function getAcademicPerformance(req, res) {
           include: {
             student: {
               include: {
-                enrollments: {
-                  where: {
-                    academic_year: currentYear?.year_name || '2024-2025'
-                  }
-                }
-              },
-              include: {
-                enrollments: true
+                current_class: true
               }
             },
-            assessment: {
+            assignment: {
               include: {
-                subject: true
+                class_subject: {
+                  include: {
+                    subject: true
+                  }
+                }
               }
             }
           }
@@ -532,7 +529,13 @@ async function getAcademicPerformance(req, res) {
     };
 
     grades.forEach(grade => {
-      const studentGrade = grade.submission.student.enrollments[0]?.grade_level;
+      const student = grade.submission?.student;
+      let gl = student?.grade_level;
+      if (gl == null && student?.current_class?.class_name) {
+        const m = String(student.current_class.class_name).match(/(\d+)/);
+        if (m) gl = parseInt(m[1], 10);
+      }
+      const studentGrade = gl ? ('Grade ' + gl) : null;
       if (studentGrade && gradeGroups[studentGrade]) {
         gradeGroups[studentGrade].push(grade);
       }
@@ -554,7 +557,7 @@ async function getAcademicPerformance(req, res) {
       // Subject breakdown
       const subjectScores = {};
       gradeGrades.forEach(grade => {
-        const subjectName = grade.submission.assessment.subject?.subject_name || 'Unknown';
+        const subjectName = grade.submission.assignment?.class_subject?.subject?.subject_name || 'Unknown';
         if (!subjectScores[subjectName]) {
           subjectScores[subjectName] = [];
         }

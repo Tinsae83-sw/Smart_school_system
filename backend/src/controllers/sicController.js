@@ -1143,7 +1143,7 @@ async function postAnnouncement(req, res) {
         announcement_type: announcement_type || 'GENERAL',
         target_audience: target_audience || 'ALL',
         created_by: userId,
-        status: 'PENDING',
+        status: 'PUBLISHED',
         publish_date: new Date()
       }
     });

@@ -34,6 +34,8 @@ export default function CommunicationPage() {
   const [loading, setLoading] = useState(true);
   const [showRecForm, setShowRecForm] = useState(false);
   const [showAnnForm, setShowAnnForm] = useState(false);
+
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   
   const [newRecommendation, setNewRecommendation] = useState({
     title: "",
@@ -94,6 +96,13 @@ export default function CommunicationPage() {
           priority: "MEDIUM"
         });
         fetchData();
+        setStatusMessage("Recommendation submitted successfully!");
+        setTimeout(() => setStatusMessage(null), 3000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        const msg = Array.isArray(data.details) ? data.details.join(', ') : (data.error || "Failed to submit recommendation.");
+        setStatusMessage(msg);
+        setTimeout(() => setStatusMessage(null), 5000);
       }
     } catch (error) {
       console.error("Error submitting recommendation:", error);
@@ -117,6 +126,13 @@ export default function CommunicationPage() {
           target_audience: "ALL"
         });
         fetchData();
+        setStatusMessage("Announcement posted successfully!");
+        setTimeout(() => setStatusMessage(null), 3000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        const msg = Array.isArray(data.details) ? data.details.join(', ') : (data.error || "Failed to post announcement.");
+        setStatusMessage(msg);
+        setTimeout(() => setStatusMessage(null), 5000);
       }
     } catch (error) {
       console.error("Error posting announcement:", error);
@@ -133,6 +149,11 @@ export default function CommunicationPage() {
 
   return (
     <div>
+      {statusMessage && (
+        <div className="mb-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300">
+          {statusMessage}
+        </div>
+      )}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Communication</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Manage recommendations and announcements</p>

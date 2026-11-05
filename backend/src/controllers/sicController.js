@@ -683,22 +683,31 @@ async function getSICMeetings(req, res) {
     const meetings = await prisma.sICMeeting.findMany({
       orderBy: { scheduled_date: 'desc' },
       include: {
-        attendees: {
-          include: {
-            user: {
-              select: {
-                full_name: true,
-                email: true
-              }
-            }
-          }
-        },
+        attendees: true,
         minutes: true,
         agenda_items: true
       }
     });
 
-    return res.json(meetings);
+    // SICMeetingAttendee has no 'user' relation in the schema, so attach
+    // user info manually (avoids a schema migration for read-only display).
+    const userIds = [...new Set(meetings.flatMap(m => m.attendees.map(a => a.user_id)))];
+    const users = userIds.length
+      ? await prisma.user.findMany({
+          where: { user_id: { in: userIds } },
+          select: { user_id: true, full_name: true, email: true }
+        })
+      : [];
+    const userMap = new Map(users.map(u => [u.user_id, u]));
+    const result = meetings.map(m => ({
+      ...m,
+      attendees: m.attendees.map(a => ({
+        ...a,
+        user: userMap.get(a.user_id) || { full_name: 'Unknown', email: null }
+      }))
+    }));
+
+    return res.json(result);
   } catch (error) {
     console.error('Get SIC Meetings error:', error);
     return res.status(500).json({ error: 'Internal server error' });

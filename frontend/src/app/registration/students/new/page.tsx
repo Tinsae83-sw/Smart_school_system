@@ -181,7 +181,7 @@ export default function RegisterStudentPage() {
   const progress = ((step + 1) / STEPS.length) * 100;
 
   return (
-    <div className="max-w-3xl">
+    <div className="w-full">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Register New Student</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
@@ -256,7 +256,7 @@ export default function RegisterStudentPage() {
         {/* Step 0: Personal */}
         {step === 0 && (
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
               <div>
                 <label className={labelCls}>First Name *</label>
                 <input required minLength={2} className={inputCls} value={formData.first_name} onChange={(e) => set("first_name", e.target.value)} />
@@ -270,7 +270,7 @@ export default function RegisterStudentPage() {
                 <input required minLength={2} className={inputCls} value={formData.last_name} onChange={(e) => set("last_name", e.target.value)} />
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
               <div>
                 <label className={labelCls}>Date of Birth *</label>
                 <input required type="date" className={inputCls} value={formData.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} />
@@ -288,7 +288,7 @@ export default function RegisterStudentPage() {
                 <input className={inputCls} value={formData.nationality} onChange={(e) => set("nationality", e.target.value)} />
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className={labelCls}>Religion</label>
                 <select className={inputCls} value={formData.religion} onChange={(e) => set("religion", e.target.value)}>
@@ -311,7 +311,7 @@ export default function RegisterStudentPage() {
         {/* Step 1: Contact */}
         {step === 1 && (
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className={labelCls}>Email Address *</label>
                 <input required type="email" className={inputCls} value={formData.email} onChange={(e) => set("email", e.target.value)} />
@@ -321,7 +321,7 @@ export default function RegisterStudentPage() {
                 <input className={inputCls} placeholder="+2519XXXXXXXX" value={formData.phone_number} onChange={(e) => set("phone_number", e.target.value)} />
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className={labelCls}>Emergency Contact Name</label>
                 <input className={inputCls} value={formData.emergency_contact_name} onChange={(e) => set("emergency_contact_name", e.target.value)} />
@@ -337,7 +337,7 @@ export default function RegisterStudentPage() {
         {/* Step 2: Academic */}
         {step === 2 && (
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className={labelCls}>Grade Level *</label>
                 <select required className={inputCls} value={formData.grade_level} onChange={(e) => set("grade_level", e.target.value)}>
@@ -366,7 +366,7 @@ export default function RegisterStudentPage() {
               If a guardian email is provided, a parent account will be created and linked to this student, and credentials will be
               sent to that email.
             </p>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className={labelCls}>Parent / Guardian Name</label>
                 <input className={inputCls} value={formData.guardian_name} onChange={(e) => set("guardian_name", e.target.value)} />
@@ -381,7 +381,7 @@ export default function RegisterStudentPage() {
                 </select>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className={labelCls}>Parent Phone</label>
                 <input className={inputCls} placeholder="09XXXXXXXX" value={formData.guardian_phone} onChange={(e) => set("guardian_phone", e.target.value)} />
@@ -402,7 +402,7 @@ export default function RegisterStudentPage() {
         {/* Step 4: System settings */}
         {step === 4 && (
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className={labelCls}>Username</label>
                 <input className={inputCls} value={formData.username} onChange={(e) => set("username", e.target.value)} placeholder="Auto-generated if blank" />

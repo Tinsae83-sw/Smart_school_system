@@ -438,8 +438,10 @@ async function getPerformanceTrends(req, res) {
  */
 async function getBudgetSummary(req, res) {
   try {
-    const currentYear = new Date().getFullYear();
-    const fiscalYear = `${currentYear}-${currentYear + 1}`;
+    const currentYear = await prisma.academicYear.findFirst({
+      where: { is_current: true }
+    });
+    const fiscalYear = currentYear?.year_name || '2024-2025';
 
     const budget = await prisma.budget.findFirst({
       where: { academic_year: fiscalYear }
@@ -477,8 +479,10 @@ async function getBudgetSummary(req, res) {
  */
 async function getExpenditureBreakdown(req, res) {
   try {
-    const currentYear = new Date().getFullYear();
-    const fiscalYear = `${currentYear}-${currentYear + 1}`;
+    const currentYear = await prisma.academicYear.findFirst({
+      where: { is_current: true }
+    });
+    const fiscalYear = currentYear?.year_name || '2024-2025';
 
     const budget = await prisma.budget.findFirst({
       where: { academic_year: fiscalYear }

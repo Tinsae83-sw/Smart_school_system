@@ -233,7 +233,14 @@ export default function SchoolImprovementPage() {
                       <p className="text-xs font-semibold text-slate-900 mb-1">Key Decisions:</p>
                       <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
                         {minutes.key_decisions.map((decision, index) => (
-                          <li key={index}>{decision}</li>
+                          <li key={index}>
+                            {typeof decision === 'string'
+                              ? decision
+                              : (decision?.decision || JSON.stringify(decision))}
+                            {typeof decision === 'object' && decision?.vote ? (
+                              <span className="ml-2 text-slate-400">({decision.vote})</span>
+                            ) : null}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -244,7 +251,14 @@ export default function SchoolImprovementPage() {
                       <p className="text-xs font-semibold text-slate-900 mb-1">Action Items:</p>
                       <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
                         {minutes.action_items.map((item, index) => (
-                          <li key={index}>{item}</li>
+                          <li key={index}>
+                            {typeof item === 'string'
+                              ? item
+                              : (item?.task || JSON.stringify(item))}
+                            {typeof item === 'object' && item?.deadline ? (
+                              <span className="ml-2 text-slate-400">(due {item.deadline})</span>
+                            ) : null}
+                          </li>
                         ))}
                       </ul>
                     </div>

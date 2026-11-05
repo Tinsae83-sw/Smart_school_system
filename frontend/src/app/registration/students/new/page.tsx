@@ -280,7 +280,6 @@ export default function RegisterStudentPage() {
                 <select required className={inputCls} value={formData.gender} onChange={(e) => set("gender", e.target.value)}>
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
                 </select>
               </div>
               <div>
@@ -346,10 +345,6 @@ export default function RegisterStudentPage() {
                   <option value="11">Grade 11</option>
                   <option value="12">Grade 12</option>
                 </select>
-              </div>
-              <div>
-                <label className={labelCls}>Department ID</label>
-                <input type="number" className={inputCls} value={formData.department_id} onChange={(e) => set("department_id", e.target.value)} />
               </div>
             </div>
             <div>

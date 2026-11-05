@@ -64,8 +64,8 @@ function validateStudentRegistration(req, res, next) {
     else if (d.getTime() > Date.now()) errors.push('Date of birth must not be in the future');
     else if (d.getFullYear() < 1900) errors.push('Date of birth must be after 1900');
   }
-  if (gender && !['MALE', 'FEMALE', 'OTHER'].includes(String(gender).trim().toUpperCase())) {
-    errors.push('Gender must be MALE, FEMALE, or OTHER');
+  if (gender && !['MALE', 'FEMALE'].includes(String(gender).trim().toUpperCase())) {
+    errors.push('Gender must be MALE or FEMALE');
   }
   if (nationality && String(nationality).trim().length > 50) errors.push('Nationality must not exceed 50 characters');
   if (religion && String(religion).trim().length > 50) errors.push('Religion must not exceed 50 characters');

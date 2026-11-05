@@ -158,7 +158,7 @@ function validateNeedsAssessment(req, res, next) {
 
   requireText(errors, 'Assessment name', assessment_name, 3, 200);
   requireOneOf(errors, 'Assessment type', assessment_type,
-    ['NEEDS', 'SATISFACTION', 'READINESS', 'RESOURCE']);
+    ['GENERAL', 'ACADEMIC', 'INFRASTRUCTURE', 'FINANCIAL', 'COMMUNITY']);
   if (academic_year !== undefined && academic_year !== null && academic_year !== '') {
     if (!/^\d{4}-\d{4}$/.test(String(academic_year))) {
       errors.push('Academic year must be in YYYY-YYYY format');

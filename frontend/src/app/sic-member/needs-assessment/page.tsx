@@ -109,7 +109,10 @@ export default function NeedsAssessmentPage() {
         fetchData();
         setTimeout(() => setStatusMessage(null), 3000);
       } else {
-        setStatusMessage("Failed to create needs assessment.");
+        const data = await res.json().catch(() => ({}));
+        const msg = Array.isArray(data.details) ? data.details.join(', ') : (data.error || "Failed to create needs assessment.");
+        setStatusMessage(msg);
+        setTimeout(() => setStatusMessage(null), 5000);
       }
     } catch (error) {
       console.error("Error creating needs assessment:", error);

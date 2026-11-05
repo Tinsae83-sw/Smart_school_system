@@ -157,7 +157,8 @@ export default function RegisterStudentPage() {
         const details: string[] = [];
         if (Array.isArray(data.details)) details.push(...data.details);
         else if (data.error) details.push(data.error);
-        else details.push(`Registration failed (HTTP ${res.status})`);
+        if (data.detail) details.push(`Detail: ${data.detail}`);
+        else if (!data.details && !data.error) details.push(`Registration failed (HTTP ${res.status})`);
         setErrors(details);
         return;
       }

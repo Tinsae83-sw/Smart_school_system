@@ -79,7 +79,6 @@ async function registerStudent(req, res) {
   const parentPassword = (guardian_password && String(guardian_password).trim()) || generatePassword();
 
   // ---- resolve class ----
-  // ---- resolve class ----
   let schoolClass = null;
   const className = current_class_name
     ? String(current_class_name).trim()
@@ -88,10 +87,6 @@ async function registerStudent(req, res) {
     schoolClass = await prisma.schoolClass.findFirst({
       where: { class_name: className },
     });
-  }
-  if (!schoolClass && grade_level) {
-    const className = `Grade ${grade_level}`;
-    schoolClass = await prisma.schoolClass.findFirst({ where: { class_name: className } });
     if (!schoolClass) {
       const fallbackTeacher = await prisma.teacher.findFirst();
       if (fallbackTeacher) {
@@ -103,6 +98,19 @@ async function registerStudent(req, res) {
           },
         });
       }
+    }
+  }
+
+  // ---- validate department (if provided) ----
+  let departmentId = null;
+  if (department_id) {
+    const parsed = parseInt(department_id, 10);
+    if (!Number.isNaN(parsed) && parsed > 0) {
+      const dept = await prisma.department.findUnique({ where: { department_id: parsed } });
+      if (!dept) {
+        return res.status(400).json({ error: 'Department ID does not exist. Leave it blank if unsure.' });
+      }
+      departmentId = parsed;
     }
   }
 
@@ -147,7 +155,7 @@ async function registerStudent(req, res) {
         enrollment_date: admission_date ? new Date(admission_date) : new Date(),
         current_class_id: schoolClass ? schoolClass.class_id : null,
         grade_level: grade_level ? parseInt(grade_level, 10) : null,
-        department_id: department_id ? parseInt(department_id, 10) : null,
+        department_id: departmentId,
         date_of_birth: date_of_birth ? new Date(date_of_birth) : null,
         gender: gender || null,
         nationality: nationality || 'Ethiopian',
@@ -253,7 +261,13 @@ async function registerStudent(req, res) {
     if (error.code === 'P2002') {
       return res.status(409).json({ error: 'Email, student number, or ID already exists' });
     }
-    return res.status(500).json({ error: 'Internal server error during registration' });
+    if (error.code === 'P2003') {
+      return res.status(400).json({ error: 'Invalid reference (department or class does not exist). Leave department ID blank if unsure.' });
+    }
+    if (error.code === 'P2025') {
+      return res.status(400).json({ error: 'A required related record was not found.' });
+    }
+    return res.status(500).json({ error: 'Internal server error during registration', detail: error.message });
   }
 }
 

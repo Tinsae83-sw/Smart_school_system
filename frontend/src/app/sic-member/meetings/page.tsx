@@ -169,8 +169,9 @@ export default function MeetingsPage() {
     } catch (error) {
       console.error("Error scheduling meeting:", error);
       alert("Failed to schedule meeting.");
-    }
   }
+  }
+  async function voteOnResolution(resolutionId: number, vote: 'for' | 'against' | 'abstain') {
     try {
       const res = await fetch(`${API_BASE}/meetings/resolutions/${resolutionId}/vote`, {
         method: "POST",

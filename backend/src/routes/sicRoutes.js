@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const sicController = require('../controllers/sicController');
 const {
+  validateSICMeetingCreation,
   validateSIPFeedback,
   validateSIPAmendment,
   validateAgendaItem,
@@ -66,6 +67,10 @@ router.get('/monitoring/financial-progress', sicController.getFinancialProgress)
 // Get SIC Meeting Schedule
 // GET /api/sic/meetings
 router.get('/meetings', sicController.getSICMeetings);
+
+// Schedule a new SIC meeting
+// POST /api/sic/meetings
+router.post('/meetings', validateSICMeetingCreation, sicController.createSICMeeting);
 
 // Get Meeting Agenda
 // GET /api/sic/meetings/:meetingId/agenda

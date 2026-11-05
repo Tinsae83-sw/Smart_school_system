@@ -52,12 +52,22 @@ export default function MeetingsPage() {
   const [minutes, setMinutes] = useState<MeetingMinutes | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAgendaForm, setShowAgendaForm] = useState(false);
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
   
   const [newAgendaItem, setNewAgendaItem] = useState({
     meeting_id: 0,
     title: "",
     description: "",
     priority: "MEDIUM"
+  });
+
+  const [newMeeting, setNewMeeting] = useState({
+    title: "",
+    description: "",
+    date: "",
+    time: "",
+    location: "",
+    meeting_type: "REGULAR"
   });
 
   async function fetchMeetings() {
@@ -133,7 +143,34 @@ export default function MeetingsPage() {
     }
   }
 
-  async function voteOnResolution(resolutionId: number, vote: 'for' | 'against' | 'abstain') {
+  async function scheduleMeeting(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API_BASE}/meetings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newMeeting.title,
+          description: newMeeting.description,
+          date: newMeeting.date,
+          time: newMeeting.time,
+          location: newMeeting.location,
+          meeting_type: newMeeting.meeting_type
+        })
+      });
+      if (res.ok) {
+        setShowScheduleForm(false);
+        setNewMeeting({ title: "", description: "", date: "", time: "", location: "", meeting_type: "REGULAR" });
+        fetchMeetings();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || data.details?.join(', ') || "Failed to schedule meeting");
+      }
+    } catch (error) {
+      console.error("Error scheduling meeting:", error);
+      alert("Failed to schedule meeting.");
+    }
+  }
     try {
       const res = await fetch(`${API_BASE}/meetings/resolutions/${resolutionId}/vote`, {
         method: "POST",
@@ -158,9 +195,17 @@ export default function MeetingsPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Meeting Management</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">View and manage SIC meetings</p>
+      <div className="mb-8 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Meeting Management</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">View and manage SIC meetings</p>
+        </div>
+        <button
+          onClick={() => setShowScheduleForm(true)}
+          className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 transition"
+        >
+          + Schedule Meeting
+        </button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
@@ -366,6 +411,100 @@ export default function MeetingsPage() {
           )}
         </div>
       </div>
+      {/* Schedule Meeting Modal */}
+      {showScheduleForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Schedule SIC Meeting</h2>
+              <button onClick={() => setShowScheduleForm(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={scheduleMeeting} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Title *</label>
+                <input
+                  type="text"
+                  required
+                  minLength={3}
+                  value={newMeeting.title}
+                  onChange={(e) => setNewMeeting((m) => ({ ...m, title: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                <textarea
+                  value={newMeeting.description}
+                  onChange={(e) => setNewMeeting((m) => ({ ...m, description: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                  rows={2}
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={newMeeting.date}
+                    onChange={(e) => setNewMeeting((m) => ({ ...m, date: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Time (HH:MM) *</label>
+                  <input
+                    type="time"
+                    required
+                    value={newMeeting.time}
+                    onChange={(e) => setNewMeeting((m) => ({ ...m, time: e.target.value }))}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={newMeeting.location}
+                  onChange={(e) => setNewMeeting((m) => ({ ...m, location: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Meeting Type</label>
+                <select
+                  value={newMeeting.meeting_type}
+                  onChange={(e) => setNewMeeting((m) => ({ ...m, meeting_type: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-700 dark:text-white"
+                >
+                  <option value="REGULAR">Regular</option>
+                  <option value="SPECIAL">Special</option>
+                  <option value="EMERGENCY">Emergency</option>
+                  <option value="ANNUAL">Annual</option>
+                </select>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="submit" className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition">
+                  Schedule
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowScheduleForm(false)}
+                  className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

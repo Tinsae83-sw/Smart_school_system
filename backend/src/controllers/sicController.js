@@ -641,6 +641,37 @@ async function getFinancialProgress(req, res) {
   }
 }
 
+async function createSICMeeting(req, res) {
+  try {
+    const { title, description, date, time, location, meeting_type } = req.body;
+    const userId = await getSICMemberId(req);
+    if (!title || !date || !time) {
+      return res.status(400).json({ error: 'Title, date, and time are required' });
+    }
+    const validTypes = ['REGULAR', 'SPECIAL', 'EMERGENCY', 'ANNUAL'];
+    const type = validTypes.includes(meeting_type) ? meeting_type : 'REGULAR';
+    const meeting = await prisma.sICMeeting.create({
+      data: {
+        title: String(title).trim(),
+        description: description ? String(description).trim() : null,
+        scheduled_date: new Date(date),
+        scheduled_time: new Date('1970-01-01T' + String(time).trim() + ':00'),
+        location: location ? String(location).trim() : null,
+        meeting_type: type,
+        created_by: userId,
+        status: 'SCHEDULED'
+      }
+    });
+    await prisma.sICMeetingAttendee.create({
+      data: { meeting_id: meeting.meeting_id, user_id: userId, attended: false, role: 'CHAIR' }
+    });
+    return res.status(201).json({ success: true, meeting });
+  } catch (error) {
+    console.error('Create SIC Meeting error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 // ==================== MEETING MANAGEMENT ====================
 
 /**
@@ -1243,6 +1274,7 @@ module.exports = {
   
   // Meeting Management
   getSICMeetings,
+  createSICMeeting,
   getMeetingAgenda,
   getMeetingMinutes,
   submitAgendaItem,

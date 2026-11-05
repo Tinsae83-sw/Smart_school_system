@@ -69,6 +69,23 @@ function requireOneOf(errors, label, value, allowed, { optional = false } = {}) 
   return value;
 }
 
+function requireDate(errors, label, value, { mustBeFuture = false } = {}) {
+  if (!value) {
+    errors.push(`${label} is required`);
+    return null;
+  }
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    errors.push(`${label} must be a valid date`);
+    return null;
+  }
+  if (mustBeFuture && d.getTime() < Date.now() - 24 * 60 * 60 * 1000) {
+    errors.push(`${label} must not be in the past`);
+    return null;
+  }
+  return d;
+}
+
 function reject(errors, res) {
   res.status(400).json({ error: 'Validation failed', details: errors });
 }
@@ -284,7 +301,33 @@ function validateTrainingCompletion(req, res, next) {
   next();
 }
 
+/**
+ * POST /api/sic/meetings
+ */
+function validateSICMeetingCreation(req, res, next) {
+  const errors = [];
+  const { title, description, date, time, location, meeting_type } = req.body;
+
+  requireText(errors, 'Title', title, 3, 200);
+  optionalText(errors, 'Description', description, 5000);
+  requireDate(errors, 'Date', date, { mustBeFuture: true });
+
+  if (!time) {
+    errors.push('Time is required');
+  } else if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(time).trim())) {
+    errors.push('Time must be in 24-hour HH:MM format');
+  }
+
+  optionalText(errors, 'Location', location, 100);
+  requireOneOf(errors, 'Meeting type', meeting_type,
+    ['REGULAR', 'SPECIAL', 'EMERGENCY', 'ANNUAL'], { optional: true });
+
+  if (errors.length) return reject(errors, res);
+  next();
+}
+
 module.exports = {
+  validateSICMeetingCreation,
   validateSIPFeedback,
   validateSIPAmendment,
   validateAgendaItem,

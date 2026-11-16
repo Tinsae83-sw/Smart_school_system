@@ -157,27 +157,35 @@ export default function VPAdministrationLayout({ children }: { children: React.R
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [vpUser, setVpUser] = useState<{ full_name: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFinanceOfficer, setIsFinanceOfficer] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    
-    // Check authentication
-    if (!isAuthenticated('VP_ADMINISTRATION')) {
-      router.push("/vp-administration/login");
+
+    const financeOfficer = isAuthenticated('FINANCIAL_OFFICER');
+    const vpAdministrator = isAuthenticated('VP_ADMINISTRATION');
+    if (!financeOfficer && !vpAdministrator) {
+      router.push("/login");
       return;
     }
 
-    // Load user data
-    const user = getUser('VP_ADMINISTRATION');
+    if (financeOfficer && pathname !== '/vp-administration/finance') {
+      router.push('/finance');
+      return;
+    }
+
+    const role = financeOfficer ? 'FINANCIAL_OFFICER' : 'VP_ADMINISTRATION';
+    const user = getUser(role);
     if (user) {
       setVpUser(user);
     }
+    setIsFinanceOfficer(financeOfficer);
     setLoading(false);
-  }, [router]);
+  }, [pathname, router]);
 
   function handleLogout() {
-    clearAuth('VP_ADMINISTRATION');
-    router.push("/vp-administration/login");
+    clearAuth(isFinanceOfficer ? 'FINANCIAL_OFFICER' : 'VP_ADMINISTRATION');
+    router.push("/login");
   }
 
   if (loading) {
@@ -210,7 +218,7 @@ export default function VPAdministrationLayout({ children }: { children: React.R
             </div>
             <div>
               <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Yekatit 25/67</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">VP Admin Panel</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{isFinanceOfficer ? "Finance Panel" : "VP Admin Panel"}</p>
             </div>
             <button className="ml-auto lg:hidden" onClick={() => setSidebarOpen(false)}>
               <svg className="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -220,7 +228,7 @@ export default function VPAdministrationLayout({ children }: { children: React.R
           </div>
 
           <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
-            {navigation.map((item) => {
+            {navigation.filter((item) => !isFinanceOfficer || item.href === "/vp-administration/finance").map((item) => {
               const isActive = pathname === item.href || (item.href !== "/vp-administration" && pathname.startsWith(item.href));
               return (
                 <Link

@@ -4,9 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/auth";
 import { authFetch } from "../shared";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { teacherTranslations } from "@/translations/teacher";
 
 export default function PerformancePage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = teacherTranslations[language];
   const [token, setToken] = useState("");
   const [classes, setClasses] = useState<any[]>([]);
   const [selectedClass, setSelectedClass] = useState<number | null>(null);

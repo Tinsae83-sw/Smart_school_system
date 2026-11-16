@@ -28,6 +28,27 @@ async function main() {
     }
   });
 
+  await prisma.user.upsert({
+    where: { email: 'finance@school.edu' },
+    update: {
+      full_name: 'Finance Officer',
+      phone_number: '+251911000004',
+      password_hash,
+      role: 'FINANCIAL_OFFICER',
+      is_active: true,
+      preferred_language: 'en'
+    },
+    create: {
+      full_name: 'Finance Officer',
+      email: 'finance@school.edu',
+      phone_number: '+251911000004',
+      password_hash,
+      role: 'FINANCIAL_OFFICER',
+      is_active: true,
+      preferred_language: 'en'
+    }
+  });
+
   const teacherUser = await prisma.user.upsert({
     where: { email: 'jane.doe@school.edu' },
     update: {
@@ -1135,6 +1156,55 @@ async function main() {
     }
   });
 
+  // Seed Income Transactions
+  await prisma.incomeTransaction.create({
+    data: {
+      budget_id: budget.budget_id,
+      income_source: 'GOVERNMENT_GRANT',
+      amount: 3500000.00,
+      description: 'Annual government education grant for the 2024/2025 academic year',
+      income_date: new Date('2024-09-01'),
+      received_by: principalUser.user_id,
+      reference: 'GRANT-2024-001'
+    }
+  });
+
+  await prisma.incomeTransaction.create({
+    data: {
+      budget_id: budget.budget_id,
+      income_source: 'SCHOOL_FEES',
+      amount: 1200000.00,
+      description: 'Tuition fees collected from students for the first semester',
+      income_date: new Date('2024-10-15'),
+      received_by: principalUser.user_id,
+      reference: 'FEES-2024-Q1'
+    }
+  });
+
+  await prisma.incomeTransaction.create({
+    data: {
+      budget_id: budget.budget_id,
+      income_source: 'PTSA_CONTRIBUTION',
+      amount: 250000.00,
+      description: 'PTSA contribution for school improvement projects',
+      income_date: new Date('2024-11-01'),
+      received_by: principalUser.user_id,
+      reference: 'PTSA-2024-001'
+    }
+  });
+
+  await prisma.incomeTransaction.create({
+    data: {
+      budget_id: budget.budget_id,
+      income_source: 'DONATION',
+      amount: 50000.00,
+      description: 'Donation from alumni association for library books',
+      income_date: new Date('2024-11-10'),
+      received_by: principalUser.user_id,
+      reference: 'DON-2024-ALUMNI'
+    }
+  });
+
   // Seed Asset Inventory
   await prisma.assetInventory.upsert({
     where: { asset_code: 'PRJ-001' },
@@ -2049,8 +2119,8 @@ async function main() {
     data: {
       partnership_id: 1,
       contribution_type: 'ACADEMIC',
-      description: 'Conducted joint teacher training workshop',
-      contribution_value: '20 teachers trained',
+      contribution_value: 20000.00,
+      impact_assessment: 'Conducted joint teacher training workshop - 20 teachers trained',
       tracking_date: new Date('2024-03-15'),
       tracked_by: sicMemberUser.user_id
     }
@@ -2060,8 +2130,8 @@ async function main() {
     data: {
       partnership_id: 1,
       contribution_type: 'FINANCIAL',
-      description: 'Provided textbooks and reference materials',
-      contribution_value: '500 books donated',
+      contribution_value: 150000.00,
+      impact_assessment: 'Provided textbooks and reference materials - 500 books donated',
       tracking_date: new Date('2024-05-20'),
       tracked_by: principalUser.user_id
     }
@@ -2767,6 +2837,7 @@ async function main() {
   console.log('Parent login: mary.parent@school.edu / Password123!');
   console.log('PTSA Representative login: ptsa.rep@school.edu / Password123!');
   console.log('SIC Member login: sic.member@school.edu / Password123!');
+  console.log('Financial Officer login: finance@school.edu / Password123!');
 }
 
 main()

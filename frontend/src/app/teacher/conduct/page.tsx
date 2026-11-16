@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/auth";
 import { authFetch, Toast } from "../shared";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { teacherTranslations } from "@/translations/teacher";
 
 interface SchoolClass {
   class_id?: number;
@@ -46,6 +48,8 @@ const GRADE_OPTIONS: ("A" | "B" | "C" | "D" | "F")[] = ["A", "B", "C", "D", "F"]
 
 export default function ConductPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = teacherTranslations[language];
   const [token, setToken] = useState("");
   const [classes, setClasses] = useState<ClassSubject[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);

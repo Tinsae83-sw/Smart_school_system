@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getToken } from "@/lib/auth";
 import { authFetch, Toast } from "../shared";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { teacherTranslations } from "@/translations/teacher";
 
 interface SchoolClass {
   class_id: number;
@@ -42,6 +44,8 @@ interface StudentRosterItem {
 
 export default function ClassesPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = teacherTranslations[language];
   const [token, setToken] = useState("");
   const [classes, setClasses] = useState<ClassSubject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +105,7 @@ export default function ClassesPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-emerald-200 dark:border-slate-600 border-t-emerald-600 dark:border-t-emerald-400 rounded-full animate-spin" />
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Loading classes & rosters...</p>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">{t.loading}</p>
         </div>
       </div>
     );
@@ -126,7 +130,7 @@ export default function ClassesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-            Class Management & Directory
+            {t.myClasses}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
             Browse your assigned classes, inspect student rosters, and access academic actions
@@ -142,7 +146,7 @@ export default function ClassesPage() {
               <svg className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">No Assigned Classes</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t.noClassesAssigned}</h3>
               <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
                 You have not been assigned to any academic class sections yet.
               </p>

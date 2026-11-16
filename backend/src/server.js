@@ -173,6 +173,9 @@ app.use('/api/vp-academic', vpAcademicRoutes);
 const vpAdminRoutes = require('./routes/vpAdminRoutes');
 app.use('/api/vp-administration', vpAdminRoutes);
 
+const financeRoutes = require('./routes/financeRoutes');
+app.use('/api/finance', financeRoutes);
+
 // SIC (School Improvement Committee) routes (no authentication for development)
 const sicRoutes = require('./routes/sicRoutes');
 app.use('/api/sic', sicRoutes);

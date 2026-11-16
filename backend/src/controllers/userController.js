@@ -832,8 +832,59 @@ async function deleteUser(req, res) {
   }
 }
 
+async function registerFinancialOfficer(req, res) {
+  try {
+    const { full_name, email, phone_number, password } = req.body;
+
+    if (typeof full_name !== 'string' || full_name.trim().length < 3) {
+      return res.status(400).json({ error: 'Full name must be at least 3 characters' });
+    }
+    if (!email || !isValidEmail(email)) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+    if (phone_number && !isValidPhone(phone_number)) {
+      return res.status(400).json({ error: 'Phone must be in format: +251XXXXXXXXX' });
+    }
+    if (typeof password !== 'string' || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (existingUser) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        full_name: full_name.trim(),
+        email: normalizedEmail,
+        phone_number: phone_number || null,
+        password_hash: await bcrypt.hash(password, 10),
+        role: 'FINANCIAL_OFFICER',
+        is_active: true,
+        preferred_language: 'en',
+      },
+      select: {
+        user_id: true,
+        full_name: true,
+        email: true,
+        phone_number: true,
+        role: true,
+        is_active: true,
+      },
+    });
+
+    return res.status(201).json({ user });
+  } catch (error) {
+    console.error('Register financial officer error:', error);
+    return res.status(500).json({ error: 'Failed to register financial officer' });
+  }
+}
+
 module.exports = {
   registerUser,
+  registerFinancialOfficer,
   linkParentToStudent,
   getUsers,
   getUserById,

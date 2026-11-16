@@ -3,9 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken, clearAuth } from "@/lib/auth";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { teacherTranslations } from "@/translations/teacher";
 
 export default function TeacherDashboardPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = teacherTranslations[language];
   const [dashboard, setDashboard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,21 +49,21 @@ export default function TeacherDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-12 h-12 border-4 border-navy-200 dark:border-navy-800 border-t-navy-600 dark:border-t-navy-400 rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-navy-200 border-t-teal-600 rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-6">Dashboard</h1>
+      <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-6">{t.dashboard}</h1>
       
       {/* Quick Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Total Classes</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{t.totalClasses}</p>
               <p className="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">{dashboard?.stats?.totalClasses || 0}</p>
             </div>
             <div className="h-12 w-12 rounded-xl bg-navy-100 dark:bg-navy-900 flex items-center justify-center">
@@ -71,7 +75,7 @@ export default function TeacherDashboardPage() {
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Total Students</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{t.totalStudents}</p>
               <p className="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">{dashboard?.stats?.totalStudents || 0}</p>
             </div>
             <div className="h-12 w-12 rounded-xl bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center">
@@ -83,7 +87,7 @@ export default function TeacherDashboardPage() {
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Pending Submissions</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{t.pendingSubmissions}</p>
               <p className="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">{dashboard?.stats?.pendingTasks?.ungradedSubmissions || 0}</p>
             </div>
             <div className="h-12 w-12 rounded-xl bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
@@ -95,7 +99,7 @@ export default function TeacherDashboardPage() {
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Today's Attendance</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{t.todaysAttendance}</p>
               <p className="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">{dashboard?.stats?.attendanceRate || 0}%</p>
             </div>
             <div className="h-12 w-12 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center">

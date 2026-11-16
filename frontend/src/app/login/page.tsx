@@ -7,10 +7,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { getRedirectPath, setAuth, AUTH_CONFIGS, getToken, getAuthenticatedRole } from "@/lib/auth";
-
-
-
-const BACKEND_URL = "http://localhost:5000";
+import { API_BASE } from "@/lib/api";
 
 
 
@@ -43,7 +40,7 @@ export default function LoginPage() {
 
     try {
 
-      const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      const response = await fetch(`${API_BASE}/auth/login`, {
 
         method: "POST",
 
@@ -119,7 +116,7 @@ export default function LoginPage() {
 
     try {
 
-      const response = await fetch(`${BACKEND_URL}/api/auth/verify-otp`, {
+      const response = await fetch(`${API_BASE}/auth/verify-otp`, {
 
         method: "POST",
 
@@ -273,4 +270,3 @@ export default function LoginPage() {
   );
 
 }
-

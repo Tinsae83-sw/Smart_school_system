@@ -27,6 +27,7 @@ enum UserRole {
   PTSA_REPRESENTATIVE
   SIC_MEMBER
   NON_ACADEMIC_STAFF
+  FINANCIAL_OFFICER
 }
 
 enum AttendanceStatus {
@@ -136,6 +137,7 @@ model User {
   grievances_assigned   Grievance[]      @relation("GrievanceAssignee")
   ptsa_fund_transactions_created PTSAFundTransaction[] @relation("PTSAFundTransactionCreator")
   ptsa_announcements_created PTSAAnnouncement[] @relation("PTSAAnnouncementCreator")
+  purchase_requests_requested PurchaseRequest[] @relation("PurchaseRequester")
 
   @@index([email])
   @@index([email, role])
@@ -2188,6 +2190,7 @@ model PurchaseRequest {
   updated_at         DateTime  @default(now()) @updatedAt
 
   supplier           Supplier? @relation(fields: [supplier_id], references: [supplier_id], onDelete: SetNull)
+  requester          User      @relation("PurchaseRequester", fields: [requested_by], references: [user_id], onDelete: Restrict)
 
   @@map("purchase_requests")
 }

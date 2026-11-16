@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const { authenticate, authorizeRoles } = require('../middleware/authMiddleware');
 
 /**
  * USER MANAGEMENT ROUTES
@@ -10,6 +11,14 @@ const userController = require('../controllers/userController');
 // Register new user (Teacher, Student, or Parent)
 // POST /api/admin/users
 router.post('/', userController.registerUser);
+
+// Register a financial officer (administrator only)
+router.post(
+  '/financial-officers',
+  authenticate,
+  authorizeRoles('ADMIN', 'SUPER_ADMIN'),
+  userController.registerFinancialOfficer
+);
 
 // Link parent to student
 // POST /api/admin/users/link-parent

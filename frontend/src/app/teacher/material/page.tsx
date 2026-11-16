@@ -18,9 +18,13 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { teacherTranslations } from "@/translations/teacher";
 
 export default function MaterialPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = teacherTranslations[language];
   const [token, setToken] = useState("");
   const [classes, setClasses] = useState<any[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<number[]>([]);

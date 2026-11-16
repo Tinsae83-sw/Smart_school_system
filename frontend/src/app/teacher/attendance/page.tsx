@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/auth";
 import { authFetch, formatDate, formatDisplayDate, Toast } from "../shared";
 import { io, Socket } from "socket.io-client";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { teacherTranslations } from "@/translations/teacher";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface ClassSubject {
@@ -125,6 +127,8 @@ function ToastNotification({
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AttendancePage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = teacherTranslations[language];
   const [token, setToken] = useState("");
   const [classes, setClasses] = useState<ClassSubject[]>([]);
   const [selectedClassSubject, setSelectedClassSubject] = useState<number | null>(null);

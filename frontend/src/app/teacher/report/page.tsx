@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/auth";
 import { authFetch, formatDisplayDate, Toast } from "../shared";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { teacherTranslations } from "@/translations/teacher";
 
 interface ClassSubject {
   class_subject_id: number;
@@ -21,6 +23,8 @@ interface Student {
 
 export default function ReportPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = teacherTranslations[language];
   const [token, setToken] = useState("");
   const [classes, setClasses] = useState<ClassSubject[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);

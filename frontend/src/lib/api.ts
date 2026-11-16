@@ -1,4 +1,6 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
+import { getAuthenticatedRole, getToken } from './auth';
+
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
 
 /**
  * Get authentication token from localStorage
@@ -68,6 +70,32 @@ export const vpAdminApi = {
     }
     return apiFetch(`/vp-administration${endpoint}`, config);
   },
+};
+
+function financeApiFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  const activeRole = getAuthenticatedRole();
+  const role = activeRole === 'FINANCIAL_OFFICER' ? activeRole : 'VP_ADMINISTRATION';
+  const token = getToken(role);
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return fetch(`${API_BASE}/finance${endpoint}`, {
+    ...options,
+    headers: {
+      ...headers,
+      ...options.headers,
+    },
+  });
+}
+
+export const financeApi = {
+  get: (endpoint: string) => financeApiFetch(endpoint, { method: 'GET' }),
+  post: (endpoint: string, data: unknown) => financeApiFetch(endpoint, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
 };
 
 /**

@@ -83,6 +83,17 @@ Base URL: `http://localhost:5000/api/admin/users`
 - `POST /:id/reset-password` - Reset password
 - `DELETE /:id` - Delete user
 
+Financial officers can be registered by an authenticated administrator with
+`POST /api/admin/users/financial-officers` and a JSON body containing
+`full_name`, `email`, and `password` (optional: `phone_number`). The protected
+`/api/finance` endpoints provide budget, expenditure, income, and purchase
+request management for financial officers, VP administrators, and admins.
+
+Run `npm run seed:finance` from `backend/` to create or reset the development
+account `finance@school.edu` with password `Password123!`. This command only
+changes that account. Change this shared demo password before using the
+account outside a local development environment.
+
 ## 🔐 Security Features
 
 - Password hashing with bcrypt

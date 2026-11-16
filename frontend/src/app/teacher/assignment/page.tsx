@@ -10,6 +10,8 @@ import {
   formatDisplayDateTime,
   Toast,
 } from "../shared";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { teacherTranslations } from "@/translations/teacher";
 
 interface ClassSubject {
   class_subject_id: number;
@@ -77,6 +79,8 @@ interface IndividualAssignmentDraft {
 
 export default function AssignmentPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = teacherTranslations[language];
   const [token, setToken] = useState("");
   const [activeTab, setActiveTab] = useState<"list" | "create" | "grade">("list");
   const [classes, setClasses] = useState<ClassSubject[]>([]);

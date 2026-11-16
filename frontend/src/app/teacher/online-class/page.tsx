@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/auth";
 import { authFetch, formatDisplayDateTime, Toast } from "../shared";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { teacherTranslations } from "@/translations/teacher";
 
 interface ClassSubject {
   class_subject_id: number;
@@ -32,6 +34,8 @@ const PLATFORMS = [
 
 export default function OnlineClassPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = teacherTranslations[language];
   const [token, setToken] = useState("");
   const [classes, setClasses] = useState<ClassSubject[]>([]);
   const [onlineClasses, setOnlineClasses] = useState<OnlineClass[]>([]);

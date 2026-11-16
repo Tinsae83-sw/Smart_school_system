@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/auth";
 import { authFetch, formatDisplayDateTime, Toast } from "../shared";
 import { io, Socket } from "socket.io-client";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { teacherTranslations } from "@/translations/teacher";
 
 interface Contact {
   user_id: number;
@@ -87,6 +89,8 @@ function AttachmentPreview({ url, className }: { url: string; className?: string
 
 export default function MessagePage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = teacherTranslations[language];
   const [token, setToken] = useState("");
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 

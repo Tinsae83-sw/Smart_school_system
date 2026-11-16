@@ -15,6 +15,7 @@ import {
   Mail,
   type LucideIcon,
 } from 'lucide-react';
+import { API_BASE } from '@/lib/api';
 
 /* ---------- Data ---------- */
 
@@ -111,12 +112,10 @@ export default function LandingPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-        
         const [schoolRes, programsRes, contactRes] = await Promise.all([
-          fetch(`${API_URL}/api/public/school-info`),
-          fetch(`${API_URL}/api/public/academic-programs`),
-          fetch(`${API_URL}/api/public/contact-info`)
+          fetch(`${API_BASE}/public/school-info`),
+          fetch(`${API_BASE}/public/academic-programs`),
+          fetch(`${API_BASE}/public/contact-info`)
         ]);
 
         if (schoolRes.ok) {

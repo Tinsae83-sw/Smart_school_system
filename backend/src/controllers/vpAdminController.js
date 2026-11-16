@@ -1510,9 +1510,14 @@ exports.createCCTVCamera = async (req, res) => {
 exports.getVehicles = async (req, res) => {
   try {
     const vehicles = await prisma.vehicle.findMany({
-      orderBy: { vehicle_name: 'asc' },
+      orderBy: { vehicle_number: 'asc' },
     });
-    res.json(vehicles);
+    res.json(vehicles.map(vehicle => ({
+      ...vehicle,
+      vehicle_name: [vehicle.make, vehicle.model].filter(Boolean).join(' ') || vehicle.vehicle_number,
+      license_plate: vehicle.vehicle_number,
+      current_location: null,
+    })));
   } catch (error) {
     console.error('Get vehicles error:', error);
     res.status(500).json({ error: 'Failed to fetch vehicles' });
@@ -1537,15 +1542,19 @@ exports.getVehicleMaintenance = async (req, res) => {
     const maintenance = await prisma.vehicleMaintenance.findMany({
       include: {
         vehicle: {
-          select: { vehicle_name: true },
+          select: { vehicle_number: true, make: true, model: true },
         },
       },
-      orderBy: { scheduled_date: 'desc' },
+      orderBy: { service_date: 'desc' },
     });
 
     const formatted = maintenance.map(m => ({
       ...m,
-      vehicle_name: m.vehicle?.vehicle_name || 'Unknown',
+      vehicle_name: m.vehicle
+        ? [m.vehicle.make, m.vehicle.model].filter(Boolean).join(' ') || m.vehicle.vehicle_number
+        : 'Unknown',
+      scheduled_date: m.service_date,
+      status: m.service_date > new Date() ? 'SCHEDULED' : 'COMPLETED',
     }));
 
     res.json(formatted);
@@ -1573,23 +1582,24 @@ exports.getDriverAssignments = async (req, res) => {
     const assignments = await prisma.driverAssignment.findMany({
       include: {
         vehicle: {
-          select: { vehicle_name: true },
-        },
-        driver: {
-          include: {
-            user: {
-              select: { full_name: true },
-            },
-          },
+          select: { vehicle_number: true, make: true, model: true },
         },
       },
       orderBy: { assigned_date: 'desc' },
     });
+    const drivers = await prisma.user.findMany({
+      where: { user_id: { in: assignments.map(assignment => assignment.driver_id) } },
+      select: { user_id: true, full_name: true },
+    });
+    const driverNames = new Map(drivers.map(driver => [driver.user_id, driver.full_name]));
 
     const formatted = assignments.map(a => ({
       ...a,
-      vehicle_name: a.vehicle?.vehicle_name || 'Unknown',
-      driver_name: a.driver?.user?.full_name || 'Unknown',
+      vehicle_name: a.vehicle
+        ? [a.vehicle.make, a.vehicle.model].filter(Boolean).join(' ') || a.vehicle.vehicle_number
+        : 'Unknown',
+      driver_name: driverNames.get(a.driver_id) || 'Unknown',
+      status: 'ACTIVE',
     }));
 
     res.json(formatted);
@@ -1620,15 +1630,22 @@ exports.getTransportSchedules = async (req, res) => {
     const schedules = await prisma.transportSchedule.findMany({
       include: {
         vehicle: {
-          select: { vehicle_name: true },
+          select: { vehicle_number: true, make: true, model: true },
         },
       },
-      orderBy: { departure_time: 'asc' },
+      orderBy: { start_time: 'asc' },
     });
 
     const formatted = schedules.map(s => ({
       ...s,
-      vehicle_name: s.vehicle?.vehicle_name || 'Unknown',
+      vehicle_name: s.vehicle
+        ? [s.vehicle.make, s.vehicle.model].filter(Boolean).join(' ') || s.vehicle.vehicle_number
+        : 'Unknown',
+      route: s.route_name,
+      departure_time: s.start_time,
+      arrival_time: s.end_time,
+      purpose: s.route_description || '',
+      status: s.is_active ? 'ACTIVE' : 'SUSPENDED',
     }));
 
     res.json(formatted);

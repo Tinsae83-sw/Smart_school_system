@@ -602,13 +602,22 @@ async function getStaffPerformance(req, res) {
       where: {
         academic_year: academic_year || '2024-2025',
         term: term || '1'
-      },
-      include: {
-        user: true
       }
     });
 
-    return res.json(performances);
+    // Attach user details (no user relation defined in schema)
+    const userIds = [...new Set(performances.map(p => p.user_id).filter(Boolean))];
+    const users = await prisma.user.findMany({
+      where: { user_id: { in: userIds } }
+    });
+    const userMap = new Map(users.map(u => [u.user_id, u]));
+
+    const result = performances.map(p => ({
+      ...p,
+      user: userMap.get(p.user_id) || null
+    }));
+
+    return res.json(result);
   } catch (error) {
     console.error('Get staff performance error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -1803,12 +1812,9 @@ async function getGovernanceOverview(req, res) {
       orderBy: { created_at: 'desc' }
     });
 
-    // Get PTSA Executive members
+    // Get PTSA Executive members (no user relation defined - fetch users separately)
     const ptsaExecutives = await prisma.pTSAExecutive.findMany({
       where: { is_active: true },
-      include: {
-        user: true
-      },
       orderBy: { term_start: 'desc' }
     });
 
@@ -1833,11 +1839,28 @@ async function getGovernanceOverview(req, res) {
     // Get Grievances
     const grievances = await prisma.grievance.findMany({
       include: {
-        user: true,
-        assigned_to: true
+        submitted_by_user: true,
+        assigned_to_user: true
       },
       orderBy: { submitted_at: 'desc' }
     });
+
+    // Attach user details to PTSA executives (relation not defined in schema)
+    const execUserIds = [...new Set(ptsaExecutives.map(e => e.user_id).filter(Boolean))];
+    const execUsers = await prisma.user.findMany({
+      where: { user_id: { in: execUserIds } }
+    });
+    const execUserMap = new Map(execUsers.map(u => [u.user_id, u]));
+    const executivesWithUsers = ptsaExecutives.map(e => ({
+      ...e,
+      user: execUserMap.get(e.user_id) || null
+    }));
+
+    // Normalize grievance relations to the `user`/`assigned_to` shape
+    const normalizedGrievances = grievances.map(g => ({
+      ...g,
+      user: g.submitted_by_user || null
+    }));
 
     // Calculate summary statistics
     const summary = {
@@ -1853,10 +1876,10 @@ async function getGovernanceOverview(req, res) {
     return res.json({
       summary,
       school_improvement_plans: sips,
-      ptsa_executives: ptsaExecutives,
+      ptsa_executives: executivesWithUsers,
       ptsa_feedback: ptsaFeedback,
       budget_advisories: budgetAdvisories,
-      grievances: grievances
+      grievances: normalizedGrievances
     });
   } catch (error) {
     console.error('Get governance overview error:', error);
@@ -2230,13 +2253,22 @@ async function getStaffLeaveRequests(req, res) {
       where: {
         status: status || undefined
       },
-      include: {
-        user: true
-      },
       orderBy: { created_at: 'desc' }
     });
 
-    return res.json(leaveRequests);
+    // Attach user details (no user relation defined in schema)
+    const userIds = [...new Set(leaveRequests.map(l => l.user_id).filter(Boolean))];
+    const users = await prisma.user.findMany({
+      where: { user_id: { in: userIds } }
+    });
+    const userMap = new Map(users.map(u => [u.user_id, u]));
+
+    const result = leaveRequests.map(l => ({
+      ...l,
+      user: userMap.get(l.user_id) || null
+    }));
+
+    return res.json(result);
   } catch (error) {
     console.error('Get staff leave requests error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -2284,13 +2316,22 @@ async function getStaffTransfers(req, res) {
       where: {
         status: status || undefined
       },
-      include: {
-        user: true
-      },
       orderBy: { created_at: 'desc' }
     });
 
-    return res.json(transfers);
+    // Attach user details (no user relation defined in schema)
+    const userIds = [...new Set(transfers.map(t => t.user_id).filter(Boolean))];
+    const users = await prisma.user.findMany({
+      where: { user_id: { in: userIds } }
+    });
+    const userMap = new Map(users.map(u => [u.user_id, u]));
+
+    const result = transfers.map(t => ({
+      ...t,
+      user: userMap.get(t.user_id) || null
+    }));
+
+    return res.json(result);
   } catch (error) {
     console.error('Get staff transfers error:', error);
     return res.status(500).json({ error: 'Internal server error' });

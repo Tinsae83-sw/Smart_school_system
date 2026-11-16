@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translateVpAdministrationOperation } from "@/translations/vp-administration-operations";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
+const API_BASE = `${(process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api").replace(/\/+$/, "")}/vp-administration`;
 
 type SecurityPersonnel = {
   security_id: number;

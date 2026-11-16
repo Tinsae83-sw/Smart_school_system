@@ -1381,24 +1381,31 @@ exports.updatePreference = async (req, res) => {
 exports.getSecurityPersonnel = async (req, res) => {
   try {
     const personnel = await prisma.securityPersonnel.findMany({
-      include: {
-        user: {
-          select: { full_name: true, email: true, phone_number: true },
-        },
-      },
       orderBy: { created_at: 'desc' },
     });
+    const users = await prisma.user.findMany({
+      where: { user_id: { in: personnel.map(p => p.user_id) } },
+      select: { user_id: true, full_name: true },
+    });
+    const usersById = new Map(users.map(user => [user.user_id, user]));
 
-    const formatted = personnel.map(p => ({
-      security_id: p.security_id,
-      user_id: p.user_id,
-      employee_id: p.employee_id,
-      full_name: p.user.full_name,
-      shift: p.shift,
-      patrol_route: p.patrol_route,
-      assigned_area: p.assigned_area,
-      is_active: p.is_active,
-    }));
+    const formatted = personnel.map(p => {
+      const user = usersById.get(p.user_id);
+      if (!user) {
+        throw new Error(`Security personnel record ${p.security_id} has no matching user`);
+      }
+
+      return {
+        security_id: p.security_id,
+        user_id: p.user_id,
+        employee_id: p.employee_id,
+        full_name: user.full_name,
+        shift: p.shift,
+        patrol_route: p.patrol_route,
+        assigned_area: p.assigned_area,
+        is_active: p.is_active,
+      };
+    });
 
     res.json(formatted);
   } catch (error) {

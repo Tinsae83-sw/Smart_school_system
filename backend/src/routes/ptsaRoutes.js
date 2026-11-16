@@ -195,6 +195,19 @@ router.get('/ptsa-announcements', getAnnouncements);
 // POST /api/ptsa/ptsa-announcements - Post announcement
 router.post('/ptsa-announcements', postAnnouncement);
 
+// Backward-compatible routes used by the PTSA representative pages
+router.get('/announcements', getAnnouncements);
+router.post('/announcements', postAnnouncement);
+
+// ============================================================
+// DISCUSSIONS
+// ============================================================
+
+router.get('/discussions', getDiscussions);
+router.post('/discussions', createDiscussion);
+router.get('/discussions/:id/messages', getDiscussionMessages);
+router.post('/discussions/:id/messages', sendDiscussionMessage);
+
 // ============================================================
 // GRIEVANCES
 // ============================================================

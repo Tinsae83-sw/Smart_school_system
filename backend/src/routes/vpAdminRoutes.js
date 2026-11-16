@@ -126,4 +126,14 @@ router.post('/settings/suppliers/:id/toggle', vpAdminController.toggleSupplier);
 router.get('/settings/preferences', vpAdminController.getPreferences);
 router.put('/settings/preferences', vpAdminController.updatePreference);
 
+// Security and safety
+router.get('/security-personnel', vpAdminController.getSecurityPersonnel);
+router.get('/visitor-logs', vpAdminController.getVisitorLogs);
+router.post('/visitor-logs', vpAdminController.createVisitorLog);
+router.post('/visitor-logs/:id/checkout', vpAdminController.checkoutVisitor);
+router.get('/safety-equipment', vpAdminController.getSafetyEquipment);
+router.post('/safety-equipment', vpAdminController.createSafetyEquipment);
+router.get('/cctv-cameras', vpAdminController.getCCTVCameras);
+router.post('/cctv-cameras', vpAdminController.createCCTVCamera);
+
 module.exports = router;

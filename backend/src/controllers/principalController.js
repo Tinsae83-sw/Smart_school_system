@@ -1936,20 +1936,23 @@ async function getPTSAExecutives(req, res) {
   try {
     const executives = await prisma.pTSAExecutive.findMany({
       where: { is_active: true },
-      include: {
-        user: true
-      },
       orderBy: { term_start: 'desc' }
     });
+    const userIds = [...new Set(executives.map(exec => exec.user_id))];
+    const users = await prisma.user.findMany({
+      where: { user_id: { in: userIds } },
+      select: { user_id: true, full_name: true, email: true }
+    });
+    const usersById = new Map(users.map(user => [user.user_id, user]));
 
     const formattedExecutives = executives.map(exec => ({
       member_id: exec.executive_id,
-      name: exec.user.full_name,
+      name: usersById.get(exec.user_id)?.full_name || 'Unknown',
       role: exec.position,
       term_start: exec.term_start,
       term_end: exec.term_end,
       status: exec.is_active ? 'ACTIVE' : 'INACTIVE',
-      contact_info: exec.user.email
+      contact_info: usersById.get(exec.user_id)?.email || ''
     }));
 
     return res.json(formattedExecutives);
@@ -2063,7 +2066,7 @@ async function getGrievances(req, res) {
         priority: priority || undefined
       },
       include: {
-        user: true
+        submitted_by_user: true
       },
       orderBy: { submitted_at: 'desc' }
     });
@@ -2071,8 +2074,8 @@ async function getGrievances(req, res) {
     // Map to frontend expected format
     const mapped = grievances.map(g => ({
       grievance_id: g.grievance_id,
-      complainant_name: g.user?.full_name || 'Unknown',
-      complainant_type: g.user?.role || 'UNKNOWN',
+      complainant_name: g.submitted_by_user?.full_name || 'Unknown',
+      complainant_type: g.submitted_by_user?.role || 'UNKNOWN',
       subject: g.subject,
       description: g.description,
       category: g.category || 'GENERAL',
@@ -2122,29 +2125,34 @@ async function resolveGrievance(req, res) {
 async function getDisciplineRecords(req, res) {
   try {
     const disciplinaryActions = await prisma.disciplinaryAction.findMany({
-      include: {
-        student: {
-          include: {
-            user: true
-          }
-        },
-        recommended_by_user: true,
-        approved_by_user: true
-      },
       orderBy: { created_at: 'desc' }
     });
+    const studentIds = [...new Set(disciplinaryActions.map(action => action.student_id))];
+    const recommenderIds = [...new Set(disciplinaryActions.map(action => action.recommended_by))];
+    const [students, recommenders] = await Promise.all([
+      prisma.student.findMany({
+        where: { student_id: { in: studentIds } },
+        include: { user: true }
+      }),
+      prisma.user.findMany({
+        where: { user_id: { in: recommenderIds } },
+        select: { user_id: true, full_name: true }
+      })
+    ]);
+    const studentsById = new Map(students.map(student => [student.student_id, student]));
+    const recommendersById = new Map(recommenders.map(user => [user.user_id, user]));
 
     // Map to frontend expected format
     const mapped = disciplinaryActions.map(d => ({
       record_id: d.action_id,
-      student_name: d.student?.user?.full_name || 'Unknown',
-      student_id: d.student?.student_id || 'Unknown',
+      student_name: studentsById.get(d.student_id)?.user?.full_name || 'Unknown',
+      student_id: studentsById.get(d.student_id)?.student_id || 'Unknown',
       infraction: d.action_type || 'Unknown',
       description: d.reason || 'No description provided',
       severity: d.action_type === 'EXPULSION' ? 'HIGH' : d.action_type === 'SUSPENSION' ? 'HIGH' : d.action_type === 'PROBATION' ? 'MEDIUM' : 'LOW',
       action_taken: d.action_type || 'Unknown',
       action_date: d.start_date || d.created_at,
-      reported_by: d.recommended_by_user?.full_name || 'Unknown',
+      reported_by: recommendersById.get(d.recommended_by)?.full_name || 'Unknown',
       status: d.status || 'ACTIVE'
     }));
 
@@ -2371,18 +2379,21 @@ async function createAnnouncement(req, res) {
 async function getAnnouncements(req, res) {
   try {
     const announcements = await prisma.schoolAnnouncement.findMany({
-      include: {
-        created_by_user: true
-      },
       orderBy: { created_at: 'desc' }
     });
+    const creatorIds = [...new Set(announcements.map(announcement => announcement.created_by))];
+    const creators = await prisma.user.findMany({
+      where: { user_id: { in: creatorIds } },
+      select: { user_id: true, full_name: true }
+    });
+    const creatorsById = new Map(creators.map(user => [user.user_id, user]));
 
     // Format announcements for frontend
     const formattedAnnouncements = announcements.map(ann => ({
       announcement_id: ann.announcement_id,
       title: ann.title,
       content: ann.content,
-      created_by: ann.created_by_user?.full_name || 'Unknown',
+      created_by: creatorsById.get(ann.created_by)?.full_name || 'Unknown',
       created_at: ann.created_at,
       target_audience: ann.target_audience,
       status: ann.status,

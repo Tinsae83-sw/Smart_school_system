@@ -20,7 +20,7 @@ type MeetingMinutes = {
   minutes_id: number;
   meeting_id: number;
   content: string;
-  action_items: string[];
+  action_items: Array<string | { task?: string; deadline?: string; assigned_to?: string }>;
   created_at: string;
 };
 
@@ -62,7 +62,7 @@ export default function MeetingsPage() {
     setLoading(true);
     try {
       const [meetingsRes, minutesRes, attendanceRes] = await Promise.all([
-        fetch(`${API_BASE}/meetings`),
+        fetch(`${API_BASE}/meetings/all`),
         fetch(`${API_BASE}/meetings/minutes`),
         fetch(`${API_BASE}/meetings/attendance`),
       ]);
@@ -377,7 +377,11 @@ export default function MeetingsPage() {
                         <p className="text-xs font-semibold text-slate-900 mb-1">Action Items:</p>
                         <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
                           {minutes.action_items.map((item, index) => (
-                            <li key={index}>{item}</li>
+                            <li key={index}>
+                              {typeof item === "string"
+                                ? item
+                                : `${item.task || "Action item"}${item.deadline ? ` — Due ${item.deadline}` : ""}${item.assigned_to ? ` (${item.assigned_to})` : ""}`}
+                            </li>
                           ))}
                         </ul>
                       </div>

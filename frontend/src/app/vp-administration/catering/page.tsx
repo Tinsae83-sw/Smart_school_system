@@ -7,12 +7,14 @@ import { VP_ADMINISTRATION_API_BASE } from "@/lib/api";
 
 const API_BASE = VP_ADMINISTRATION_API_BASE;
 
+type NumericValue = number | string | null;
+
 type MealPlan = {
   plan_id: number;
   plan_name: string;
   plan_type: string;
   description?: string;
-  daily_cost: number;
+  daily_cost: NumericValue;
   is_active: boolean;
   created_at: string;
 };
@@ -24,7 +26,7 @@ type FoodInventory = {
   quantity: number;
   unit: string;
   reorder_level: number;
-  unit_cost: number;
+  unit_cost: NumericValue;
   supplier?: string;
   last_restocked?: string;
   expiry_date?: string;
@@ -35,8 +37,8 @@ type FoodTransaction = {
   item_name: string;
   transaction_type: string;
   quantity: number;
-  unit_cost: number;
-  total_cost: number;
+  unit_cost: NumericValue;
+  total_cost: NumericValue;
   transaction_date: string;
   reference?: string;
   notes?: string;
@@ -75,6 +77,13 @@ export default function CateringPage() {
   const foodCategories = ["GRAINS", "VEGETABLES", "FRUITS", "DAIRY", "PROTEINS", "BEVERAGES", "SNACKS"];
   const units = ["KG", "LITERS", "PIECES", "PACKS", "BOXES"];
   const transactionTypes = ["RESTOCK", "USAGE", "WASTE", "ADJUSTMENT"];
+
+  function formatAmount(value: NumericValue) {
+    if (value === null || value === "") return "N/A";
+
+    const amount = Number(value);
+    return Number.isFinite(amount) ? amount.toFixed(2) : "N/A";
+  }
 
   function translateValue(value: string | null | undefined) {
     if (typeof value !== "string" || value.length === 0) return "-";
@@ -302,7 +311,7 @@ export default function CateringPage() {
                       <tr key={plan.plan_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{plan.plan_name}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{translateValue(plan.plan_type)}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">ETB {plan.daily_cost?.toFixed(2) ?? "N/A"}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">ETB {formatAmount(plan.daily_cost)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600 max-w-xs truncate">{plan.description || "-"}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${plan.is_active ? "bg-orange-50 text-orange-700" : "bg-rose-50 text-rose-700"}`}>
@@ -354,7 +363,7 @@ export default function CateringPage() {
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{item.item_name}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{translateValue(item.category)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{item.quantity} {translateValue(item.unit)}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">ETB {item.unit_cost?.toFixed(2) ?? "N/A"}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">ETB {formatAmount(item.unit_cost)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{item.reorder_level} {translateValue(item.unit)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{item.expiry_date || "-"}</td>
                         <td className="px-6 py-3">
@@ -411,7 +420,7 @@ export default function CateringPage() {
                           </span>
                         </td>
                         <td className="px-6 py-3 text-sm text-slate-600">{trans.quantity}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">ETB {trans.total_cost?.toFixed(2) ?? "N/A"}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">ETB {formatAmount(trans.total_cost)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{trans.reference || "-"}</td>
                       </tr>
                     ))}

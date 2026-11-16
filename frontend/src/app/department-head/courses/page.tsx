@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+import { ADMIN_API_BASE, DEPARTMENT_HEAD_API_BASE as API_BASE } from "@/lib/api";
 
 type Subject = {
   subject_id: number;
@@ -68,9 +67,9 @@ export default function CoursesPage() {
       const token = localStorage.getItem("dept_head_token");
       
       const [classSubjectsRes, subjectsRes, classesRes, teachersRes, deptRes] = await Promise.all([
-        fetch("http://localhost:5000/api/admin/class-subject"),
-        fetch("http://localhost:5000/api/admin/subjects"),
-        fetch("http://localhost:5000/api/classes"),
+        fetch(`${ADMIN_API_BASE}/class-subject`),
+        fetch(`${ADMIN_API_BASE}/subjects`),
+        fetch(`${ADMIN_API_BASE}/classes`),
         fetch(`${API_BASE}/teachers`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -162,7 +161,7 @@ export default function CoursesPage() {
   async function handleDelete(classSubjectId: number) {
     if (!confirm("Are you sure you want to remove this course assignment?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/class-subject/${classSubjectId}`, {
+      const res = await fetch(`${ADMIN_API_BASE}/class-subject/${classSubjectId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete course");

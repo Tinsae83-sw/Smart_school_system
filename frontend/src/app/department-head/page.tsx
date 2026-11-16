@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-
-const BASE_API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
-const API_BASE = `${BASE_API}/department-head`;
+import { DEPARTMENT_HEAD_API_BASE as API_BASE } from "@/lib/api";
 
 type DashboardMetrics = {
   total_teachers: number;

@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+import { DEPARTMENT_HEAD_API_BASE as API_BASE } from "@/lib/api";
 
 type LessonPlan = {
   plan_id: number;

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { DEPARTMENT_HEAD_API_BASE, VP_ACADEMIC_API_BASE as API_BASE } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
 const STORAGE_TOKEN_KEY = "dept_head_token";
 
 const EXAM_TYPES = ["MIDTERM", "FINAL", "QUIZ", "UNIT_TEST", "PRACTICAL"] as const;
@@ -213,7 +213,7 @@ export default function ExamsPage() {
         throw new Error("Authentication token not found");
       }
 
-      const res = await fetch(`${API_BASE}/../department-head/teachers`, {
+      const res = await fetch(`${DEPARTMENT_HEAD_API_BASE}/teachers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+import { ADMIN_API_BASE, DEPARTMENT_HEAD_API_BASE as API_BASE } from "@/lib/api";
 
 type Teacher = {
   teacher_id: number;
@@ -66,7 +65,7 @@ export default function TeachersPage() {
 
   async function fetchClasses() {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/classes");
+      const res = await fetch(`${ADMIN_API_BASE}/classes`);
       if (res.ok) {
         const data = await res.json();
         setClasses(data.classes || data);
@@ -78,7 +77,7 @@ export default function TeachersPage() {
 
   async function fetchSubjects() {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/subjects");
+      const res = await fetch(`${ADMIN_API_BASE}/subjects`);
       if (res.ok) {
         const data = await res.json();
         setSubjects(data.subjects || []);

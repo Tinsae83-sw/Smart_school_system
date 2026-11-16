@@ -1,6 +1,9 @@
 import { getAuthenticatedRole, getToken } from './auth';
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://smart-school-system-1-kevh.onrender.com/api";
+export const DEPARTMENT_HEAD_API_BASE = `${API_BASE}/department-head`;
+export const ADMIN_API_BASE = `${API_BASE}/admin`;
+export const VP_ACADEMIC_API_BASE = `${API_BASE}/vp-academic`;
 
 /**
  * Get authentication token from localStorage

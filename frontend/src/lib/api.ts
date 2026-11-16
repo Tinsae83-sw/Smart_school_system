@@ -2,6 +2,9 @@ import { getAuthenticatedRole, getToken } from './auth';
 
 export const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "https://smart-school-system-1-kevh.onrender.com/api")
   .replace(/\/+$/, "");
+export const SIC_API_BASE = API_BASE.endsWith("/sic")
+  ? API_BASE
+  : `${API_BASE}/sic`;
 export const PRINCIPAL_API_BASE = API_BASE.endsWith("/principal")
   ? API_BASE
   : `${API_BASE}/principal`;

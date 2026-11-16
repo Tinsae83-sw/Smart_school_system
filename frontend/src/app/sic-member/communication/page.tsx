@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/sic";
+import { SIC_API_BASE as API_BASE } from "@/lib/api";
 
 type Recommendation = {
   recommendation_id: number;

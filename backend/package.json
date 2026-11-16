@@ -4,7 +4,7 @@
   "description": "RESTful API for Smart School Connect - User Registration and Management System",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "npm run db:push && node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node seed.js",
     "seed:finance": "node seedFinancialOfficer.js",
@@ -41,11 +41,11 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "pg": "^8.21.0",
+    "prisma": "^7.8.0",
     "sequelize": "^6.37.8",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "prisma": "^7.8.0"
+    "nodemon": "^3.1.14"
   }
 }

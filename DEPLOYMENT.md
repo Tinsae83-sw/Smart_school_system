@@ -47,14 +47,13 @@ The `render.yaml` file is already created in the backend folder.
 
 6. Click **"Create Web Service"**
 
-### 1.4 Run Database Migration
-After deployment, you'll need to set up the database:
+### 1.4 Initialize the Database
+The backend runs `npx prisma db push` before starting, so the schema is synchronized during deployment. To initialize sample data:
 
 1. Go to your Render dashboard → PostgreSQL database
 2. Copy the **Internal Database URL**
 3. SSH into your web service or use Render Shell:
    ```bash
-   npx prisma db push
    node seed.js
    ```
 
@@ -181,7 +180,7 @@ NEXT_PUBLIC_API_BASE=https://smart-school-backend.onrender.com/api
 
 ### Backend Issues
 - **Database Connection Error**: Verify `DATABASE_URL` is correct
-- **Migration Failed**: Run `npx prisma db push` manually via Render Shell
+- **Database schema sync failed**: Check the Render service logs and verify `DATABASE_URL` and database permissions. The backend runs `npx prisma db push` before starting.
 - **Port Issues**: Ensure PORT is set to 10000 (Render's default)
 
 ### Frontend Issues

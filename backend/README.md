@@ -54,7 +54,7 @@ BCRYPT_SALT_ROUNDS=10
 # Generate Prisma Client
 npx prisma generate
 
-# Push schema to database
+# Push schema to database (also run automatically by npm start)
 npx prisma db push
 ```
 

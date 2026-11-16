@@ -67,7 +67,9 @@ export default function StaffPage() {
   const attendanceStatuses = ["PRESENT", "ABSENT", "LATE", "HALF_DAY"];
   const leaveStatuses = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"];
 
-  function getStatusLabel(status: string) {
+  function getStatusLabel(status: string | null | undefined) {
+    if (typeof status !== "string" || status.length === 0) return "-";
+
     const labels: Record<string, string> = {
       PRESENT: t.present,
       ABSENT: t.absent,
@@ -81,7 +83,9 @@ export default function StaffPage() {
     return labels[status] || status.replace(/_/g, " ");
   }
 
-  function getLeaveTypeLabel(leaveType: string) {
+  function getLeaveTypeLabel(leaveType: string | null | undefined) {
+    if (typeof leaveType !== "string" || leaveType.length === 0) return "-";
+
     const labels: Record<string, string> = {
       ANNUAL: t.annual,
       SICK: t.sick,
@@ -92,7 +96,9 @@ export default function StaffPage() {
     return labels[leaveType] || leaveType.replace(/_/g, " ");
   }
 
-  function getRoleLabel(role: string) {
+  function getRoleLabel(role: string | null | undefined) {
+    if (typeof role !== "string" || role.length === 0) return "-";
+
     return role === "LIBRARIAN" ? t.librarian : role.replace(/_/g, " ");
   }
 

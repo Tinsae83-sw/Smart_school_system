@@ -126,7 +126,9 @@ export default function CommunicationsPage() {
     return labels[type] ?? type;
   }
 
-  function translateAudience(audience: string) {
+  function translateAudience(audience: string | null | undefined) {
+    if (typeof audience !== "string" || audience.length === 0) return "-";
+
     const labels: Record<string, string> = {
       ALL: t.all,
       NON_ACADEMIC_STAFF: t.nonAcademicStaff,

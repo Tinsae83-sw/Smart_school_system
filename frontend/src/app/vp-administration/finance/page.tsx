@@ -83,7 +83,9 @@ export default function FinancePage() {
   const requestCategories = ["EQUIPMENT", "MATERIALS", "SUPPLIES", "SERVICES"];
   const statuses = ["PENDING", "APPROVED", "REJECTED", "ORDERED", "RECEIVED"];
 
-  function translateValue(value: string) {
+  function translateValue(value: string | null | undefined) {
+    if (typeof value !== "string" || value.length === 0) return "-";
+
     const labels: Record<string, string> = {
       ACTIVE: t.active,
       PENDING: t.pending,

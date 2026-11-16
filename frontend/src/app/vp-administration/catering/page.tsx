@@ -76,7 +76,9 @@ export default function CateringPage() {
   const units = ["KG", "LITERS", "PIECES", "PACKS", "BOXES"];
   const transactionTypes = ["RESTOCK", "USAGE", "WASTE", "ADJUSTMENT"];
 
-  function translateValue(value: string) {
+  function translateValue(value: string | null | undefined) {
+    if (typeof value !== "string" || value.length === 0) return "-";
+
     const labels: Record<string, string> = {
       STANDARD: t.standard,
       VEGETARIAN: t.vegetarian,

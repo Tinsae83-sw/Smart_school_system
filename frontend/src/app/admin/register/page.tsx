@@ -80,6 +80,7 @@ function RegisterForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<RegistrationResult | null>(null);
+  const [optionsVersion, setOptionsVersion] = useState(0);
 
   useEffect(() => {
     async function loadOptions() {
@@ -106,7 +107,7 @@ function RegisterForm() {
       }
     }
     loadOptions();
-  }, []);
+  }, [optionsVersion]);
 
   function update<K extends keyof ReturnType<typeof initialForm>>(key: K, value: ReturnType<typeof initialForm>[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -210,6 +211,7 @@ function RegisterForm() {
     setForm(initialForm());
     setResult(null);
     setError("");
+    setOptionsVersion((v) => v + 1);
   }
 
   const roleTabs: { value: RegistrableRole; label: string; icon: React.ElementType }[] = [

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ParentContext, authHeaders, BACKEND_URL } from "./ParentContext";
+import { ParentContext, authHeaders, resolveBackendUrl } from "./ParentContext";
 import { isAuthenticated, getUser, clearAuth, getToken } from "@/lib/auth";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -84,7 +84,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
     console.log('[ParentLayout] Headers:', headers);
 
     try {
-      const response = await fetch(`${BACKEND_URL}${path}`, {
+      const response = await fetch(resolveBackendUrl(path), {
         ...options,
         headers,
       });

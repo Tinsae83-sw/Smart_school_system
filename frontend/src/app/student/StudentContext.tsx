@@ -2,7 +2,15 @@
 
 import { createContext, useContext } from "react";
 
-const BACKEND_URL = "http://localhost:5000";
+const DEFAULT_BACKEND_URL = "https://smart-school-system-1-kevh.onrender.com";
+export const BACKEND_URL = (process.env.NEXT_PUBLIC_API_BASE || DEFAULT_BACKEND_URL)
+  .replace(/\/api\/?$/, "")
+  .replace(/\/+$/, "");
+
+export function resolveBackendUrl(path: string) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${BACKEND_URL}${normalizedPath.startsWith("/api") ? normalizedPath : `/api${normalizedPath}`}`;
+}
 
 type StudentContextType = {
   token: string;
@@ -17,7 +25,7 @@ const defaultContext: StudentContextType = {
   profile: null,
   authFetch: async (path: string, options?: RequestInit) => {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
-    const response = await fetch(`${BACKEND_URL}${path}`, {
+    const response = await fetch(resolveBackendUrl(path), {
       ...options,
       headers,
     });

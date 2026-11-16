@@ -101,7 +101,9 @@ export default function TransportPage() {
   const shifts = ["MORNING", "AFTERNOON", "NIGHT", "FULL_DAY"];
   const scheduleStatuses = ["ACTIVE", "SUSPENDED", "CANCELLED"];
 
-  function translateValue(value: string) {
+  function translateValue(value: string | null | undefined) {
+    if (typeof value !== "string" || value.length === 0) return "-";
+
     const labels: Record<string, string> = {
       BUS: t.bus,
       VAN: t.van,
@@ -523,7 +525,7 @@ export default function TransportPage() {
                         <td className="px-6 py-3 text-sm text-slate-600">{schedule.route}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{schedule.departure_time}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{schedule.arrival_time}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{schedule.days_of_week.map(translateValue).join(", ")}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{(schedule.days_of_week ?? []).map(translateValue).join(", ") || "-"}</td>
                         <td className="px-6 py-3 text-sm text-slate-600 max-w-xs truncate">{schedule.purpose}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(schedule.status)}`}>

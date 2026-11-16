@@ -169,6 +169,130 @@ async function getPtsaProfile(req, res) {
   }
 }
 
+async function getPtsaSettingsProfile(req, res) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { user_id: req.user.user_id },
+      select: {
+        user_id: true,
+        full_name: true,
+        email: true,
+        phone_number: true,
+        profile_picture_url: true,
+        preferred_language: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'PTSA representative not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching PTSA settings profile:', error);
+    res.status(500).json({ error: 'Failed to fetch PTSA settings profile' });
+  }
+}
+
+async function updatePtsaSettingsProfile(req, res) {
+  try {
+    const { full_name, email, phone_number, preferred_language } = req.body;
+    if (
+      typeof full_name !== 'string' || !full_name.trim() ||
+      typeof email !== 'string' || !email.includes('@') ||
+      (phone_number !== undefined && phone_number !== null && typeof phone_number !== 'string') ||
+      (preferred_language !== undefined && typeof preferred_language !== 'string')
+    ) {
+      return res.status(400).json({ error: 'Invalid profile data' });
+    }
+
+    const user = await prisma.user.update({
+      where: { user_id: req.user.user_id },
+      data: {
+        full_name: full_name.trim(),
+        email: email.trim(),
+        ...(phone_number !== undefined && { phone_number }),
+        ...(preferred_language !== undefined && { preferred_language })
+      },
+      select: {
+        user_id: true,
+        full_name: true,
+        email: true,
+        phone_number: true,
+        profile_picture_url: true,
+        preferred_language: true
+      }
+    });
+
+    res.json(user);
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: 'Email is already in use' });
+    }
+    console.error('Error updating PTSA settings profile:', error);
+    res.status(500).json({ error: 'Failed to update PTSA settings profile' });
+  }
+}
+
+async function getPtsaSettingsPTSAProfile(req, res) {
+  try {
+    const rep = await prisma.pTSARepresentative.findUnique({
+      where: { user_id: req.user.user_id },
+      select: { ptsa_rep_id: true, position: true, term_start: true, term_end: true }
+    });
+
+    if (!rep) {
+      return res.status(404).json({ error: 'PTSA representative not found' });
+    }
+
+    res.json({ ...rep, position: rep.position || '' });
+  } catch (error) {
+    console.error('Error fetching PTSA group profile:', error);
+    res.status(500).json({ error: 'Failed to fetch PTSA group profile' });
+  }
+}
+
+async function updatePtsaSettingsPTSAProfile(req, res) {
+  try {
+    const { position, term_start, term_end } = req.body;
+    const parseDate = (value) => {
+      if (value === undefined) return undefined;
+      if (value === null || value === '') return null;
+      if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const date = new Date(`${value}T00:00:00.000Z`);
+      return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? false : date;
+    };
+    const startDate = parseDate(term_start);
+    const endDate = parseDate(term_end);
+
+    if (
+      (position !== undefined && typeof position !== 'string') ||
+      startDate === false ||
+      endDate === false
+    ) {
+      return res.status(400).json({ error: 'Invalid PTSA profile data' });
+    }
+
+    const rep = await prisma.pTSARepresentative.update({
+      where: { user_id: req.user.user_id },
+      data: {
+        ...(position !== undefined && { position: position.trim() }),
+        ...(startDate !== undefined && { term_start: startDate }),
+        ...(endDate !== undefined && { term_end: endDate })
+      },
+      select: { ptsa_rep_id: true, position: true, term_start: true, term_end: true }
+    });
+
+    res.json({ ...rep, position: rep.position || '' });
+  } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'PTSA representative not found' });
+    }
+    console.error('Error updating PTSA group profile:', error);
+    res.status(500).json({ error: 'Failed to update PTSA group profile' });
+  }
+}
+
 /**
  * Get Academic Grade Summaries
  * GET /api/ptsa/academic/grade-summaries
@@ -1933,6 +2057,10 @@ module.exports = {
   getPtsaMeetings,
   getPtsaFeedback,
   getPtsaProfile,
+  getPtsaSettingsProfile,
+  updatePtsaSettingsProfile,
+  getPtsaSettingsPTSAProfile,
+  updatePtsaSettingsPTSAProfile,
   getAcademicGradeSummaries,
   getGradeDistributions,
   getAttendanceSummaries,

@@ -327,6 +327,7 @@ model Student {
   evaluation_links    EvaluationLink[]
   student_marks       StudentMark[]
   attendance_submissions StudentAttendanceSubmission[]
+  conduct_grades      ConductGrade[]
 
   @@index([user_id])
   @@index([current_class_id])
@@ -2517,6 +2518,7 @@ model ConductGrade {
   comments          String?   @db.Text
   graded_at         DateTime  @default(now())
 
+  student           Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
   conduct_comments  ConductComment[]
 
   @@unique([student_id, term, academic_year])

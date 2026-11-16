@@ -148,7 +148,7 @@ const navigation: NavItem[] = [
     href: "/ptsa-representative/settings",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.11-.849-.778-2.015-1.226-4.19-1.226-6.473 0-2.284.448-4.459 1.226-6.474.105-.338.363-.746-.457-1.1-.525-.355-.566.19-.812.712-.402.89-.733 1.82-.986 2.783m0-9.18c.688.06 1.386.09 2.09.09h.75a4.5 4.5 0 110 9h-.75c-.704 0-1.402.03-2.09.09" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10v4h4l5 4V6l-5 4H3zm12-2a5 5 0 010 8m2-10a8 8 0 010 12" />
       </svg>
     ),
   },

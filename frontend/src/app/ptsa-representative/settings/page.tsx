@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PTSA_API_BASE as API_BASE } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 
 type UserProfile = {
   user_id: number;
   full_name: string;
   email: string;
-  phone_number: string;
+  phone_number: string | null;
   profile_picture_url?: string;
   preferred_language: string;
 };
@@ -16,11 +17,8 @@ type UserProfile = {
 type PTSAProfile = {
   ptsa_rep_id: number;
   position: string;
-  term_start: string;
-  term_end: string;
-  mission_statement?: string;
-  contact_email?: string;
-  contact_phone?: string;
+  term_start: string | null;
+  term_end: string | null;
 };
 
 type NotificationPreferences = {
@@ -32,17 +30,32 @@ type NotificationPreferences = {
   grievance_updates: boolean;
 };
 
+const NOTIFICATION_PREFERENCES_KEY = "ptsa_notification_preferences";
+const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  email_notifications: true,
+  sms_notifications: false,
+  in_app_notifications: true,
+  meeting_reminders: true,
+  announcement_alerts: true,
+  grievance_updates: true,
+};
+
+function formatDateInput(value: string | null): string | null {
+  return value ? value.slice(0, 10) : null;
+}
+
+function getSettingsHeaders(includeJson = false): HeadersInit {
+  const token = getToken("PTSA_REPRESENTATIVE");
+  return {
+    ...(includeJson && { "Content-Type": "application/json" }),
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+}
+
 export default function SettingsPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [ptsaProfile, setPTSAProfile] = useState<PTSAProfile | null>(null);
-  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>({
-    email_notifications: true,
-    sms_notifications: false,
-    in_app_notifications: true,
-    meeting_reminders: true,
-    announcement_alerts: true,
-    grievance_updates: true,
-  });
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>(DEFAULT_NOTIFICATION_PREFERENCES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
@@ -54,15 +67,35 @@ export default function SettingsPage() {
   async function loadSettingsData() {
     setLoading(true);
     try {
-      const [userRes, ptsaRes, prefsRes] = await Promise.all([
-        fetch(`${API_BASE}/settings/profile`),
-        fetch(`${API_BASE}/settings/ptsa-profile`),
-        fetch(`${API_BASE}/settings/notifications`),
+      const [userRes, ptsaRes] = await Promise.all([
+        fetch(`${API_BASE}/settings/profile`, { headers: getSettingsHeaders() }),
+        fetch(`${API_BASE}/settings/ptsa-profile`, { headers: getSettingsHeaders() }),
       ]);
 
       if (userRes.ok) setUserProfile(await userRes.json());
-      if (ptsaRes.ok) setPTSAProfile(await ptsaRes.json());
-      if (prefsRes.ok) setNotificationPrefs(await prefsRes.json());
+      if (ptsaRes.ok) {
+        const profile: PTSAProfile = await ptsaRes.json();
+        setPTSAProfile({
+          ...profile,
+          term_start: formatDateInput(profile.term_start),
+          term_end: formatDateInput(profile.term_end),
+        });
+      }
+
+      const savedPreferences = window.localStorage.getItem(NOTIFICATION_PREFERENCES_KEY);
+      if (savedPreferences) {
+        const parsed: unknown = JSON.parse(savedPreferences);
+        if (parsed && typeof parsed === "object") {
+          setNotificationPrefs({
+            ...DEFAULT_NOTIFICATION_PREFERENCES,
+            ...Object.fromEntries(
+              Object.entries(parsed).filter(([key, value]) =>
+                key in DEFAULT_NOTIFICATION_PREFERENCES && typeof value === "boolean"
+              )
+            ),
+          });
+        }
+      }
     } catch (error) {
       console.error("Error loading settings:", error);
     } finally {
@@ -74,11 +107,13 @@ export default function SettingsPage() {
     if (!userProfile) return;
     setSaving(true);
     try {
-      await fetch(`${API_BASE}/settings/profile`, {
+      const response = await fetch(`${API_BASE}/settings/profile`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getSettingsHeaders(true),
         body: JSON.stringify(userProfile),
       });
+      if (!response.ok) throw new Error(`Profile update failed (${response.status})`);
+      setUserProfile(await response.json());
       alert("Profile updated successfully!");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -92,10 +127,17 @@ export default function SettingsPage() {
     if (!ptsaProfile) return;
     setSaving(true);
     try {
-      await fetch(`${API_BASE}/settings/ptsa-profile`, {
+      const response = await fetch(`${API_BASE}/settings/ptsa-profile`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getSettingsHeaders(true),
         body: JSON.stringify(ptsaProfile),
+      });
+      if (!response.ok) throw new Error(`PTSA profile update failed (${response.status})`);
+      const profile: PTSAProfile = await response.json();
+      setPTSAProfile({
+        ...profile,
+        term_start: formatDateInput(profile.term_start),
+        term_end: formatDateInput(profile.term_end),
       });
       alert("PTSA profile updated successfully!");
     } catch (error) {
@@ -109,11 +151,7 @@ export default function SettingsPage() {
   async function saveNotificationPreferences() {
     setSaving(true);
     try {
-      await fetch(`${API_BASE}/settings/notifications`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(notificationPrefs),
-      });
+      window.localStorage.setItem(NOTIFICATION_PREFERENCES_KEY, JSON.stringify(notificationPrefs));
       alert("Notification preferences saved successfully!");
     } catch (error) {
       console.error("Error saving notification preferences:", error);
@@ -248,33 +286,6 @@ export default function SettingsPage() {
                     value={ptsaProfile.position || ""}
                     onChange={(e) => setPTSAProfile({...ptsaProfile, position: e.target.value})}
                     className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Contact Email</label>
-                  <input
-                    type="email"
-                    value={ptsaProfile.contact_email || ""}
-                    onChange={(e) => setPTSAProfile({...ptsaProfile, contact_email: e.target.value})}
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Contact Phone</label>
-                  <input
-                    type="tel"
-                    value={ptsaProfile.contact_phone || ""}
-                    onChange={(e) => setPTSAProfile({...ptsaProfile, contact_phone: e.target.value})}
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Mission Statement</label>
-                  <textarea
-                    value={ptsaProfile.mission_statement || ""}
-                    onChange={(e) => setPTSAProfile({...ptsaProfile, mission_statement: e.target.value})}
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none resize-none"
-                    rows={3}
                   />
                 </div>
                 <div>

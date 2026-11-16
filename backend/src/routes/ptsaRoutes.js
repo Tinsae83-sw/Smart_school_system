@@ -1,10 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const { authenticate, authorizeRoles } = require('../middleware/authMiddleware');
 const {
   getPtsaDashboard,
   getPtsaMeetings,
   getPtsaFeedback,
   getPtsaProfile,
+  getPtsaSettingsProfile,
+  updatePtsaSettingsProfile,
+  getPtsaSettingsPTSAProfile,
+  updatePtsaSettingsPTSAProfile,
   getAcademicGradeSummaries,
   getGradeDistributions,
   getAttendanceSummaries,
@@ -62,6 +67,10 @@ router.get('/dashboard', getPtsaDashboard);
 
 // GET /api/ptsa/profile - Get PTSA representative profile
 router.get('/profile', getPtsaProfile);
+router.get('/settings/profile', authenticate, authorizeRoles('PTSA_REPRESENTATIVE'), getPtsaSettingsProfile);
+router.put('/settings/profile', authenticate, authorizeRoles('PTSA_REPRESENTATIVE'), updatePtsaSettingsProfile);
+router.get('/settings/ptsa-profile', authenticate, authorizeRoles('PTSA_REPRESENTATIVE'), getPtsaSettingsPTSAProfile);
+router.put('/settings/ptsa-profile', authenticate, authorizeRoles('PTSA_REPRESENTATIVE'), updatePtsaSettingsPTSAProfile);
 
 // ============================================================
 // MEETINGS & FEEDBACK

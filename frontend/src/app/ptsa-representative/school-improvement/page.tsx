@@ -42,6 +42,19 @@ type AnnualReport = {
   generated_at: string;
 };
 
+function formatMinutesItem(item: unknown): string {
+  if (typeof item === "string") return item;
+  if (item && typeof item === "object") {
+    const details = item as { decision?: unknown; vote?: unknown };
+    const decision = typeof details.decision === "string" ? details.decision : "";
+    const vote = typeof details.vote === "string" ? details.vote : "";
+    if (decision && vote) return `${decision} (${vote})`;
+    if (decision || vote) return decision || vote;
+    return JSON.stringify(item);
+  }
+  return String(item ?? "");
+}
+
 export default function SchoolImprovementPage() {
   const [sip, setSip] = useState<SchoolImprovementPlan | null>(null);
   const [sipProgress, setSipProgress] = useState<SIPProgress[]>([]);
@@ -232,7 +245,7 @@ export default function SchoolImprovementPage() {
                       <p className="text-xs font-semibold text-slate-900 mb-1">Key Decisions:</p>
                       <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
                         {minutes.key_decisions.map((decision, index) => (
-                          <li key={index}>{decision}</li>
+                          <li key={index}>{formatMinutesItem(decision)}</li>
                         ))}
                       </ul>
                     </div>
@@ -243,7 +256,7 @@ export default function SchoolImprovementPage() {
                       <p className="text-xs font-semibold text-slate-900 mb-1">Action Items:</p>
                       <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
                         {minutes.action_items.map((item, index) => (
-                          <li key={index}>{item}</li>
+                          <li key={index}>{formatMinutesItem(item)}</li>
                         ))}
                       </ul>
                     </div>

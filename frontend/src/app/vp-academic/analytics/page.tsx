@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { vpAcademicTranslations } from "@/translations/vp-academic";
+import { vpAcademicApi } from "@/lib/api";
 import {
   BarChart,
   Bar,
@@ -18,8 +19,6 @@ import {
   Legend,
   ResponsiveContainer
 } from "recharts";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
 
 type SubjectPerformance = {
   subject_name: string;
@@ -73,7 +72,7 @@ export default function AnalyticsPage() {
   async function fetchSubjectPerformance() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/academic/grade-distribution`);
+      const res = await vpAcademicApi.get("/academic/grade-distribution");
       if (!res.ok) throw new Error("Failed to fetch subject performance");
       const data = await res.json();
       setSubjectPerformance(Array.isArray(data) ? data : []);
@@ -88,7 +87,7 @@ export default function AnalyticsPage() {
   async function fetchTeacherPerformance() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/teachers/performance`);
+      const res = await vpAcademicApi.get("/teachers/performance");
       if (!res.ok) throw new Error("Failed to fetch teacher performance");
       const data = await res.json();
       setTeacherPerformance(Array.isArray(data) ? data : []);
@@ -103,7 +102,7 @@ export default function AnalyticsPage() {
   async function fetchClassPerformance() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/academic/grades`);
+      const res = await vpAcademicApi.get("/academic/grades");
       if (!res.ok) throw new Error("Failed to fetch class performance");
       const data = await res.json();
       setClassPerformance(Array.isArray(data) ? data : []);

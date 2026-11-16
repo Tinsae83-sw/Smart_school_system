@@ -9,8 +9,6 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { vpAcademicTranslations } from "@/translations/vp-academic";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
-
 type NavItem = {
   labelKey: keyof typeof vpAcademicTranslations.en;
   href: string;

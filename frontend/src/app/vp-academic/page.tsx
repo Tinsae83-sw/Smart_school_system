@@ -4,8 +4,7 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { vpAcademicTranslations } from "@/translations/vp-academic";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-academic";
+import { vpAcademicApi } from "@/lib/api";
 
 type DashboardMetrics = {
   total_students: number;
@@ -52,8 +51,8 @@ export default function VPAcademicDashboardPage() {
     setLoading(true);
     try {
       const [dashboardRes, teachersRes] = await Promise.all([
-        fetch(`${API_BASE}/dashboard`),
-        fetch(`${API_BASE}/teachers`),
+        vpAcademicApi.get("/dashboard"),
+        vpAcademicApi.get("/teachers"),
       ]);
 
       if (!dashboardRes.ok || !teachersRes.ok) {

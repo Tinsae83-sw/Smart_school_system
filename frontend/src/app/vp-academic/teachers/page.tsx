@@ -24,7 +24,7 @@ type Teacher = {
   subjects: string[];
 };
 
-type Department = string;
+type Department = { name: string };
 
 export default function TeachersPage() {
   const { language } = useLanguage();
@@ -79,7 +79,7 @@ export default function TeachersPage() {
     try {
       const [teachersRes, deptsRes] = await Promise.all([
         vpAcademicApi.get('/teachers'),
-        vpAcademicApi.get('/departments'),
+        vpAcademicApi.get('/students/academic-options'),
       ]);
 
       if (teachersRes.ok) {
@@ -89,7 +89,7 @@ export default function TeachersPage() {
 
       if (deptsRes.ok) {
         const deptsData = await deptsRes.json();
-        setDepartments(deptsData.map((d: any) => d.name));
+        setDepartments((deptsData.departments || []).map((department: Department) => department.name));
       }
     } catch (error) {
       console.error("Failed to fetch teachers:", error);

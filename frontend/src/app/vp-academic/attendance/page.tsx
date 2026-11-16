@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { vpAcademicApi } from "@/lib/api";
+import { ADMIN_API_BASE, vpAcademicApi } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { vpAcademicTranslations } from "@/translations/vp-academic";
 
@@ -93,13 +93,11 @@ export default function AttendancePage() {
   async function fetchData() {
     setLoading(true);
     try {
-      const ADMIN_API = process.env.NEXT_PUBLIC_ADMIN_API || "http://localhost:5000/api";
-      
       if (activeTab === "students") {
         const [attendanceRes, classesRes, studentsRes] = await Promise.all([
           vpAcademicApi.get(`/academic/attendance?class_id=${selectedClass}&date=${selectedDate}`),
-          fetch(`${ADMIN_API}/admin/classes`),
-          fetch(`${ADMIN_API}/admin/students`),
+          fetch(`${ADMIN_API_BASE}/classes`),
+          vpAcademicApi.get("/students"),
         ]);
 
         if (attendanceRes.ok) {
@@ -116,7 +114,7 @@ export default function AttendancePage() {
         }
       } else if (activeTab === "classes") {
         const [classesRes, summaryRes] = await Promise.all([
-          fetch(`${ADMIN_API}/admin/classes`),
+          fetch(`${ADMIN_API_BASE}/classes`),
           vpAcademicApi.get(`/academic/attendance/summary?date=${selectedDate}`),
         ]);
 

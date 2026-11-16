@@ -888,8 +888,13 @@ async function getIndividualTimetable(req, res) {
         }
       });
     } else if (type === 'class') {
+      const classId = id === 'all' ? undefined : Number.parseInt(id, 10);
+      if (classId !== undefined && (!Number.isInteger(classId) || classId <= 0)) {
+        return res.status(400).json({ error: 'Invalid class ID' });
+      }
+
       schedules = await prisma.classSchedule.findMany({
-        where: { class_id: parseInt(id) },
+        ...(classId === undefined ? {} : { where: { class_id: classId } }),
         include: {
           school_class: true,
           subject: true,

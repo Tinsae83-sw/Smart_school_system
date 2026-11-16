@@ -2,12 +2,9 @@ const express = require('express');
 const router = express.Router();
 const parentController = require('../controllers/parentController');
 
-// TEMPORARILY DISABLE ALL AUTHENTICATION FOR DEBUGGING
-// Apply authentication and authorization to all routes
-// const parentAuth = require('../middleware/parentAuth');
-// const { authorize } = require('../middleware/roleMiddleware');
-// router.use(parentAuth);
-// router.use(authorize(['PARENT']));
+const parentAuth = require('../middleware/parentAuth');
+
+router.use(parentAuth);
 
 // ============================================
 // 1. DASHBOARD & OVERVIEW
@@ -44,6 +41,7 @@ router.get('/children/:childId/attendance/export', parentController.exportAttend
 // ============================================
 // 4. VIEW CHILD'S CONDUCT (READ-ONLY)
 // ============================================
+router.get('/children/:childId/conduct', parentController.getConductSummary);
 router.get('/children/:childId/conduct/summary', parentController.getConductSummary);
 router.get('/children/:childId/conduct/history', parentController.getConductHistory);
 router.get('/children/:childId/conduct/comments', parentController.getConductComments);

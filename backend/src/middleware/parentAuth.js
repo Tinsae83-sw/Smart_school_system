@@ -27,6 +27,10 @@ async function parentAuth(req, res, next) {
       return res.status(403).json({ error: 'Access denied. Parent role required.' });
     }
 
+    if (!user.parent) {
+      return res.status(403).json({ error: 'Parent profile not found' });
+    }
+
     req.user = {
       user_id: user.user_id,
       full_name: user.full_name,

@@ -111,6 +111,38 @@ export const financeApi = {
   }),
 };
 
+function adminApiFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  const activeRole = getAuthenticatedRole();
+  const token = activeRole === 'ADMIN' || activeRole === 'SUPER_ADMIN' ? getToken(activeRole) : null;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return fetch(`${ADMIN_API_BASE}${endpoint}`, {
+    ...options,
+    headers: {
+      ...headers,
+      ...options.headers,
+    },
+  });
+}
+
+/**
+ * Administrator (registrar) API helper
+ */
+export const adminApi = {
+  get: (endpoint: string) => adminApiFetch(endpoint, { method: 'GET' }),
+  post: (endpoint: string, data?: unknown) => adminApiFetch(endpoint, {
+    method: 'POST',
+    body: data === undefined ? undefined : JSON.stringify(data),
+  }),
+  patch: (endpoint: string, data: unknown) => adminApiFetch(endpoint, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+};
+
 /**
  * VP Academic API helper
  */

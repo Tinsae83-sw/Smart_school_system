@@ -5,7 +5,15 @@ import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+const API_BASE = `${(process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api").replace(/\/$/, "")}/principal`;
+
+async function fetchPrincipalData<T>(path: string): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`);
+  if (!response.ok) {
+    throw new Error(`Principal API request failed (${response.status}): ${path}`);
+  }
+  return (await response.json()) as T;
+}
 
 type DashboardMetrics = {
   total_enrollment: number;
@@ -103,24 +111,14 @@ export default function PrincipalDashboardPage() {
   async function fetchAll() {
     setLoading(true);
     try {
-      const [dashboardRes, kpiRes, complianceRes, staffRes, alertsRes, settingsRes, deptRes] = await Promise.all([
-        fetch(`${API_BASE}/dashboard`),
-        fetch(`${API_BASE}/kpi`),
-        fetch(`${API_BASE}/compliance`),
-        fetch(`${API_BASE}/staff/senior`),
-        fetch(`${API_BASE}/alerts`),
-        fetch(`${API_BASE}/settings`),
-        fetch(`${API_BASE}/departments`),
-      ]);
-
       const results = await Promise.allSettled([
-        dashboardRes.json(),
-        kpiRes.json(),
-        complianceRes.json(),
-        staffRes.json(),
-        alertsRes.json(),
-        settingsRes.json(),
-        deptRes.json(),
+        fetchPrincipalData<DashboardMetrics>("/dashboard"),
+        fetchPrincipalData<KPIData>("/kpi"),
+        fetchPrincipalData<ComplianceData>("/compliance"),
+        fetchPrincipalData<StaffMember[]>("/staff/senior"),
+        fetchPrincipalData<RecentAlert[]>("/alerts"),
+        fetchPrincipalData<SchoolProfile>("/settings"),
+        fetchPrincipalData<Department[]>("/departments"),
       ]);
 
       if (results[0].status === 'fulfilled') setMetrics(results[0].value);
@@ -131,6 +129,11 @@ export default function PrincipalDashboardPage() {
       if (results[5].status === 'fulfilled') setSchoolProfile(results[5].value);
       if (results[6].status === 'fulfilled') setDepartments(results[6].value);
 
+      const failures = results.filter((result) => result.status === 'rejected');
+      if (failures.length > 0) {
+        console.error("Failed to load principal dashboard data:", failures.map((result) => result.reason));
+        setStatusMessage(t.unableToLoad);
+      }
     } catch (error) {
       console.error(error);
       setStatusMessage(t.unableToLoad);
@@ -327,7 +330,7 @@ export default function PrincipalDashboardPage() {
             </span>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {Object.entries(compliance.items).map(([key, item]) => (
+            {Object.entries(compliance.items ?? {}).map(([key, item]) => (
               <div key={key} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-slate-700 dark:text-slate-300 capitalize">
@@ -356,7 +359,7 @@ export default function PrincipalDashboardPage() {
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {Object.entries(metrics.average_grades_by_level).map(([level, avg]) => (
+                {Object.entries(metrics.average_grades_by_level ?? {}).map(([level, avg]) => (
                   <div key={level} className="rounded-xl bg-slate-50 dark:bg-slate-700/50 p-4 text-center">
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.grade} {level}</p>
                     <p className="text-2xl font-bold text-slate-900 dark:text-white">{avg}</p>

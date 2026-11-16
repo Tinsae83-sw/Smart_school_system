@@ -11,6 +11,9 @@ export const PTSA_API_BASE = API_BASE.endsWith("/ptsa")
 export const DEPARTMENT_HEAD_API_BASE = `${API_BASE}/department-head`;
 export const ADMIN_API_BASE = `${API_BASE}/admin`;
 export const VP_ACADEMIC_API_BASE = `${API_BASE}/vp-academic`;
+export const VP_ADMINISTRATION_API_BASE = API_BASE.endsWith("/vp-administration")
+  ? API_BASE
+  : `${API_BASE}/vp-administration`;
 
 /**
  * Get authentication token from localStorage

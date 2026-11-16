@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { vpAdministrationReportingTranslations } from "@/translations/vp-administration-reporting";
+import { VP_ADMINISTRATION_API_BASE } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/vp-administration";
+const API_BASE = VP_ADMINISTRATION_API_BASE;
 
 type AuditLog = {
   log_id: number;

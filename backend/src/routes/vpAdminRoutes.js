@@ -136,4 +136,22 @@ router.post('/safety-equipment', vpAdminController.createSafetyEquipment);
 router.get('/cctv-cameras', vpAdminController.getCCTVCameras);
 router.post('/cctv-cameras', vpAdminController.createCCTVCamera);
 
+// Transport
+router.get('/vehicles', vpAdminController.getVehicles);
+router.post('/vehicles', vpAdminController.createVehicle);
+router.get('/vehicle-maintenance', vpAdminController.getVehicleMaintenance);
+router.post('/vehicle-maintenance', vpAdminController.createVehicleMaintenance);
+router.get('/driver-assignments', vpAdminController.getDriverAssignments);
+router.post('/driver-assignments', vpAdminController.createDriverAssignment);
+router.get('/transport-schedules', vpAdminController.getTransportSchedules);
+router.post('/transport-schedules', vpAdminController.createTransportSchedule);
+
+// Catering
+router.get('/meal-plans', vpAdminController.getMealPlans);
+router.post('/meal-plans', vpAdminController.createMealPlan);
+router.get('/food-inventory', vpAdminController.getFoodInventory);
+router.post('/food-inventory', vpAdminController.createFoodInventory);
+router.get('/food-transactions', vpAdminController.getFoodTransactions);
+router.post('/food-transactions', vpAdminController.createFoodTransaction);
+
 module.exports = router;

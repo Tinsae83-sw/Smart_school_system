@@ -445,8 +445,12 @@ async function getConductSummaries(req, res) {
     const summaries = {};
 
     conduct.forEach(record => {
-      const gradeLevel = record.student.grade_level;
-      const grade = record.grade.toUpperCase();
+      const gradeLevel = record.student?.grade_level;
+      const grade = typeof record.grade === 'string' ? record.grade.trim().toUpperCase() : '';
+
+      if (!Number.isInteger(gradeLevel) || !grade) {
+        return;
+      }
 
       if (!summaries[gradeLevel]) {
         summaries[gradeLevel] = { excellent_count: 0, good_count: 0, needs_improvement_count: 0 };

@@ -8,17 +8,14 @@ const { authenticate, authorizeRoles } = require('../middleware/authMiddleware')
  * All routes are prefixed with /api/admin/users
  */
 
+router.use(authenticate, authorizeRoles('ADMIN', 'SUPER_ADMIN'));
+
 // Register new user (Teacher, Student, or Parent)
 // POST /api/admin/users
 router.post('/', userController.registerUser);
 
 // Register a financial officer (administrator only)
-router.post(
-  '/financial-officers',
-  authenticate,
-  authorizeRoles('ADMIN', 'SUPER_ADMIN'),
-  userController.registerFinancialOfficer
-);
+router.post('/financial-officers', userController.registerFinancialOfficer);
 
 // Link parent to student
 // POST /api/admin/users/link-parent

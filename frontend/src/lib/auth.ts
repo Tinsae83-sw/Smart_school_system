@@ -13,7 +13,8 @@ export type UserRole =
   | 'PTSA_REPRESENTATIVE'
   | 'SIC_MEMBER'
   | 'FINANCIAL_OFFICER'
-  | 'ADMIN';
+  | 'ADMIN'
+  | 'SUPER_ADMIN';
 
 export interface AuthConfig {
   tokenKey: string;
@@ -86,7 +87,13 @@ export const AUTH_CONFIGS: Record<UserRole, AuthConfig> = {
   ADMIN: {
     tokenKey: 'admin_token',
     userKey: 'admin_user',
-    loginPath: '/admin/login',
+    loginPath: '/login',
+    dashboardPath: '/admin',
+  },
+  SUPER_ADMIN: {
+    tokenKey: 'super_admin_token',
+    userKey: 'super_admin_user',
+    loginPath: '/login',
     dashboardPath: '/admin',
   },
 };

@@ -1,23 +1,7 @@
 const prisma = require('../config/prisma');
 
-// Helper function to get parent ID (with or without authentication)
 async function getParentId(req) {
-  // If authenticated, use the authenticated parent ID
-  if (req.parent_id) {
-    return req.parent_id;
-  }
-  
-  // For development without authentication, use the first parent in the database
-  const parent = await prisma.parent.findFirst({
-    where: { user: { role: 'PARENT' } },
-    include: { user: true }
-  });
-  
-  if (!parent) {
-    throw new Error('No parent found in database');
-  }
-  
-  return parent.parent_id;
+  return req.user.parent_id;
 }
 
 // ============================================
@@ -34,7 +18,8 @@ exports.getParentDashboard = async (req, res) => {
       include: {
         student: {
           include: {
-            current_class: true
+            current_class: true,
+            user: true
           }
         }
       }
@@ -149,7 +134,8 @@ exports.getChildDashboard = async (req, res) => {
       include: {
         student: {
           include: {
-            current_class: true
+            current_class: true,
+            user: true
           }
         }
       }
@@ -991,7 +977,8 @@ exports.getDailyAttendance = async (req, res) => {
       include: {
         student: {
           include: {
-            current_class: true
+            current_class: true,
+            user: true
           }
         }
       }
@@ -1317,7 +1304,7 @@ exports.getConductSummary = async (req, res) => {
         student_id: parseInt(childId)
       },
       include: {
-        comments: true
+        conduct_comments: true
       },
       orderBy: {
         graded_at: 'desc'
@@ -1330,7 +1317,7 @@ exports.getConductSummary = async (req, res) => {
       student_name: studentParent.student.user.full_name,
       class_id: studentParent.student.current_class_id,
       conduct: cg.grade,
-      notes: cg.comments.length > 0 ? cg.comments.map(c => c.comment).join('; ') : null
+      notes: cg.conduct_comments.length > 0 ? cg.conduct_comments.map(c => c.comment).join('; ') : cg.comments
     }));
 
     res.json(conductRecords);
@@ -1767,7 +1754,8 @@ exports.getCurrentAssignments = async (req, res) => {
       include: {
         student: {
           include: {
-            current_class: true
+            current_class: true,
+            user: true
           }
         }
       }
@@ -1880,7 +1868,8 @@ exports.getAssignmentDeadlines = async (req, res) => {
       include: {
         student: {
           include: {
-            current_class: true
+            current_class: true,
+            user: true
           }
         }
       }
@@ -2067,7 +2056,8 @@ exports.getMissingAssignments = async (req, res) => {
       include: {
         student: {
           include: {
-            current_class: true
+            current_class: true,
+            user: true
           }
         }
       }
@@ -2174,7 +2164,8 @@ exports.getExamSchedule = async (req, res) => {
       include: {
         student: {
           include: {
-            current_class: true
+            current_class: true,
+            user: true
           }
         }
       }
@@ -3336,7 +3327,8 @@ exports.getPeerEvaluationSummary = async (req, res) => {
       include: {
         student: {
           include: {
-            current_class: true
+            current_class: true,
+            user: true
           }
         }
       }
@@ -3352,14 +3344,14 @@ exports.getPeerEvaluationSummary = async (req, res) => {
         student_id: parseInt(childId)
       },
       include: {
-        evaluator: {
+        evaluator_student: {
           include: {
             user: true
           }
         }
       },
       orderBy: {
-        evaluation_date: 'desc'
+        submitted_at: 'desc'
       }
     });
 
@@ -3371,7 +3363,7 @@ exports.getPeerEvaluationSummary = async (req, res) => {
         evaluationGroups[key] = {
           evaluation_id: pe.evaluation_id,
           title: `${pe.term} Peer Evaluation`,
-          due_date: pe.evaluation_date,
+          due_date: pe.submitted_at,
           status: 'OPEN',
           released: true,
           questions: ['Teamwork', 'Participation', 'Collaboration', 'Respect'],
@@ -3380,9 +3372,9 @@ exports.getPeerEvaluationSummary = async (req, res) => {
       }
       
       evaluationGroups[key].results.push({
-        reviewer_name: pe.evaluator.user.full_name,
+        reviewer_name: pe.evaluator_student.user.full_name,
         comments: pe.comments,
-        score: (pe.teamwork_score + pe.participation_score + pe.collaboration_score + pe.respect_score) / 4
+        score: (Number(pe.teamwork_score) + Number(pe.participation_score) + Number(pe.collaboration_score) + Number(pe.respect_score)) / 4
       });
     });
 
@@ -3537,14 +3529,18 @@ exports.getFeeStructure = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Get fee structure from database
-    const feeStructure = await prisma.feeStructure.findMany({
+    const student = await prisma.student.findUnique({
+      where: { student_id: parseInt(childId) },
+      select: { grade_level: true }
+    });
+    const gradeLevels = student?.grade_level ? [0, student.grade_level] : undefined;
+
+    const feeStructure = await prisma.schoolFee.findMany({
       where: {
-        student_id: parseInt(childId)
+        is_active: true,
+        ...(gradeLevels && { grade_level: { in: gradeLevels } })
       },
-      orderBy: {
-        due_date: 'asc'
-      }
+      orderBy: { fee_id: 'asc' }
     });
 
     // Get payments to calculate paid amount
@@ -3567,7 +3563,7 @@ exports.getFeeStructure = async (req, res) => {
         name: f.fee_name,
         amount: parseFloat(f.amount),
         currency: f.currency,
-        term: f.term,
+        term: f.academic_year,
         description: f.description
       })),
       totalFees,
@@ -3944,7 +3940,8 @@ exports.getAssociatedChildren = async (req, res) => {
       include: {
         student: {
           include: {
-            current_class: true
+            current_class: true,
+            user: true
           }
         }
       }

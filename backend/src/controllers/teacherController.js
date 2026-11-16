@@ -276,7 +276,7 @@ async function getTeacherDashboard(req, res) {
     let todaySchedule = [];
     try {
       const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-      todaySchedule = await prisma.classSchedule.findMany({
+      const schedules = await prisma.classSchedule.findMany({
         where: {
           teacher_id: teacherId,
           day_of_week: dayOfWeek
@@ -287,6 +287,15 @@ async function getTeacherDashboard(req, res) {
         },
         orderBy: { period: 'asc' }
       });
+      const formatTime = (t) => new Date(t).toISOString().substring(11, 16);
+      todaySchedule = schedules.map((s) => ({
+        schedule_id: s.schedule_id,
+        subject: s.subject?.subject_name,
+        class: s.school_class?.class_name,
+        room: s.room_number,
+        period: s.period,
+        time: `${formatTime(s.start_time)} - ${formatTime(s.end_time)}`
+      }));
     } catch (e) {
       console.warn('Could not fetch today schedule:', e.message);
     }
@@ -2106,13 +2115,7 @@ async function getClassConduct(req, res) {
         student: {
           include: { user: true }
         },
-        conduct_comments: {
-          include: {
-            teacher: {
-              include: { user: true }
-            }
-          }
-        }
+        conduct_comments: true
       }
     });
 

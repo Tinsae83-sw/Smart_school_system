@@ -100,6 +100,7 @@ After running `node seed.js`, use these credentials:
 **Password**: `Password123!`
 
 - **Admin**: `admin@school.edu`
+- **Registrar**: `registration@school.edu`
 - **Finance Officer**: `finance@school.edu`
 - **Principal**: `principal@school.edu`
 - **Teacher**: `jane.doe@school.edu`

@@ -302,6 +302,7 @@ model Student {
   current_class       SchoolClass?        @relation(fields: [current_class_id], references: [class_id], onDelete: SetNull)
   department          Department?         @relation(fields: [department_id], references: [department_id], onDelete: SetNull)
   attendance_records  AttendanceRecord[]
+  individual_assignments Assignment[]
   submissions         Submission[]
   student_parents     StudentParent[]
   payments            Payment[]
@@ -503,12 +504,15 @@ model Assignment {
   allow_resubmission Boolean  @default(false)
   resubmission_deadline DateTime?
   max_resubmissions Int       @default(1)
+  student_id       Int?      @map("student_id")
   created_at       DateTime  @default(now())
   updated_at       DateTime  @default(now()) @updatedAt
 
   class_subject    ClassSubject    @relation(fields: [class_subject_id], references: [class_subject_id], onDelete: Cascade)
+  student          Student?        @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
   submissions      Submission[]
 
+  @@index([student_id])
   @@map("assignments")
 }
 

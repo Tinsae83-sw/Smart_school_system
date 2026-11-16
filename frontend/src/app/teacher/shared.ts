@@ -1,6 +1,6 @@
 import { clearAuth } from "@/lib/auth";
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+export const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000").replace(/\/api\/?$/, "");
 
 export class ApiError extends Error {
   status: number;

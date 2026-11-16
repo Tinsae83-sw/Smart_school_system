@@ -49,6 +49,27 @@ async function main() {
     }
   });
 
+  await prisma.user.upsert({
+    where: { email: 'registration@school.edu' },
+    update: {
+      full_name: 'School Registrar',
+      phone_number: '+251911000005',
+      password_hash,
+      role: 'ADMIN',
+      is_active: true,
+      preferred_language: 'en'
+    },
+    create: {
+      full_name: 'School Registrar',
+      email: 'registration@school.edu',
+      phone_number: '+251911000005',
+      password_hash,
+      role: 'ADMIN',
+      is_active: true,
+      preferred_language: 'en'
+    }
+  });
+
   const teacherUser = await prisma.user.upsert({
     where: { email: 'jane.doe@school.edu' },
     update: {
@@ -2828,6 +2849,7 @@ async function main() {
 
   console.log('Sample data seeded successfully.');
   console.log('Admin login: admin@school.edu / Password123!');
+  console.log('Registrar login: registration@school.edu / Password123!');
   console.log('Principal login: principal@school.edu / Password123!');
   console.log('VP Academic login: vp.academic@school.edu / Password123!');
   console.log('VP Administration login: vp.admin@school.edu / Password123!');

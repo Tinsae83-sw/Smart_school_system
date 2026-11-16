@@ -653,7 +653,7 @@ export default function AttendancePage() {
                         </svg>
                       </div>
                       <div>
-                        <p className="text-2xl font-bold text-sky-900 dark:text-sky-300">{selectedStudentHistory.stats.attendance_rate.toFixed(1)}%</p>
+                        <p className="text-2xl font-bold text-sky-900 dark:text-sky-300">{selectedStudentHistory.stats.attendance_rate?.toFixed(1) ?? "N/A"}%</p>
                         <p className="text-xs text-sky-600 dark:text-sky-400">{t.attendanceRateLabel}</p>
                       </div>
                     </div>

@@ -328,7 +328,7 @@ export default function ReportsPage() {
                               style={{ width: `${att.attendance_rate}%` }}
                             />
                           </div>
-                          <span className="text-sm text-slate-900 dark:text-white">{att.attendance_rate.toFixed(1)}%</span>
+                          <span className="text-sm text-slate-900 dark:text-white">{att.attendance_rate?.toFixed(1) ?? "N/A"}%</span>
                         </div>
                       </td>
                     </tr>
@@ -361,8 +361,8 @@ export default function ReportsPage() {
                     <tr key={student.student_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                       <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{student.student_name}</td>
                       <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{student.class_name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{student.average_grade.toFixed(1)}%</td>
-                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{student.attendance_rate.toFixed(1)}%</td>
+                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{student.average_grade?.toFixed(1) ?? "N/A"}%</td>
+                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{student.attendance_rate?.toFixed(1) ?? "N/A"}%</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getRiskLevelColor(student.risk_level)}`}>
                           {getRiskLevelLabel(student.risk_level)}

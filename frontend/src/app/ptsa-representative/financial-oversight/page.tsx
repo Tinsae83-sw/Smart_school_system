@@ -176,9 +176,9 @@ export default function FinancialOversightPage() {
                   <div className="h-6 bg-slate-200 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-teal-400 to-teal-600 rounded-full flex items-center justify-end pr-2 transition-all"
-                      style={{ width: `${item.percentage}%` }}
+                      style={{ width: `${item.percentage ?? 0}%` }}
                     >
-                      <span className="text-xs font-bold text-white">{item.percentage.toFixed(1)}%</span>
+                      <span className="text-xs font-bold text-white">{item.percentage?.toFixed(1) ?? "N/A"}%</span>
                     </div>
                   </div>
                 </div>

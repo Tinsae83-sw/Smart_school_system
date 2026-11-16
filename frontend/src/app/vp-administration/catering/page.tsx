@@ -302,7 +302,7 @@ export default function CateringPage() {
                       <tr key={plan.plan_id} className="hover:bg-slate-50">
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{plan.plan_name}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{translateValue(plan.plan_type)}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">ETB {plan.daily_cost.toFixed(2)}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">ETB {plan.daily_cost?.toFixed(2) ?? "N/A"}</td>
                         <td className="px-6 py-3 text-sm text-slate-600 max-w-xs truncate">{plan.description || "-"}</td>
                         <td className="px-6 py-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${plan.is_active ? "bg-orange-50 text-orange-700" : "bg-rose-50 text-rose-700"}`}>
@@ -354,7 +354,7 @@ export default function CateringPage() {
                         <td className="px-6 py-3 text-sm font-medium text-slate-900">{item.item_name}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{translateValue(item.category)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{item.quantity} {translateValue(item.unit)}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">ETB {item.unit_cost.toFixed(2)}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">ETB {item.unit_cost?.toFixed(2) ?? "N/A"}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{item.reorder_level} {translateValue(item.unit)}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{item.expiry_date || "-"}</td>
                         <td className="px-6 py-3">
@@ -411,7 +411,7 @@ export default function CateringPage() {
                           </span>
                         </td>
                         <td className="px-6 py-3 text-sm text-slate-600">{trans.quantity}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">ETB {trans.total_cost.toFixed(2)}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">ETB {trans.total_cost?.toFixed(2) ?? "N/A"}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{trans.reference || "-"}</td>
                       </tr>
                     ))}

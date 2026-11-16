@@ -379,7 +379,7 @@ export default function StudentGrades() {
                                   </span>
                                 </td>
                                 <td className="py-3 px-4 text-sm font-medium text-slate-900 dark:text-white">
-                                  {grade.score.toFixed(2)}
+                                  {grade.score?.toFixed(2) ?? "N/A"}
                                 </td>
                                 <td className="py-3 px-4">
                                   {grade.letter_grade ? (
@@ -417,7 +417,7 @@ export default function StudentGrades() {
                               <div className="flex-1">
                                 <h4 className="font-medium text-slate-900 dark:text-white">{sub.assignment_title}</h4>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                  Score: {sub.score !== null ? sub.score.toFixed(2) : "N/A"} / {sub.max_score.toFixed(2)}
+                                  Score: {sub.score != null ? sub.score.toFixed(2) : "N/A"} / {sub.max_score?.toFixed(2) ?? "N/A"}
                                 </p>
                                 {sub.feedback && (
                                   <p className="text-sm text-slate-600 dark:text-slate-300 mt-2 italic">
@@ -625,7 +625,7 @@ export default function StudentGrades() {
                                     {subj.letter_grade}
                                   </span>
                                 </td>
-                                <td className="py-3 px-4 text-center text-slate-900 dark:text-white">{subj.earned_points.toFixed(2)}</td>
+                                <td className="py-3 px-4 text-center text-slate-900 dark:text-white">{subj.earned_points?.toFixed(2) ?? "0.00"}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -636,7 +636,7 @@ export default function StudentGrades() {
                               <td className="py-3 px-4" />
                               <td className="py-3 px-4 text-slate-900 dark:text-white">GPA: {transcript.academic_summary.cumulative_gpa}</td>
                               <td className="py-3 px-4 text-center text-slate-900 dark:text-white">
-                                {transcript.subjects.reduce((s, x) => s + x.earned_points, 0).toFixed(2)}
+                                {transcript.subjects.reduce((s, x) => s + (x.earned_points ?? 0), 0).toFixed(2)}
                               </td>
                             </tr>
                           </tfoot>

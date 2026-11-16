@@ -149,7 +149,7 @@ export default function AcademicPerformancePage() {
                   <span className="text-xs text-slate-400">{summary.student_count} students</span>
                 </div>
                 <p className="text-lg font-semibold text-slate-900">{summary.subject}</p>
-                <p className="text-3xl font-bold text-teal-600 mt-2">{summary.average_grade.toFixed(1)}%</p>
+                <p className="text-3xl font-bold text-teal-600 mt-2">{summary.average_grade?.toFixed(1) ?? "N/A"}%</p>
               </div>
             ))}
           </div>
@@ -210,7 +210,7 @@ export default function AcademicPerformancePage() {
               {filteredAttendance.map((summary) => (
                 <div key={summary.grade_level} className="rounded-xl bg-slate-50 p-4 border border-slate-200">
                   <p className="text-sm font-medium text-slate-600">Grade {summary.grade_level}</p>
-                  <p className="text-2xl font-bold text-slate-900 mt-2">{summary.attendance_rate.toFixed(1)}%</p>
+                  <p className="text-2xl font-bold text-slate-900 mt-2">{summary.attendance_rate?.toFixed(1) ?? "N/A"}%</p>
                   <p className="text-xs text-slate-500 mt-1">{summary.total_students} students</p>
                   <div className="mt-3 h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div 
@@ -281,9 +281,9 @@ export default function AcademicPerformancePage() {
                     <tr key={`${result.exam_type}-${result.year}`} className="border-b border-slate-100">
                       <td className="py-3 px-4 text-sm text-slate-900">{result.exam_type}</td>
                       <td className="py-3 px-4 text-sm text-slate-600">{result.year}</td>
-                      <td className="py-3 px-4 text-sm font-medium text-teal-600">{result.school_average.toFixed(1)}%</td>
-                      <td className="py-3 px-4 text-sm text-slate-600">{result.national_average.toFixed(1)}%</td>
-                      <td className="py-3 px-4 text-sm font-medium text-emerald-600">{result.pass_rate.toFixed(1)}%</td>
+                      <td className="py-3 px-4 text-sm font-medium text-teal-600">{result.school_average?.toFixed(1) ?? "N/A"}%</td>
+                      <td className="py-3 px-4 text-sm text-slate-600">{result.national_average?.toFixed(1) ?? "N/A"}%</td>
+                      <td className="py-3 px-4 text-sm font-medium text-emerald-600">{result.pass_rate?.toFixed(1) ?? "N/A"}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -312,9 +312,9 @@ export default function AcademicPerformancePage() {
                         <div className="flex-1 h-6 bg-slate-200 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-gradient-to-r from-teal-400 to-teal-600 rounded-full flex items-center justify-end pr-2 transition-all"
-                            style={{ width: `${trend.average_score}%` }}
+                            style={{ width: `${trend.average_score ?? 0}%` }}
                           >
-                            <span className="text-xs font-bold text-white">{trend.average_score.toFixed(1)}%</span>
+                          <span className="text-xs font-bold text-white">{trend.average_score?.toFixed(1) ?? "N/A"}%</span>
                           </div>
                         </div>
                       </div>

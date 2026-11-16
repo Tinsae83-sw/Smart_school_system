@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+import { PRINCIPAL_API_BASE } from "@/lib/api";
 
 type Announcement = {
   announcement_id: number;
@@ -68,7 +67,7 @@ export default function CommunicationsPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/communications/announcements`, {
+      const res = await fetch(`${PRINCIPAL_API_BASE}/communications/announcements`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
@@ -96,7 +95,7 @@ export default function CommunicationsPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`${API_BASE}/communications/announcements`, {
+      const res = await fetch(`${PRINCIPAL_API_BASE}/communications/announcements`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -126,7 +125,7 @@ export default function CommunicationsPage() {
     if (!confirm(language === "am" ? "ይህን ማስታወቂያ መሰረዝ ይፈልጋሉ?" : "Are you sure you want to delete this announcement?")) return;
 
     try {
-      const res = await fetch(`${API_BASE}/communications/announcements/${announcementId}`, {
+      const res = await fetch(`${PRINCIPAL_API_BASE}/communications/announcements/${announcementId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });

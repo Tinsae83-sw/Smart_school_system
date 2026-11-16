@@ -4,8 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+import { PRINCIPAL_API_BASE } from "@/lib/api";
 
 type StaffMember = {
   user_id: number;
@@ -85,13 +84,13 @@ export default function StaffManagementPage() {
 
     try {
       const [seniorRes, teachersRes, deptsRes] = await Promise.all([
-        fetch(`${API_BASE}/staff/senior`, {
+        fetch(`${PRINCIPAL_API_BASE}/staff/senior`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/staff/teachers`, {
+        fetch(`${PRINCIPAL_API_BASE}/staff/teachers`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/departments`, {
+        fetch(`${PRINCIPAL_API_BASE}/departments`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);
@@ -156,7 +155,7 @@ export default function StaffManagementPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE}${endpoint}`, {
+      const res = await fetch(`${PRINCIPAL_API_BASE}${endpoint}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -193,7 +192,7 @@ export default function StaffManagementPage() {
 
     const endpoint = activeTab === "senior" ? "/staff/senior" : "/staff/teachers";
     const method = editingStaff ? "PUT" : "POST";
-    const url = editingStaff ? `${API_BASE}${endpoint}/${editingStaff.user_id}` : `${API_BASE}${endpoint}`;
+    const url = editingStaff ? `${PRINCIPAL_API_BASE}${endpoint}/${editingStaff.user_id}` : `${PRINCIPAL_API_BASE}${endpoint}`;
 
     // Prepare request body based on whether it's create or update
     let requestBody;

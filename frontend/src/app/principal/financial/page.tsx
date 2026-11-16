@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+import { PRINCIPAL_API_BASE } from "@/lib/api";
 
 type FinancialSummary = {
   total_budget: number;
@@ -47,13 +46,13 @@ export default function FinancialOversightPage() {
     setLoading(true);
     try {
       const [summaryRes, allocationsRes, expensesRes] = await Promise.all([
-        fetch(`${API_BASE}/financial/summary`, {
+        fetch(`${PRINCIPAL_API_BASE}/financial/summary`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/financial/allocations`, {
+        fetch(`${PRINCIPAL_API_BASE}/financial/allocations`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/financial/expenses`, {
+        fetch(`${PRINCIPAL_API_BASE}/financial/expenses`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);

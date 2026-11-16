@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+import { PRINCIPAL_API_BASE } from "@/lib/api";
 
 type SIP = {
   sip_id: number;
@@ -80,13 +79,13 @@ export default function GovernancePage() {
 
     try {
       const [sipRes, ptsaRes, feedbackRes] = await Promise.all([
-        fetch(`${API_BASE}/governance/sip`, {
+        fetch(`${PRINCIPAL_API_BASE}/governance/sip`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/governance/ptsa/executive`, {
+        fetch(`${PRINCIPAL_API_BASE}/governance/ptsa/executive`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/governance/ptsa/feedback`, {
+        fetch(`${PRINCIPAL_API_BASE}/governance/ptsa/feedback`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);
@@ -138,7 +137,7 @@ export default function GovernancePage() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE}/governance/sip/${sipId}/approve`, {
+      const res = await fetch(`${PRINCIPAL_API_BASE}/governance/sip/${sipId}/approve`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -167,7 +166,7 @@ export default function GovernancePage() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE}/governance/ptsa/feedback/${feedbackId}/respond`, {
+      const res = await fetch(`${PRINCIPAL_API_BASE}/governance/ptsa/feedback/${feedbackId}/respond`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+import { PRINCIPAL_API_BASE } from "@/lib/api";
 
 type Department = {
   department_id: number;
@@ -73,7 +72,7 @@ export default function DepartmentsPage() {
     setLoading(true);
 
     try {
-      const deptsRes = await fetch(`${API_BASE}/departments`, {
+      const deptsRes = await fetch(`${PRINCIPAL_API_BASE}/departments`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
@@ -116,7 +115,7 @@ export default function DepartmentsPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/departments/${departmentId}`, {
+      const res = await fetch(`${PRINCIPAL_API_BASE}/departments/${departmentId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -158,8 +157,8 @@ export default function DepartmentsPage() {
 
     const method = editingDepartment ? "PUT" : "POST";
     const url = editingDepartment
-      ? `${API_BASE}/departments/${editingDepartment.department_id}`
-      : `${API_BASE}/departments`;
+      ? `${PRINCIPAL_API_BASE}/departments/${editingDepartment.department_id}`
+      : `${PRINCIPAL_API_BASE}/departments`;
 
     // Prepare request body
     const requestBody = {

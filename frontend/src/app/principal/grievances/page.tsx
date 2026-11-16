@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+import { PRINCIPAL_API_BASE } from "@/lib/api";
 
 type Grievance = {
   grievance_id: number;
@@ -57,10 +56,10 @@ export default function GrievancesPage() {
 
     try {
       const [grievancesRes, disciplineRes] = await Promise.all([
-        fetch(`${API_BASE}/grievances`, {
+        fetch(`${PRINCIPAL_API_BASE}/grievances`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/discipline`, {
+        fetch(`${PRINCIPAL_API_BASE}/discipline`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);
@@ -107,7 +106,7 @@ export default function GrievancesPage() {
     );
     setGrievances(updatedGrievances);
 
-    fetch(`${API_BASE}/grievances/${selectedGrievance.grievance_id}/resolve`, {
+    fetch(`${PRINCIPAL_API_BASE}/grievances/${selectedGrievance.grievance_id}/resolve`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

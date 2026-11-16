@@ -4,11 +4,10 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
-
-const API_BASE = `${(process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api").replace(/\/$/, "")}/principal`;
+import { PRINCIPAL_API_BASE } from "@/lib/api";
 
 async function fetchPrincipalData<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`);
+  const response = await fetch(`${PRINCIPAL_API_BASE}${path}`);
   if (!response.ok) {
     throw new Error(`Principal API request failed (${response.status}): ${path}`);
   }

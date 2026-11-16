@@ -9,8 +9,6 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
-
 type NavItem = {
   labelKey: keyof typeof principalTranslations.en;
   href: string;

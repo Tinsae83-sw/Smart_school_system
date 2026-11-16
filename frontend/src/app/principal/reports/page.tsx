@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+import { PRINCIPAL_API_BASE } from "@/lib/api";
 
 type AcademicReport = {
   report_id: number;
@@ -61,13 +60,13 @@ export default function ReportsPage() {
 
     try {
       const [academicRes, complianceRes, auditRes] = await Promise.all([
-        fetch(`${API_BASE}/reports/academic`, {
+        fetch(`${PRINCIPAL_API_BASE}/reports/academic`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/reports/compliance`, {
+        fetch(`${PRINCIPAL_API_BASE}/reports/compliance`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/reports/audit-logs`, {
+        fetch(`${PRINCIPAL_API_BASE}/reports/audit-logs`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);
@@ -104,7 +103,7 @@ export default function ReportsPage() {
     setIsGenerating(true);
 
     try {
-      const res = await fetch(`${API_BASE}/reports/generate`, {
+      const res = await fetch(`${PRINCIPAL_API_BASE}/reports/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -129,7 +128,7 @@ export default function ReportsPage() {
 
   async function handleExportAuditLogs() {
     try {
-      const res = await fetch(`${API_BASE}/reports/audit-logs`, {
+      const res = await fetch(`${PRINCIPAL_API_BASE}/reports/audit-logs`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 

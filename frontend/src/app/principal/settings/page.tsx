@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { principalTranslations } from "@/translations/principal";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/principal";
+import { PRINCIPAL_API_BASE } from "@/lib/api";
 
 type SchoolSettings = {
   school_id: number;
@@ -68,13 +67,13 @@ export default function SchoolSettingsPage() {
 
     try {
       const [settingsRes, calendarRes, policiesRes] = await Promise.all([
-        fetch(`${API_BASE}/settings`, {
+        fetch(`${PRINCIPAL_API_BASE}/settings`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/academic-calendar`, {
+        fetch(`${PRINCIPAL_API_BASE}/academic-calendar`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
-        fetch(`${API_BASE}/settings/policies`, {
+        fetch(`${PRINCIPAL_API_BASE}/settings/policies`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }),
       ]);
@@ -132,7 +131,7 @@ export default function SchoolSettingsPage() {
 
   function handleDeletePolicy(policyId: number) {
     if (confirm(language === "am" ? "ይህን ፖሊሲ መሰረዝ ይፈልጋሉ?" : "Are you sure you want to delete this policy?")) {
-      fetch(`${API_BASE}/settings/policies/${policyId}`, {
+      fetch(`${PRINCIPAL_API_BASE}/settings/policies/${policyId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
@@ -159,7 +158,7 @@ export default function SchoolSettingsPage() {
       setSettings({ ...settings, ...formData } as SchoolSettings);
     }
 
-    fetch(`${API_BASE}/settings`, {
+    fetch(`${PRINCIPAL_API_BASE}/settings`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -198,7 +197,7 @@ export default function SchoolSettingsPage() {
       setCalendar({ ...calendar, ...calendarFormData } as AcademicCalendar);
     }
 
-    fetch(`${API_BASE}/academic-calendar`, {
+    fetch(`${PRINCIPAL_API_BASE}/academic-calendar`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -233,8 +232,8 @@ export default function SchoolSettingsPage() {
     setIsSubmitting(true);
 
     const url = policyFormData.policy_id
-      ? `${API_BASE}/settings/policies/${policyFormData.policy_id}`
-      : `${API_BASE}/settings/policies`;
+      ? `${PRINCIPAL_API_BASE}/settings/policies/${policyFormData.policy_id}`
+      : `${PRINCIPAL_API_BASE}/settings/policies`;
 
     const method = policyFormData.policy_id ? "PUT" : "POST";
 

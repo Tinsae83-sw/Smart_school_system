@@ -3,7 +3,8 @@
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api/department-head";
+const BASE_API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
+const API_BASE = `${BASE_API}/department-head`;
 
 type DashboardMetrics = {
   total_teachers: number;

@@ -48,7 +48,7 @@ The `render.yaml` file is already created in the backend folder.
 6. Click **"Create Web Service"**
 
 ### 1.4 Initialize the Database
-The backend runs `npx prisma db push` before starting, so the schema is synchronized during deployment. To initialize sample data:
+Before starting, the backend creates the transport tables with an idempotent, transport-only SQL script. This avoids blocking service startup on unrelated schema issues. To initialize sample data:
 
 1. Go to your Render dashboard → PostgreSQL database
 2. Copy the **Internal Database URL**
@@ -180,7 +180,8 @@ NEXT_PUBLIC_API_BASE=https://smart-school-backend.onrender.com/api
 
 ### Backend Issues
 - **Database Connection Error**: Verify `DATABASE_URL` is correct
-- **Database schema sync failed**: Check the Render service logs and verify `DATABASE_URL` and database permissions. The backend runs `npx prisma db push` before starting.
+- **Transport schema setup failed**: Check the Render service logs and verify `DATABASE_URL` and database permissions. The backend runs `npx prisma db execute --file prisma/transport-schema.sql` before starting.
+- **Other schema changes**: Run `npx prisma db push` manually only after resolving any existing data or foreign-key conflicts reported by Prisma.
 - **Port Issues**: Ensure PORT is set to 10000 (Render's default)
 
 ### Frontend Issues

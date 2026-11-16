@@ -4,7 +4,7 @@
   "description": "RESTful API for Smart School Connect - User Registration and Management System",
   "main": "src/server.js",
   "scripts": {
-    "start": "npm run db:push && node src/server.js",
+    "start": "npm run db:transport && node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node seed.js",
     "seed:finance": "node seedFinancialOfficer.js",
@@ -13,6 +13,7 @@
     "setup": "node setup-database.js",
     "db:setup": "node setup-database.js",
     "db:push": "npx prisma db push",
+    "db:transport": "npx prisma db execute --file prisma/transport-schema.sql",
     "db:generate": "npx prisma generate",
     "db:studio": "npx prisma studio"
   },

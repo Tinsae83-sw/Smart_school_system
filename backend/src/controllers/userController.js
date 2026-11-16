@@ -396,7 +396,8 @@ async function linkParentToStudent(req, res) {
     const link = await prisma.studentParent.create({
       data: {
         student_id: student.student_id,
-        parent_id: parent.parent_id
+        parent_id: parent.parent_id,
+        relationship: relationship || parent.relationship
       }
     });
 

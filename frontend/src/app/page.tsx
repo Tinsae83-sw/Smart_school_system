@@ -31,7 +31,7 @@ const navLinks = [
 
 const defaultGrades: Grade[] = [
   { grade: 'Grade 9', color: 'bg-navy-600', description: 'Strong foundation for secondary education, with emphasis on core academic subjects and study skills.', image: '/school-group-1.png' },
-  { grade: 'Grade 10', color: 'bg-teal-600', description: 'Development of deeper subject knowledge, critical thinking, and preparation for national academic requirements.', image: '/school-group-2.png' },
+  { grade: 'Grade 10', color: 'bg-yellow-600', description: 'Development of deeper subject knowledge, critical thinking, and preparation for national academic requirements.', image: '/school-group-2.png' },
   { grade: 'Grade 11', color: 'bg-navy-600', description: 'Advanced academic preparation and development of skills required for higher education and future careers.', image: '/school-group-3.png' },
   { grade: 'Grade 12', color: 'bg-teal-600', description: 'Focused preparation for higher education, examinations, and transition into university or professional pathways.', image: '/school-group-1.png' },
 ];

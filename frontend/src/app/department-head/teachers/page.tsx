@@ -43,6 +43,7 @@ export default function TeachersPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<number[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
+  const [expandedTeacherId, setExpandedTeacherId] = useState<number | null>(null);
 
   async function fetchTeachers() {
     setLoading(true);
@@ -204,12 +205,35 @@ export default function TeachersPage() {
                     </td>
                     <td className="px-6 py-4">
                       {teacher.classes && teacher.classes.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {teacher.classes.map((cls, i) => (
-                            <span key={i} className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-                              {cls.class_name} - {cls.subject}
-                            </span>
-                          ))}
+                        <div>
+                          <button
+                            type="button"
+                            aria-expanded={expandedTeacherId === teacher.teacher_id}
+                            aria-controls={`assigned-classes-${teacher.teacher_id}`}
+                            onClick={() => setExpandedTeacherId(
+                              expandedTeacherId === teacher.teacher_id ? null : teacher.teacher_id
+                            )}
+                            className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition"
+                          >
+                            {teacher.classes.length} {teacher.classes.length === 1 ? "class" : "classes"}
+                            <svg
+                              className={`h-3.5 w-3.5 transition-transform ${expandedTeacherId === teacher.teacher_id ? "rotate-180" : ""}`}
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path fillRule="evenodd" d="M5.22 7.47a.75.75 0 0 1 1.06 0L10 11.19l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.53a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          {expandedTeacherId === teacher.teacher_id && (
+                            <div id={`assigned-classes-${teacher.teacher_id}`} className="mt-2 flex min-w-40 flex-col gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+                              {teacher.classes.map((cls, i) => (
+                                <span key={i} className="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                                  {cls.class_name} - {cls.subject}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <span className="text-sm text-slate-400">No classes assigned</span>
